@@ -298,6 +298,8 @@ function animateRiggedPlayer(gait,moving,time,dt){
  }else{
    for(const item of rig.bodyBones){const b=item.bone;b.quaternion.copy(item.rest);let angle=0;
      if(item.kind==='leftLeg')angle=gait*.9;else if(item.kind==='rightLeg')angle=-gait*.9;
+     else if(item.kind==='leftKnee')angle=Math.max(0,gait)*(sprinting&&stamina>0?.58:.38);
+     else if(item.kind==='rightKnee')angle=Math.max(0,-gait)*(sprinting&&stamina>0?.58:.38);
      else if(item.kind==='leftArm')angle=-gait*.58;else if(item.kind==='rightArm')angle=gait*.58;
      else if(item.kind==='leftForearm')angle=-Math.max(0,gait)*.18;else if(item.kind==='rightForearm')angle=Math.max(0,gait)*.18;
      else if(item.kind==='spine')angle=Math.sin(time*2.4)*.018;
@@ -322,8 +324,6 @@ function installRiggedPlayer(gltf){
  model.traverse(o=>{if(o.isSkinnedMesh)hasSkinnedMesh=true;if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const material of materials){if(!material)continue;materialCount++;if(material.map||material.normalMap||material.roughnessMap||material.metalnessMap||material.emissiveMap)hasTextureOrVertexColor=true}if(o.geometry?.getAttribute('color'))hasTextureOrVertexColor=true});
  if(!hasSkinnedMesh)throw new Error('Visual quality gate: asset has no skinned mesh; keeping animated fallback');
  if(!hasTextureOrVertexColor)throw new Error('Visual quality gate: rig has no texture maps or vertex colors ('+materialCount+' material slots); keeping clothed procedural character');
- const candidateNames=(gltf.animations||[]).map(c=>String(c.name||'').toLowerCase());
- if(!candidateNames.some(n=>/idle|stand|breath|rest/.test(n))||!candidateNames.some(n=>/walk|walking|locomotion/.test(n))||!candidateNames.some(n=>/run|running|sprint/.test(n)))throw new Error('Visual quality gate: character needs separate idle, walk and run clips; keeping animated fallback');
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
  if(!Number.isFinite(size.y)||size.y<.25)throw new Error('Humanoid model has invalid bounds');
  const modelRoot=new THREE.Group(),scale=1.78/size.y;model.scale.setScalar(scale);model.position.y=-bounds.min.y*scale;modelRoot.add(model);
@@ -338,6 +338,8 @@ function installRiggedPlayer(gltf){
  for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
    if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
    else if((n.includes('right')||n.startsWith('r'))&&/(upleg|thigh|upperleg)/.test(n))kind='rightLeg';
+   else if((n.includes('left')||n.startsWith('l'))&&/(lowerleg|calf|leglower)/.test(n))kind='leftKnee';
+   else if((n.includes('right')||n.startsWith('r'))&&/(lowerleg|calf|leglower)/.test(n))kind='rightKnee';
    else if((n.includes('left')||n.startsWith('l'))&&/(upperarm|arm$|shoulder)/.test(n))kind='leftArm';
    else if((n.includes('right')||n.startsWith('r'))&&/(upperarm|arm$|shoulder)/.test(n))kind='rightArm';
    else if((n.includes('left')||n.startsWith('l'))&&/(forearm|lowerarm)/.test(n))kind='leftForearm';
@@ -345,8 +347,13 @@ function installRiggedPlayer(gltf){
    else if(/spine1|spine2|chest/.test(n))kind='spine';
    if(kind)bodyBones.push({bone,kind,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0)});
  }
+ const bodyKinds=new Set(bodyBones.map(item=>item.kind));
+ if(!['leftLeg','rightLeg','leftArm','rightArm'].every(kind=>bodyKinds.has(kind)))throw new Error('Rig validation: missing mapped left/right leg or arm bones; keeping animated fallback');
  const clips=gltf.animations||[];
- const mixer=clips.length?new THREE.AnimationMixer(model):null;
+ const clipNames=clips.map(c=>String(c.name||'').toLowerCase());
+ const hasNamedLocomotion=clipNames.some(n=>/idle|stand|breath|rest/.test(n))&&clipNames.some(n=>/walk|walking|locomotion|jog/.test(n))&&clipNames.some(n=>/run|running|sprint/.test(n));
+ // If an asset ships without a compatible named locomotion set, animate its validated humanoid bones procedurally.
+ const mixer=hasNamedLocomotion?new THREE.AnimationMixer(model):null;
  const actions={idle:null,walk:null,run:null,jump:null};
  if(mixer){
    for(const clip of clips){
@@ -373,7 +380,7 @@ function installRiggedPlayer(gltf){
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');
 }
-async function loadRiggedPlayer(){try{const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}catch(err){playerAssetStatus='Rig loader unavailable · using procedural fallback';console.warn('REALCITY rig loader import failed; keeping fallback.',err)}}
+async function loadRiggedPlayer(){try{const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/main/public/assets/vendor/quaternius/night-striker.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}catch(err){playerAssetStatus='Rig loader unavailable · using procedural fallback';console.warn('REALCITY rig loader import failed; keeping fallback.',err)}}
 
 loadRiggedPlayer();
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}

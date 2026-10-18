@@ -222,12 +222,29 @@ function person(color){
 }
 for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);const spawn=pickPedestrianWaypoint(i<14?{x:0,z:23}:null,i<14?65:180,p)??{x:4.72,z:24.72};p.position.set(spawn.x,0,spawn.z);p.userData.dir=Math.atan2(Math.sin(i*2.399),Math.cos(i*2.399));const goal=nextPedestrianWaypoint(p,spawn.x,spawn.z)??spawn;p.userData.goalX=goal.x;p.userData.goalZ=goal.z;p.userData.pause=.25+rand()*.5;p.userData.speed=.78+rand()*.48;scene.add(p);pedestrians.push(p)}
 loadfill.style.width='65%';loadnote.textContent='Preparing player and vehicles…';
+// Shared tapered, softly beveled sedan shell: silhouette and highlights read better than a sharp rectangular box.
+const sedanShape=new THREE.Shape();
+sedanShape.moveTo(-.72,-1.88);
+sedanShape.lineTo(.72,-1.88);
+sedanShape.quadraticCurveTo(.88,-1.86,.91,-1.62);
+sedanShape.lineTo(.95,1.08);
+sedanShape.quadraticCurveTo(.91,1.68,.70,1.90);
+sedanShape.lineTo(-.70,1.90);
+sedanShape.quadraticCurveTo(-.91,1.68,-.95,1.08);
+sedanShape.lineTo(-.91,-1.62);
+sedanShape.quadraticCurveTo(-.88,-1.86,-.72,-1.88);
+const sedanBodyGeometry=new THREE.ExtrudeGeometry(sedanShape,{depth:.55,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.045,bevelThickness:.045});
+sedanBodyGeometry.rotateX(Math.PI/2);sedanBodyGeometry.translate(0,.55,0);
 function car(color,x,z,rot=0){
  const g=new THREE.Group(),bodyMat=new THREE.MeshPhysicalMaterial({color,roughness:.25,metalness:.34,clearcoat:.62,clearcoatRoughness:.24}),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78),rubberTrim=mat(0x303638,.78,.05);
- const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,.58,3.75),bodyMat);body.position.y=.72;body.castShadow=true;g.add(body);
+ const body=new THREE.Mesh(sedanBodyGeometry,bodyMat);body.position.y=.42;body.castShadow=true;body.receiveShadow=true;g.add(body);
  const hood=new THREE.Mesh(new THREE.BoxGeometry(1.72,.20,1.05),bodyMat);hood.position.set(0,1.02,1.12);hood.castShadow=true;g.add(hood);
  const trunk=new THREE.Mesh(new THREE.BoxGeometry(1.68,.18,.78),bodyMat);trunk.position.set(0,.99,-1.35);g.add(trunk);
  const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.43,.62,1.82),glass);cabin.position.set(0,1.28,-.22);cabin.castShadow=true;g.add(cabin);
+ // Separate angled windshields and slim pillars give the cabin a more automotive profile.
+ const windshield=new THREE.Mesh(new THREE.BoxGeometry(1.28,.36,.035),glass);windshield.position.set(0,1.36,.66);windshield.rotation.x=.42;g.add(windshield);
+ const rearGlass=new THREE.Mesh(new THREE.BoxGeometry(1.25,.32,.035),glass);rearGlass.position.set(0,1.34,-1.08);rearGlass.rotation.x=-.40;g.add(rearGlass);
+ for(const side of [-1,1])for(const zz of [-.96,-.42,.34,.62]){const pillar=new THREE.Mesh(new THREE.BoxGeometry(.045,.57,.055),trim);pillar.position.set(side*.72,1.29,zz);g.add(pillar)}
  const roof=new THREE.Mesh(new THREE.BoxGeometry(1.27,.10,1.12),bodyMat);roof.position.set(0,1.61,-.26);g.add(roof);
  const dash=new THREE.Mesh(new THREE.BoxGeometry(1.27,.17,.36),trim);dash.position.set(0,1.02,.55);g.add(dash);
  const consoleBox=new THREE.Mesh(new THREE.BoxGeometry(.28,.25,.48),trim);consoleBox.position.set(0,.91,-.08);g.add(consoleBox);
@@ -237,7 +254,11 @@ function car(color,x,z,rot=0){
  for(const side of [-1,1]){const mirror=new THREE.Mesh(new THREE.BoxGeometry(.15,.12,.23),trim);mirror.position.set(side*.83,1.17,.47);g.add(mirror);
   const headlamp=new THREE.Mesh(new THREE.BoxGeometry(.36,.13,.06),mat(0xffedbd,.22,.05));headlamp.material.emissive.setHex(0xffd38a);headlamp.material.emissiveIntensity=.05;headlamp.position.set(side*.56,.78,1.90);g.add(headlamp);carLamps.push({mesh:headlamp,kind:'head'});
   const tail=new THREE.Mesh(new THREE.BoxGeometry(.30,.13,.06),mat(0xc52f32,.28));tail.material.emissive.setHex(0xff1c14);tail.material.emissiveIntensity=.15;tail.position.set(side*.57,.77,-1.91);g.add(tail);carLamps.push({mesh:tail,kind:'tail'});
-  const wheels=[];for(const zz of [-1.22,1.22]){const wg=new THREE.Group();wg.position.set(side*.96,.36,zz);const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.22,14),tire);wheel.rotation.z=Math.PI/2;wheel.castShadow=true;wg.add(wheel);const hub=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.235,10),rim);hub.rotation.z=Math.PI/2;wg.add(hub);g.add(wg);wheels.push(wg)}
+  const wheels=[];for(const zz of [-1.22,1.22]){const wg=new THREE.Group();wg.position.set(side*.96,.36,zz);const wheel=new THREE.Mesh(new THREE.CylinderGeometry(.32,.32,.22,18),tire);wheel.rotation.z=Math.PI/2;wheel.castShadow=true;wg.add(wheel);
+  const hub=new THREE.Mesh(new THREE.CylinderGeometry(.15,.15,.235,12),rim);hub.rotation.z=Math.PI/2;wg.add(hub);
+  const cap=new THREE.Mesh(new THREE.CylinderGeometry(.065,.065,.24,12),trim);cap.rotation.z=Math.PI/2;wg.add(cap);
+  for(let spokeIndex=0;spokeIndex<5;spokeIndex++){const spokeRoot=new THREE.Group();spokeRoot.rotation.x=spokeIndex*Math.PI*2/5;const spoke=new THREE.Mesh(new THREE.BoxGeometry(.035,.19,.045),rim);spoke.position.y=.095;spoke.castShadow=true;spokeRoot.add(spoke);wg.add(spokeRoot)}
+  g.add(wg);wheels.push(wg)}
   if(!g.userData.wheels)g.userData.wheels=[];g.userData.wheels.push(...wheels);
  }
  // Body-side seams, handles, lower rocker trim and wheel-arch lips add silhouette detail without changing physics.

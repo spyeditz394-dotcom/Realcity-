@@ -317,9 +317,9 @@ function animateRiggedPlayer(gait,moving,time,dt){
 }
 function installRiggedPlayer(gltf){
  const model=gltf.scene;model.updateMatrixWorld(true);
- // Only replace the already-visible, animated fallback with a complete skinned character.
- // A mesh with a few bones or one generic animation can pass a naive "rigged" check but still
- // render as a mannequin and remain static during walking. Reject incomplete/unverified assets.
+ // The previous upstream asset was a matte, untextured base mesh with no locomotion clips.
+ // Prefer a documented CC0 textured Quaternius character; reject anything that cannot deform
+ // as a skinned human or whose left/right limb bones cannot be mapped for procedural locomotion.
  let hasTextureOrVertexColor=false,materialCount=0,hasSkinnedMesh=false;
  model.traverse(o=>{if(o.isSkinnedMesh)hasSkinnedMesh=true;if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const material of materials){if(!material)continue;materialCount++;if(material.map||material.normalMap||material.roughnessMap||material.metalnessMap||material.emissiveMap)hasTextureOrVertexColor=true}if(o.geometry?.getAttribute('color'))hasTextureOrVertexColor=true});
  if(!hasSkinnedMesh)throw new Error('Visual quality gate: asset has no skinned mesh; keeping animated fallback');

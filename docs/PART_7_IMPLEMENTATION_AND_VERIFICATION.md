@@ -32,7 +32,7 @@ Source contains a procedural city, grid-based road and sidewalk geometry, distri
 | New documentation deployment | PENDING at last status check | Documentation commit `eaa4fab...` had a Vercel deployment in BUILDING state at the time of inspection. |
 | Browser console / network errors | NOT TESTED | No interactive browser DevTools session available. |
 | Rendered player appearance and skin deformation | NOT TESTED | The code validates bounds, bone count and finger-bone naming, but the actual mesh, skin weights, bone axes and visible deformation have not been visually inspected in a running browser. |
-| External GLB licensing/provenance | BLOCKED | The URL is external and no definitive license/author record was verified in the inspected source/docs. Do not treat a commit message or URL alone as a license. |
+| External GLB licensing/provenance | PARTIALLY VERIFIED | Upstream `ASSETS.md` identifies the model as Quaternius Universal Base Characters — Standard under CC0 1.0 and records the source pack/checksum: https://github.com/programasweights/avatar/blob/main/ASSETS.md. REALCITY still loads it remotely rather than versioning it locally. |
 | Animation transitions | NOT TESTED | Source has name-based idle/walk/run/jump action buckets and mixer update; no rendered locomotion capture was collected. |
 | Pedestrian sidewalk traversal | NOT TESTED | Waypoint coordinates were corrected in source, but path segments, corners, obstacles, spacing and sustained movement must be observed in-game. |
 | Driving / traffic / collisions / service | NOT TESTED | No interactive regression session was performed. |
@@ -44,7 +44,7 @@ Source contains a procedural city, grid-based road and sidewalk geometry, distri
 ## Known limitations and next gates
 
 1. The procedural person is a fallback made from separate meshes. It is not equivalent to a fully skinned, production-quality human character.
-2. The remote GLB must be approved for license, provenance, file size, skinning, clip compatibility and reliable delivery. Prefer a reviewed local asset when redistribution is permitted.
+2. The upstream GLB's CC0 provenance is documented in its `ASSETS.md`; remaining work is to pin the exact asset/revision or vendor a local copy when the binary asset workflow is available, then verify file size, skinning, clip compatibility and reliable delivery.
 3. The pedestrian waypoint implementation remains a small grid-based selector, not a complete pedestrian navigation/crowd system. The offset correction must be tested in a running scene.
 4. The city remains procedural and box-heavy. District differentiation is currently mainly palette, height range and frontage variation. Build a few coherent authored architectural kits and landmarks only after baseline captures.
 5. The one interior is a single reusable room placed at remote world coordinates and toggled visible/invisible. Test entry/exit, collision, camera, save/reload and recovery before adding more.

@@ -1,4 +1,4 @@
-# REALCITY — Part 13 city depth & character performance
+# REALCITY — Part 15 character locomotion repair
 
 This branch continues the existing REALCITY Vite/Three.js game. Part 13 builds on the earlier stability and facade-material passes with a batched distant skyline, instanced rooftop utility details, and shared procedural character geometry. The playable city boundary and collision layout are unchanged. Part 11 also adds a procedural day/night sky gradient, quality-tier exposure and fog, and directional shadows that follow the active player or vehicle.
 
@@ -42,3 +42,13 @@ The Vercel preview build is the first validation gate. Actual gameplay controls,
 - Reused existing architecture instancing and materials, keeping these added facade elements in a small number of draw-call batches.
 - Preserved the existing detailed procedural player fallback and current rig qualification checks. This pass prioritizes measurable environment depth without swapping in an unverified external character.
 - Build, in-game WebGL appearance, and Android performance must be verified on the new preview before this is considered complete.
+
+
+## Part 15 — character locomotion repair
+
+- Added separate knee pivots and elbow pivots to the procedural human fallback, so walk cycles bend the legs and swing the forearms instead of rotating long rigid limb groups.
+- Updated protagonist and pedestrian animation to drive knee flexion and elbow swing from the current gait.
+- Fixed run selection: the previous rigged-player controller inferred run versus walk from a sinusoidal gait value, which could switch animation clips repeatedly during a single stride. It now selects run from the sprint input/stamina state.
+- Tightened the optional external character asset gate: only a skinned, textured/vertex-colored model with separate named idle, walk, and run clips can replace the animated fallback. An incomplete rig should no longer silently replace the playable character with a static mannequin.
+- This is a stability and animation repair, not yet an imported AAA character pack. Production-quality character/vehicle assets still need to be sourced, license-checked, optimized, and visually tested.
+- The remote preview/build must pass after deployment; actual browser animation and Android visual verification remain required.

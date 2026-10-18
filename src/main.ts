@@ -83,11 +83,11 @@ interiorBox(2.2,1.8,.16,mat(0x374d55),roomX,1.15,roomZ-4.72);interiorBox(1.4,1.1
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
  // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.
- const g=new THREE.Group(),shirt=mat(color,.78),pants=mat(0x263440,.88),skin=mat(0xd6a77f,.88),shoe=mat(0x20262a,.76),hairMat=mat(0x30251f,.94),seamMat=mat(0x202b30,.9);
+ const g=new THREE.Group(),shirt=mat(color,.78),pants=mat([0x263440,0x39434a,0x51483e,0x303d35,0x4a3b4a][Math.floor(rand()*5)],.88),skin=mat([0xf0c8a4,0xd6a77f,0xb9825e,0x8d6049,0xe0b08b,0x9d6d50][Math.floor(rand()*6)],.88),shoe=mat([0x20262a,0x3a3029,0x171d21,0x4b4740][Math.floor(rand()*4)],.76),hairMat=mat([0x30251f,0x17191b,0x5c3d2a,0x74604a,0x272d34][Math.floor(rand()*5)],.94),seamMat=mat(0x202b30,.9),bodyScale=0.94+rand()*.12,legScale=.94+rand()*.12,shoulderScale=.92+rand()*.16;
  const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
  // Torso layers give a clearer shoulder/chest-to-waist silhouette than a single capsule.
- const torso=addMesh(g,new THREE.CapsuleGeometry(.255,.48,5,12),shirt,0,1.13,0,1.02,1,.88);
- addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,1.34,0,.32,.19,.205);
+ const torso=addMesh(g,new THREE.CapsuleGeometry(.255,.48,5,12),shirt,0,1.13,0,1.02*shoulderScale,1,.88);
+ addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,1.34,0,.32*shoulderScale,.19,.205);
  addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,.99,.006,.245,.19,.19);
  const collar=addMesh(g,new THREE.CylinderGeometry(.105,.12,.07,12),seamMat,0,1.445,0);
  const neck=addMesh(g,new THREE.CylinderGeometry(.085,.105,.18,12),skin,0,1.51,.012);
@@ -148,7 +148,7 @@ function person(color){
  addMesh(g,new THREE.BoxGeometry(.27,.37,.12),mat(0x384b49,.92),0,1.13,-.235);
  addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),-.11,1.04,.205);
  addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),.11,1.04,.205);
- g.userData={legs,arms,hands,torso,phase:rand()*7,speed:.28+rand()*.3,dir:rand()*Math.PI*2};
+ g.scale.set(bodyScale,legScale,bodyScale);g.userData={legs,arms,hands,torso,phase:rand()*7,speed:.78+rand()*.48,dir:rand()*Math.PI*2};
  return g
 }
 for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);const spawn=pickPedestrianWaypoint(null,180,p)??{x:4.72,z:24.72};p.position.set(spawn.x,0,spawn.z);p.userData.dir=Math.atan2(Math.sin(i*2.399),Math.cos(i*2.399));const goal=nextPedestrianWaypoint(p,spawn.x,spawn.z)??spawn;p.userData.goalX=goal.x;p.userData.goalZ=goal.z;p.userData.pause=.25+rand()*.5;p.userData.speed=.78+rand()*.48;scene.add(p);pedestrians.push(p)}

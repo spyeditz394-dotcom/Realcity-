@@ -361,12 +361,13 @@ function installRiggedPlayer(gltf){
  for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
    if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
    else if((n.includes('right')||n.startsWith('r'))&&/(upleg|thigh|upperleg)/.test(n))kind='rightLeg';
-   else if((n.includes('left')||n.startsWith('l'))&&/(lowerleg|calf|leglower)/.test(n))kind='leftKnee';
-   else if((n.includes('right')||n.startsWith('r'))&&/(lowerleg|calf|leglower)/.test(n))kind='rightKnee';
-   else if((n.includes('left')||n.startsWith('l'))&&/(upperarm|arm$|shoulder)/.test(n))kind='leftArm';
-   else if((n.includes('right')||n.startsWith('r'))&&/(upperarm|arm$|shoulder)/.test(n))kind='rightArm';
+   else if((n.includes('left')||n.startsWith('l'))&&/(lowerleg|calf|leglower|leftleg$)/.test(n))kind='leftKnee';
+   else if((n.includes('right')||n.startsWith('r'))&&/(lowerleg|calf|leglower|rightleg$)/.test(n))kind='rightKnee';
+   // Match forearms before the broad arm suffix: names like mixamorigLeftForeArm also end in "arm".
    else if((n.includes('left')||n.startsWith('l'))&&/(forearm|lowerarm)/.test(n))kind='leftForearm';
    else if((n.includes('right')||n.startsWith('r'))&&/(forearm|lowerarm)/.test(n))kind='rightForearm';
+   else if((n.includes('left')||n.startsWith('l'))&&/(upperarm|arm$|shoulder)/.test(n))kind='leftArm';
+   else if((n.includes('right')||n.startsWith('r'))&&/(upperarm|arm$|shoulder)/.test(n))kind='rightArm';
    else if(/spine1|spine2|chest/.test(n))kind='spine';
    if(kind)bodyBones.push({bone,kind,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0)});
  }

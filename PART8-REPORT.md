@@ -27,15 +27,15 @@ The supplied historical Part 7 SHA (`a9ce225fb4a9e83a72c05c7fc122b441861ab3ce`) 
 
 - GitHub branch creation: PASS.
 - Source edit committed on the feature branch: PASS.
-- Build: NOT TESTED in the repository runtime at the moment this report was written.
-- Browser gameplay: NOT TESTED.
+- Build: PASS — Vercel ran `npm run build` / `vite build` successfully for the feature branch. Dependency-install warnings were non-fatal.
+- Preview HTTP and bundle check: PASS — preview HTML returned HTTP 200; the emitted JavaScript bundle returned HTTP 200 and contains the new `braking`/`stopped` traffic states and `avoiding`/`walking` pedestrian state strings.\n- Browser gameplay: NOT TESTED; fetching HTML/JS does not execute WebGL or verify visual behavior.
 - Visual inspection/screenshot: NOT TESTED.
 - Pedestrian route correctness and long-duration stall recovery: NOT TESTED.
 - Traffic lane/intersection behavior: NOT TESTED; existing traffic still follows straight grid lanes and wraps at the map boundary. Full turn routing and signal priority remain future work.
 - Vehicle control/service regression: NOT TESTED.
 - ULTRA performance and phone performance: NOT TESTED.
 - OPPO A5 Pro physical test: NOT TESTED.
-- Production deployment: unchanged; only a preview deployment may be created for this branch.
+- Preview deployment: READY at https://realcity-5ciw5xzbi-spyeditz394-4635s-projects.vercel.app/ (deployment `dpl_6CpGqPNkE62f6krZsuyfANpdVpeT`, source commit at deploy time `9dd9a72fdbc18ef6a85bb7eee5748e9485c5ed62`). Production deployment was not changed.
 - ANICORE: not accessed or modified.
 
 ## Remaining work / next gates

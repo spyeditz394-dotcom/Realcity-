@@ -23,9 +23,9 @@ addEventListener('unhandledrejection',e=>reportStartupFailure(e.reason?.message|
 setTimeout(()=>{if(load?.isConnected&&getComputedStyle(load).opacity!=='0')reportStartupFailure('Startup timed out after 20 seconds');},20000);
 await RAPIER.init();
 const physicsWorld = new RAPIER.World({x:0,y:-9.81,z:0});
-let quality=2,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=6?Math.max(0,Math.min(3,saved.quality)):3;const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4d1);scene.fog=new THREE.FogExp2(0xa3c3ca,.00165);
+let quality=2,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=6?Math.max(0,Math.min(3,saved.quality)):3;const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4d1);scene.background=new THREE.Color(0x9fb9c3);scene.fog=new THREE.FogExp2(0x9fb9c3,.00125);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,420);
-const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,[1.0,Math.min(devicePixelRatio,1.25),Math.min(devicePixelRatio,1.5),Math.min(devicePixelRatio,2.0)][quality]));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=quality>=1;renderer.shadowMap.type=THREE.PCFSoftShadowMap;root.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,[1.0,Math.min(devicePixelRatio,1.25),Math.min(devicePixelRatio,1.5),Math.min(devicePixelRatio,2.0)][quality]));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.08;renderer.shadowMap.enabled=quality>=1;renderer.shadowMap.type=THREE.PCFSoftShadowMap;sun.shadow.mapSize.set(quality>=2?1536:1024,quality>=2?1536:1024);root.appendChild(renderer.domElement);
 const hemi=new THREE.HemisphereLight(0xdff6ff,0x5c6554,2.0);scene.add(hemi);const sun=new THREE.DirectionalLight(0xffedce,3.0);sun.position.set(-48,85,34);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0005;scene.add(sun);
 const mat=(c,r=.85,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 // Small procedural detail maps are generated locally: no external downloads and safe fallbacks.
@@ -51,13 +51,17 @@ for(let k=-6;k<=6;k++){let p=k*20,roadMat=(k%2===0?asphalt:asphaltAlt);box(9,.12
 for(let t=-155;t<155;t+=8){queueRoadMark(p,.02,t,0);queueRoadMark(t,.02,p,Math.PI/2)}}
 const roadMarks=new THREE.InstancedMesh(roadMarkGeometry,roadMarkMaterial,roadMarkMatrices.length);for(let i=0;i<roadMarkMatrices.length;i++)roadMarks.setMatrixAt(i,roadMarkMatrices[i]);roadMarks.instanceMatrix.needsUpdate=true;roadMarks.userData.cityStatic=true;roadMarks.userData.alwaysVisible=true;scene.add(roadMarks);cityStaticMeshes.push(roadMarks);
 loadfill.style.width='25%';loadnote.textContent='Creating city blocks and buildings…';
-const districtPalettes={Downtown:[0x6d7d87,0x8999a1,0x64717d,0xadb8bd],Market:[0xb78b63,0xc2a17b,0x8f9d91,0xc7b99b],Residential:[0xb3afa2,0xc7c1b3,0x9eaa9d,0xb2b9b5],Civic:[0x9eafad,0xd0cbbd,0x879a9a,0xbac6c2],Industrial:[0x707a7c,0x8b887d,0x9a826c,0x656e70]};
+const districtPalettes={Downtown:[0x596b78,0x7e929e,0x52616e,0xb0bec5],Market:[0xb58a66,0xc9a982,0x87988c,0xd2c1a3],Residential:[0xb9b4a7,0xd0c9ba,0x9da99f,0xb9c3c0],Civic:[0x9aafb0,0xd8d3c5,0x819698,0xc2cecb],Industrial:[0x687679,0x8b8b80,0xa18b74,0x5d696c]};
 function districtFor(gx,gz){if(Math.abs(gx)<=1&&Math.abs(gz)<=1)return 'Downtown';if(gx>=2)return 'Market';if(gx<=-2)return 'Residential';if(gz<=-3)return 'Civic';return 'Industrial'}
 for(let gx=-6;gx<6;gx++)for(let gz=-6;gz<6;gz++){const cx=gx*20+10,cz=gz*20+10;
 if(rand()<.14){box(10,.18,10,grass,cx,.03,cz);for(let t=0;t<4;t++){let x=cx+(rand()-.5)*7,z=cz+(rand()-.5)*7;box(.32,1.25,.32,trunkMat,x,.7,z,true);let crown=new THREE.Mesh(new THREE.IcosahedronGeometry(.95+rand()*.5,1),leafMats[Math.floor(rand()*leafMats.length)]);crown.position.set(x,1.9,z);crown.castShadow=true;crown.userData.cityStatic=true;scene.add(crown);cityStaticMeshes.push(crown)}continue}
 const district=districtFor(gx,gz),w=5.5+rand()*3.2,d=5.5+rand()*3.2,h=district==='Downtown'?20+rand()*27:district==='Industrial'?6+rand()*10:district==='Residential'?5+rand()*10:district==='Market'?9+rand()*15:11+rand()*18,x=cx+(rand()-.5)*2.6,z=cz+(rand()-.5)*2.6;
-const palette=districtPalettes[district],wall=mat(palette[Math.floor(rand()*palette.length)],.9);if(facadeDetail)wall.map=facadeDetail;const b=box(w,h,d,wall,x,h/2,z,true);b.receiveShadow=true;cameraBlockers.push(b);buildings.push({x,z,w,d,h});addSolid(x,z,w,d,h);
+const palette=districtPalettes[district],wall=mat(palette[Math.floor(rand()*palette.length)],.82,.025);if(facadeDetail)wall.map=facadeDetail;const b=box(w,h,d,wall,x,h/2,z,true);b.receiveShadow=true;cameraBlockers.push(b);buildings.push({x,z,w,d,h});addSolid(x,z,w,d,h);
 box(w+.15,.22,d+.15,mat(0x40494a,.86),x,h+.08,z,true);
+// Roof parapets, service housings and facade shadow lines give buildings a layered silhouette.
+for(const side of [-1,1]){box(.16,.62,d+.12,mat(0x4b565a,.86),x+side*(w/2-.08),h+.36,z,true);box(w+.12,.62,.16,mat(0x4b565a,.86),x,h+.36,z+side*(d/2-.08),true)}
+if(h>10){const roofMat=mat(district==='Industrial'?0x505b5d:0x697579,.82,.12);box(w*.24,.55,d*.22,roofMat,x-w*.2,h+.48,z-d*.15,true);box(w*.12,.32,d*.16,roofMat,x+w*.2,h+.36,z+d*.16,true)}
+
 if(h>13&&rand()<.62){const unitMat=mat(0x697477,.82,.18);box(w*.22,.72,d*.24,unitMat,x-w*.18,h+.48,z-d*.12,true);box(w*.12,.42,d*.15,unitMat,x+w*.22,h+.33,z+d*.16,true)}
 const floors=Math.max(2,Math.floor((h-1.8)/2.6));
 for(let f=0;f<floors;f++){let yy=2+f*2.55;for(let xx=-w/2+.8;xx<w/2-.25;xx+=1.35){queueWindow(Math.floor(rand()*windowMats.length),x+xx,yy,z+d/2+.035,0)}
@@ -65,8 +69,8 @@ for(let zz=-d/2+.8;zz<d/2-.25;zz+=1.35){for(let side of [-1,1])queueWindow(Math.
 // Continuous floor bands, corner pilasters and occasional balconies break up the plain box-building silhouette.
 for(let f=0;f<=floors;f++){const yy=1.12+f*2.55;if(yy<h-.15)queueArchitecture(0,x,yy,z+d/2+.07,w,.095,.13);}
 for(const side of [-1,1])queueArchitecture(1,x+side*(w/2-.09),h/2,z+d/2+.065,.13,h,.15);
-if(rand()<.48)queueArchitecture(2,x,2.05,z+d/2+.34,w*.62,.12,.62);
-if(h>16&&rand()<.48){const by=4.5+rand()*Math.max(1,h-8);queueArchitecture(1,x,by,z+d/2+.15,w*.48,.08,.48);queueArchitecture(0,x,by+.36,z+d/2+.37,w*.48,.07,.07);for(const side of [-1,1])queueArchitecture(0,x+side*w*.24,by+.18,z+d/2+.37,.07,.36,.07)}
+if(rand()<.78)queueArchitecture(2,x,2.05,z+d/2+.34,w*.62,.12,.62);
+if(h>16&&rand()<.72){const by=4.5+rand()*Math.max(1,h-8);queueArchitecture(1,x,by,z+d/2+.15,w*.48,.08,.48);queueArchitecture(0,x,by+.36,z+d/2+.37,w*.48,.07,.07);for(const side of [-1,1])queueArchitecture(0,x+side*w*.24,by+.18,z+d/2+.37,.07,.36,.07)}
 if(rand()<.78){box(w*.68,1.4,.1,mat(0x334e51),x,1.1,z+d/2+.08);box(w*.42,.09,.12,mat(0x6dd8c5),x,1.82,z+d/2+.14);for(let q=-1;q<=1;q++)box(.05,.72,.14,mat(0xb5b7ae),x+q*w*.16,1.1,z+d/2+.16)}
 if(((gx+6)*12+(gz+6))%4===0){const doorPanel=box(1.02,1.9,.075,mat(0x273d42),x,1.02,z+d/2+.23,true);box(.11,2.08,.12,mat(0x87999a),x-.57,1.04,z+d/2+.22,true);box(.11,2.08,.12,mat(0x87999a),x+.57,1.04,z+d/2+.22,true);box(1.25,.12,.12,mat(0x70d9c4),x,2.12,z+d/2+.22,true);doors.push({x,z:z+d/2+1.12,outsideX:x,outsideZ:z+d/2+1.12,district,mesh:doorPanel})}
 }

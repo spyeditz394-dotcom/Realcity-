@@ -90,7 +90,7 @@ function person(color){
 for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);p.position.set((rand()-.5)*205,0,(rand()-.5)*205);p.userData.goalX=(rand()-.5)*220;p.userData.goalZ=(rand()-.5)*220;p.userData.pause=rand()*2;scene.add(p);pedestrians.push(p)}
 loadfill.style.width='65%';loadnote.textContent='Preparing player and vehicles…';
 function car(color,x,z,rot=0){
- const g=new THREE.Group(),bodyMat=mat(color,.34,.28),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.92),rim=mat(0x9ca8ab,.28,.72);
+ const g=new THREE.Group(),bodyMat=mat(color,.27,.42),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78);
  const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,.58,3.75),bodyMat);body.position.y=.72;body.castShadow=true;g.add(body);
  const hood=new THREE.Mesh(new THREE.BoxGeometry(1.72,.20,1.05),bodyMat);hood.position.set(0,1.02,1.12);hood.castShadow=true;g.add(hood);
  const trunk=new THREE.Mesh(new THREE.BoxGeometry(1.68,.18,.78),bodyMat);trunk.position.set(0,.99,-1.35);g.add(trunk);

@@ -24,8 +24,9 @@ This is an incremental change to the existing Vite/Three.js/Rapier project. It d
 | Branch checkpoint | PASS | Dedicated branch created from the verified Part 6 branch head. |
 | Source changes | PASS | GitHub commits exist on `part-7-open-world-systems`. |
 | Waypoint design | IMPLEMENTED / NOT RUNTIME-TESTED | Code uses safe candidate nodes and local rerouting; visual navigation must still be observed in a running WebGL session. |
-| TypeScript / Vite production build | PASS | Vercel build log for the latest source commit reports `✓ built in 3.45s` and `Build Completed`; this is a production build check, not a runtime test. |
-| Preview HTTP / version marker | PASS | Vercel preview returned HTTP 200 and the HTML title `REALCITY — Part 7 Living City Systems` for commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c`. |\n| Browser runtime / console / WebGL | NOT TESTED | The page response was fetched, but no interactive browser session, rendered-scene inspection, console inspection, or gameplay recording was available. |
+| TypeScript / Vite production build | PASS | Vercel build log for source commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c` reports `✓ built in 3.45s` and `Build Completed`; this is a production build check, not a runtime test. |
+| Preview HTTP / version marker | PASS | Vercel preview returned HTTP 200 and the HTML title `REALCITY — Part 7 Living City Systems` for source commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c`; the latest report-only commit is `f497fcb65d219b0de3f87813e10710afcb5517de`. |
+| Browser runtime / console / WebGL | NOT TESTED | The page response was fetched, but no interactive browser session, rendered-scene inspection, console inspection, or gameplay recording was available. |
 | Character mesh, skeleton, skin weights, fingers | NOT TESTED | The external GLB remains unverified; the procedural fallback is not equivalent to a high-quality skinned human. |
 | Traffic / driving / collisions | NOT TESTED | No behavior regression run was performed. |
 | Save/load / touch controls | NOT TESTED | No interactive regression pass was performed. |

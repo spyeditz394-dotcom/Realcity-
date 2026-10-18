@@ -1,6 +1,6 @@
-# REALCITY — Part 12 architecture & material realism
+# REALCITY — Part 13 city depth & character performance
 
-This branch continues the existing REALCITY Vite/Three.js game. Part 12 builds on the Part 11 stability foundation with procedural facade panel seams, subtle plaster grain and weathering, and low-amplitude bump relief for building surfaces. Part 11 also adds a procedural day/night sky gradient, quality-tier exposure and fog, and directional shadows that follow the active player or vehicle.
+This branch continues the existing REALCITY Vite/Three.js game. Part 13 builds on the earlier stability and facade-material passes with a batched distant skyline, instanced rooftop utility details, and shared procedural character geometry. The playable city boundary and collision layout are unchanged. Part 11 also adds a procedural day/night sky gradient, quality-tier exposure and fog, and directional shadows that follow the active player or vehicle.
 
 ## Run
 
@@ -24,3 +24,12 @@ npm run dev
 - The original recovery reference remains available at https://open-world-city-prototype.vercel.app/.
 
 The Vercel preview build is the first validation gate. Actual gameplay controls, visual quality, collision edge cases, and performance on a physical Android device still require hands-on testing.
+
+
+## Part 13 — city depth & character performance
+
+- Expanded the ground plane and added a distant, fog-softened skyline ring outside the playable boundary. Skyline towers are instanced in three material batches and do not participate in collisions.
+- Added instanced rooftop HVAC housings and occasional antenna silhouettes using existing architectural batches.
+- Cached repeated procedural human geometry across the player fallback and pedestrian crowd to avoid creating near-identical geometry resources for every character.
+- Kept cached character geometry alive when the optional rigged model replaces the fallback, because pedestrians still reference the shared geometry.
+- This is a procedural visual/performance pass; real-device appearance, FPS, memory, and gameplay still require browser QA.

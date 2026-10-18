@@ -59,12 +59,12 @@ The source repository's `ASSETS.md` identifies this asset as Quaternius **Superh
 | Natural idle/walk/run transitions | NOT TESTED | A clip-driven state machine and compatible locomotion assets are not yet integrated. |
 | NPC variety and navigation | PARTIAL | Existing source has 22 procedural fallback people and basic wandering; this is not a verified realistic NPC pipeline. |
 | City/vehicle visual overhaul | NOT TESTED | No visual changes to these systems in this initial branch. |
-| Build | NOT TESTED | No local Node/npm runtime was available through the GitHub file connector; a deployment/build check is still required. |
+| Build | PASS | Vercel preview build ran `npm run build` / `vite build` and completed successfully; dependency-install warnings were non-fatal. |
 | Actual browser runtime | NOT TESTED | No live browser session or screenshot capture was available in this step. |
 | OPPO A5 Pro ULTRA benchmark | NOT TESTED | Must be measured on the physical phone; no phone performance is inferred. |
-| Deployment | NOT TESTED | Branch changes are not represented as a production deployment. |
+| Preview deployment | PASS | Preview `https://realcity-bpxxpqzzu-spyeditz394-4635s-projects.vercel.app/` returned HTTP 200. Production was not changed. |
 
-## Next implementation gates
+## Preview build evidence\n\n- Vercel preview deployment ID: `dpl_F9zRf1MYKsqFLZuibjfJP18SFHSR`.\n- Built commit at time of check: `7f46ebbc2b8250dfa2c9623f7489dfd3a135a8fb` on `part6/audit-performance-hud`.\n- Build logs showed dependency installation followed by `npm run build` and Vite production bundling; Vercel deployment state reached `READY`.\n- Preview HTML returned HTTP 200. The emitted JavaScript bundle was fetched and checked for the new skinning/finger-validation diagnostics and corrected `MAIN` HUD label; the old `MAP≈1MB*` estimate was absent.\n- This verifies source build and served bundle contents only. It does not execute the WebGL game in a real browser or verify visual appearance, GLB loading, gameplay, FPS, or phone performance.\n\n## Next implementation gates
 
 1. Run a build and inspect preview logs for this branch.
 2. Capture a real runtime screenshot and verify the external GLB actually loads.

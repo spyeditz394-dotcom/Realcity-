@@ -200,6 +200,7 @@ function fingerPoseValue(pose){return ({relaxed:.08,open:0,curled:1.05,gripping:
 function setPlayerFingerPose(pose='relaxed',side='both',finger='all'){
  const rig=player.userData.rig;if(!rig)return false;const amount=fingerPoseValue(pose);let changed=0;
  for(const item of rig.fingerBones){if(side!=='both'&&item.side!==side)continue;if(finger!=='all'&&item.kind!==finger)continue;
+   item.pose=pose;
    const angle=amount*(item.segment===0?.62:item.segment===1?1:item.segment===2?.92:.45);
    item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,angle));changed++;
  }
@@ -229,8 +230,8 @@ function animateRiggedPlayer(gait,moving,time,dt){
  // This is a procedural pose overlay on the actual recognized rig bones, not a claim that
  // every third-party skeleton's local finger axis has been visually validated.
  for(const item of rig.fingerBones){
-   const base=fingerPoseValue('relaxed');
-   const wiggle=moving?Math.sin(time*5+item.index*.8+(item.side==='left'?1:0))*.018:0;
+   const base=fingerPoseValue(item.pose||'relaxed')*(item.segment===0?.62:item.segment===1?1:item.segment===2?.92:.45);
+   const wiggle=moving&&(!item.pose||item.pose==='relaxed')?Math.sin(time*5+item.index*.8+(item.side==='left'?1:0))*.018:0;
    item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,base+wiggle));
  }
 }
@@ -243,7 +244,7 @@ function installRiggedPlayer(gltf){
  const fingerBones=[];
  for(const bone of bones){const kind=getFingerKind(bone.name),side=getHandSide(bone.name);if(!kind||!side)continue;
    const match=bone.name.match(/(?:[._ -]?)([0-4])$/),segment=match?Number(match[1]):Math.min(3,fingerBones.filter(x=>x.side===side&&x.kind===kind).length);
-   fingerBones.push({bone,kind,side,segment,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0),index:fingerBones.length});
+   fingerBones.push({bone,kind,side,segment,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0),index:fingerBones.length,pose:'relaxed'});
  }
  if(bones.length<20||fingerBones.length<20){const names=bones.map(b=>b.name).filter(n=>/thumb|index|middle|ring|pinky|little/i.test(n));throw new Error('Rig validation: '+bones.length+' bones, '+fingerBones.length+' recognized finger joints; candidates: '+(names.slice(0,12).join(', ')||'none'))}
  const bodyBones=[];

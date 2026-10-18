@@ -195,7 +195,7 @@ const player=person(0x20b7a5);let spawnX=Number.isFinite(saved.spawnX)?Math.max(
 let playerAssetStatus='Loading rigged human…',playerAssetLoadMs=0,playerFingerBoneCount=0;
 const playerAssetStarted=performance.now();
 function getFingerKind(name){const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');if(n.includes('thumb'))return 'thumb';if(n.includes('index'))return 'index';if(n.includes('middle'))return 'middle';if(n.includes('ring'))return 'ring';if(n.includes('pinky')||n.includes('little'))return 'little';return null}
-function getHandSide(name){const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');if(n.includes('left')||n.startsWith('lhand')||n.startsWith('lthumb')||n.startsWith('lindex')||n.startsWith('lmiddle')||n.startsWith('lring')||n.startsWith('lpinky')||n.startsWith('llittle'))return 'left';if(n.includes('right')||n.startsWith('rhand')||n.startsWith('rthumb')||n.startsWith('rindex')||n.startsWith('rmiddle')||n.startsWith('rring')||n.startsWith('rpinky')||n.startsWith('rlittle'))return 'right';return null}
+function getHandSide(name){const raw=name.toLowerCase(),n=raw.replace(/[^a-z0-9]/g,'');if(n.includes('left')||n.startsWith('lhand')||n.startsWith('lthumb')||n.startsWith('lindex')||n.startsWith('lmiddle')||n.startsWith('lring')||n.startsWith('lpinky')||n.startsWith('llittle')||/(?:^|[._ -])l(?:$|[._ -])/.test(raw)||/(?:^|[._ -])left(?:$|[._ -])/.test(raw))return 'left';if(n.includes('right')||n.startsWith('rhand')||n.startsWith('rthumb')||n.startsWith('rindex')||n.startsWith('rmiddle')||n.startsWith('rring')||n.startsWith('rpinky')||n.startsWith('rlittle')||/(?:^|[._ -])r(?:$|[._ -])/.test(raw)||/(?:^|[._ -])right(?:$|[._ -])/.test(raw))return 'right';return null}
 function fingerPoseValue(pose){return ({relaxed:.08,open:0,curled:1.05,gripping:.82})[pose]??0}
 function setPlayerFingerPose(pose='relaxed',side='both',finger='all'){
  const rig=player.userData.rig;if(!rig)return false;const amount=fingerPoseValue(pose);let changed=0;
@@ -228,7 +228,7 @@ function installRiggedPlayer(gltf){
    const match=bone.name.match(/(?:[._ -]?)([0-4])$/),segment=match?Number(match[1]):Math.min(3,fingerBones.filter(x=>x.side===side&&x.kind===kind).length);
    fingerBones.push({bone,kind,side,segment,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0),index:fingerBones.length});
  }
- if(bones.length<20||fingerBones.length<20)throw new Error('Loaded humanoid does not expose enough named finger joints for safe hand control');
+ if(bones.length<20||fingerBones.length<20){const names=bones.map(b=>b.name).filter(n=>/thumb|index|middle|ring|pinky|little/i.test(n));throw new Error('Rig validation: '+bones.length+' bones, '+fingerBones.length+' recognized finger joints; candidates: '+(names.slice(0,12).join(', ')||'none'))}
  const bodyBones=[];
  for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
    if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
@@ -249,7 +249,7 @@ function installRiggedPlayer(gltf){
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');
 }
-function loadRiggedPlayer(){const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rigged asset rejected · procedural fallback active';console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rigged asset unavailable · procedural fallback active';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}
+function loadRiggedPlayer(){const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}
 
 loadRiggedPlayer();
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}

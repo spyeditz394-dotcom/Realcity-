@@ -1,4 +1,4 @@
-# REALCITY — Part 15 character locomotion repair
+# REALCITY — Part 16 vehicle silhouette & character locomotion
 
 This branch continues the existing REALCITY Vite/Three.js game. Part 13 builds on the earlier stability and facade-material passes with a batched distant skyline, instanced rooftop utility details, and shared procedural character geometry. The playable city boundary and collision layout are unchanged. Part 11 also adds a procedural day/night sky gradient, quality-tier exposure and fog, and directional shadows that follow the active player or vehicle.
 
@@ -52,3 +52,12 @@ The Vercel preview build is the first validation gate. Actual gameplay controls,
 - Tightened the optional external character asset gate: only a skinned, textured/vertex-colored model with separate named idle, walk, and run clips can replace the animated fallback. An incomplete rig should no longer silently replace the playable character with a static mannequin.
 - Replaced the old untextured matte-jade mannequin URL with a textured Quaternius Universal Base Characters model (CC0; asset provenance recorded in ASSET_CREDITS.md). It is loaded asynchronously so it does not block city initialization. This is a stylized game-ready base character, not a photoreal civilian hero; higher-quality civilian outfit variants and local asset bundling remain follow-up work.
 - The remote preview/build must pass after deployment; actual browser animation and Android visual verification remain required.
+
+
+## Part 16 — vehicle silhouette and material detail
+
+- Replaced the car's single sharp rectangular lower body with a shared tapered, softly beveled sedan shell to create a more believable silhouette and highlight roll-off.
+- Added separate angled front/rear windshield panels and slim cabin pillars.
+- Added five-spoke alloy wheel details and central caps while reusing the shared vehicle body geometry across traffic and parked cars.
+- Vehicle collision footprint, driving physics, traffic lanes, and vehicle spawn layout are unchanged.
+- The car models are still procedurally built rather than imported photoreal assets; actual in-game appearance, wheel rotation, glass layering, and Android performance need visual testing.

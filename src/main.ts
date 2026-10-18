@@ -71,26 +71,75 @@ interiorBox(2.8,.12,1.5,mat(0x6e5946),roomX-1.6,.65,roomZ-1.5);interiorBox(2.8,.
 interiorBox(1.8,.82,.8,mat(0x477b78),roomX+2.3,.41,roomZ-1.6);interiorBox(.7,1.7,.7,mat(0x6a8e6b),roomX+3.3,.85,roomZ+2.5);
 interiorBox(2.2,1.8,.16,mat(0x374d55),roomX,1.15,roomZ-4.72);interiorBox(1.4,1.1,.08,mat(0x6bd9c6),roomX,1.3,roomZ-4.61);interiorBox(1.4,.08,.08,mat(0xb9d3cf),roomX,1.9,roomZ-4.6);
 function person(color){
- const g=new THREE.Group(),shirt=mat(color,.76),pants=mat(0x263440,.86),skin=mat(0xd6a77f,.85),shoe=mat(0x20262a,.72),hairMat=mat(0x30251f,.95);
- const torso=new THREE.Mesh(new THREE.CapsuleGeometry(.285,.52,4,8),shirt);torso.position.y=1.13;torso.castShadow=true;g.add(torso);
- const belt=new THREE.Mesh(new THREE.CylinderGeometry(.235,.25,.09,10),mat(0x35302b));belt.position.y=.78;g.add(belt);
- const neck=new THREE.Mesh(new THREE.CylinderGeometry(.09,.105,.16,8),skin);neck.position.y=1.48;g.add(neck);
- const head=new THREE.Mesh(new THREE.SphereGeometry(.205,12,10),skin);head.position.y=1.69;head.castShadow=true;g.add(head);
- const hair=new THREE.Mesh(new THREE.SphereGeometry(.214,10,7,0,Math.PI*2,0,Math.PI*.52),hairMat);hair.position.y=1.77;g.add(hair);
- for(const side of [-1,1]){const ear=new THREE.Mesh(new THREE.SphereGeometry(.045,7,6),skin);ear.position.set(side*.198,1.68,0);g.add(ear);const eye=new THREE.Mesh(new THREE.SphereGeometry(.023,6,5),mat(0x17252a));eye.position.set(side*.073,1.70,.185);g.add(eye)}
- const legs=[],arms=[];
- for(let i=0;i<2;i++){
-  const side=i===0?1:-1,hip=new THREE.Group();hip.position.set(side*.125,.82,0);g.add(hip);
-  const thigh=new THREE.Mesh(new THREE.CapsuleGeometry(.105,.30,3,6),pants);thigh.position.y=-.23;thigh.castShadow=true;hip.add(thigh);
-  const shin=new THREE.Mesh(new THREE.CapsuleGeometry(.078,.26,3,6),pants);shin.position.set(0,-.49,.015);shin.castShadow=true;hip.add(shin);
-  const boot=new THREE.Mesh(new THREE.BoxGeometry(.17,.12,.27),shoe);boot.position.set(0,-.67,.055);boot.castShadow=true;hip.add(boot);legs.push(hip);
-  const arm=new THREE.Group();arm.position.set(side*.29,1.34,0);g.add(arm);
-  const upper=new THREE.Mesh(new THREE.CapsuleGeometry(.075,.24,3,6),shirt);upper.position.y=-.18;upper.castShadow=true;arm.add(upper);
-  const fore=new THREE.Mesh(new THREE.CapsuleGeometry(.06,.22,3,6),skin);fore.position.set(0,-.40,.015);fore.castShadow=true;arm.add(fore);
-  const hand=new THREE.Mesh(new THREE.SphereGeometry(.065,7,6),skin);hand.position.set(0,-.54,.02);arm.add(hand);arms.push(arm);
+ // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
+ // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.
+ const g=new THREE.Group(),shirt=mat(color,.78),pants=mat(0x263440,.88),skin=mat(0xd6a77f,.88),shoe=mat(0x20262a,.76),hairMat=mat(0x30251f,.94),seamMat=mat(0x202b30,.9);
+ const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
+ // Torso layers give a clearer shoulder/chest-to-waist silhouette than a single capsule.
+ const torso=addMesh(g,new THREE.CapsuleGeometry(.255,.48,5,12),shirt,0,1.13,0,1.02,1,.88);
+ addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,1.34,0,.32,.19,.205);
+ addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,.99,.006,.245,.19,.19);
+ const collar=addMesh(g,new THREE.CylinderGeometry(.105,.12,.07,12),seamMat,0,1.445,0);
+ const neck=addMesh(g,new THREE.CylinderGeometry(.085,.105,.18,12),skin,0,1.51,.012);
+ // Head shape, ears, nose, lips, eyes and brows are separate readable forms.
+ addMesh(g,new THREE.SphereGeometry(1,20,16),skin,0,1.735,.012,.177,.225,.16);
+ addMesh(g,new THREE.SphereGeometry(1,12,10),skin,-.176,1.72,0,.035,.06,.045);
+ addMesh(g,new THREE.SphereGeometry(1,12,10),skin,.176,1.72,0,.035,.06,.045);
+ addMesh(g,new THREE.SphereGeometry(1,12,10),skin,0,1.72,.163,.038,.052,.05);
+ const mouth=addMesh(g,new THREE.BoxGeometry(.07,.012,.012),mat(0x784b45,.9),0,1.648,.158,.95,1,1,false);
+ for(const side of [-1,1]){
+   addMesh(g,new THREE.SphereGeometry(1,10,8),mat(0xf1e9db,.55),side*.067,1.765,.151,.035,.024,.012,false);
+   addMesh(g,new THREE.SphereGeometry(1,10,8),mat(0x263039,.45),side*.067,1.765,.163,.014,.018,.008,false);
+   const brow=addMesh(g,new THREE.CapsuleGeometry(.012,.045,3,6),hairMat,side*.067,1.801,.15,1,1,1,false);brow.rotation.z=side*.12;
  }
- const backpack=new THREE.Mesh(new THREE.BoxGeometry(.28,.38,.13),mat(0x384b49));backpack.position.set(0,1.12,-.27);backpack.castShadow=true;g.add(backpack);
- g.userData={legs,arms,torso,phase:rand()*7,speed:.28+rand()*.3,dir:rand()*Math.PI*2};return g
+ // Hair cap plus a short rear hair volume avoids the featureless spherical head.
+ addMesh(g,new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI*.54),hairMat,0,1.82,.002,.184,.15,.17);
+ addMesh(g,new THREE.SphereGeometry(1,12,8),hairMat,0,1.755,-.105,.16,.13,.09);
+ // Belt, waistband, cuffs and seams provide clothing separation.
+ addMesh(g,new THREE.CylinderGeometry(.225,.24,.075,14),mat(0x35302b,.82),0,.82,0);
+ addMesh(g,new THREE.BoxGeometry(.075,.055,.025),mat(0xc2a66a,.55,.5),0,.82,.239,false);
+ const legs=[],arms=[],hands=[];
+ for(let i=0;i<2;i++){
+   const side=i===0?1:-1,hip=new THREE.Group();hip.position.set(side*.125,.81,0);g.add(hip);
+   addMesh(hip,new THREE.CapsuleGeometry(.105,.31,4,8),pants,0,-.205,0,1,1,.98);
+   addMesh(hip,new THREE.SphereGeometry(1,12,9),pants,0,-.405,.005,.082,.09,.082);
+   addMesh(hip,new THREE.CapsuleGeometry(.073,.29,4,8),pants,0,-.49,.008,1,1,.96);
+   addMesh(hip,new THREE.CylinderGeometry(.078,.075,.045,10),seamMat,0,-.62,.012);
+   // Foot/shoe includes a shaped upper, toe box and visible sole.
+   addMesh(hip,new THREE.SphereGeometry(1,12,9),shoe,0,-.675,.07,.09,.07,.16);
+   addMesh(hip,new THREE.BoxGeometry(.18,.035,.29),mat(0x101619,.95),0,-.716,.065);
+   legs.push(hip);
+   const arm=new THREE.Group();arm.position.set(side*.285,1.355,0);g.add(arm);
+   addMesh(arm,new THREE.SphereGeometry(1,12,10),shirt,side*.008,-.045,0,.105,.12,.11);
+   const upper=addMesh(arm,new THREE.CapsuleGeometry(.071,.245,4,8),shirt,0,-.185,0,1,1,.98);
+   const elbow=addMesh(arm,new THREE.SphereGeometry(1,12,9),shirt,0,-.33,.006,.068,.075,.07);
+   const fore=addMesh(arm,new THREE.CapsuleGeometry(.055,.23,4,8),skin,0,-.425,.014,1,1,.95);
+   // Sleeve cuff and palm are sized separately so the hand reads as a hand, not a ball.
+   addMesh(arm,new THREE.CylinderGeometry(.063,.06,.055,10),shirt,0,-.34,.012);
+   const palm=addMesh(arm,new THREE.SphereGeometry(1,14,10),skin,0,-.535,.025,.073,.087,.043);
+   const fingerGroups=[];
+   const fingerDefs=[{x:-.047,len:.078,r:.012},{x:-.019,len:.095,r:.013},{x:.011,len:.101,r:.013},{x:.039,len:.085,r:.011}];
+   for(let fi=0;fi<fingerDefs.length;fi++){
+     const fd=fingerDefs[fi],fg=new THREE.Group();fg.position.set(fd.x,-.585,.027);fg.rotation.z=(fd.x/.05)*-.08;arm.add(fg);
+     addMesh(fg,new THREE.CapsuleGeometry(fd.r,fd.len*.52,3,6),skin,0,-fd.len*.28,0,1,1,.9);
+     addMesh(fg,new THREE.SphereGeometry(fd.r*1.03,8,6),skin,0,-fd.len*.56,0);
+     const distal=addMesh(fg,new THREE.CapsuleGeometry(fd.r*.78,fd.len*.30,3,6),skin,0,-fd.len*.72,.001,1,1,.9);
+     fingerGroups.push(fg);
+   }
+   // Opposing, angled thumb with two segments and a knuckle.
+   const thumb=new THREE.Group();thumb.position.set(side*.063,-.535,.035);thumb.rotation.z=side*-.72;arm.add(thumb);
+   addMesh(thumb,new THREE.CapsuleGeometry(.014,.055,3,6),skin,side*.015,-.025,0,1,1,.9);
+   addMesh(thumb,new THREE.SphereGeometry(.014,8,6),skin,side*.03,-.058,.002);
+   addMesh(thumb,new THREE.CapsuleGeometry(.011,.04,3,6),skin,side*.035,-.079,.002,1,1,.9);
+   fingerGroups.push(thumb);
+   arms.push(arm);hands.push({palm,fingers:fingerGroups,side});
+ }
+ // Backpack, shoulder seams, pocket and shoe accents add silhouette and fabric detail.
+ addMesh(g,new THREE.BoxGeometry(.27,.37,.12),mat(0x384b49,.92),0,1.13,-.235);
+ addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),-.11,1.04,.205);
+ addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),.11,1.04,.205);
+ g.userData={legs,arms,hands,torso,phase:rand()*7,speed:.28+rand()*.3,dir:rand()*Math.PI*2};
+ return g
 }
 for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);p.position.set((rand()-.5)*205,0,(rand()-.5)*205);p.userData.goalX=(rand()-.5)*220;p.userData.goalZ=(rand()-.5)*220;p.userData.pause=rand()*2;scene.add(p);pedestrians.push(p)}
 loadfill.style.width='65%';loadnote.textContent='Preparing player and vehicles…';

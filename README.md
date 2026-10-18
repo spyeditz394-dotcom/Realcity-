@@ -33,3 +33,12 @@ The Vercel preview build is the first validation gate. Actual gameplay controls,
 - Cached repeated procedural human geometry across the player fallback and pedestrian crowd to avoid creating near-identical geometry resources for every character.
 - Kept cached character geometry alive when the optional rigged model replaces the fallback, because pedestrians still reference the shared geometry.
 - This is a procedural visual/performance pass; real-device appearance, FPS, memory, and gameplay still require browser QA.
+
+
+## Part 14 — facade depth & protagonist quality
+
+- Added instanced window lintels, sills, and jambs on front and side elevations to make glass read as recessed architectural openings rather than flat decals.
+- Added a dark street-level plinth to ground buildings visually and improve the street/building scale.
+- Reused existing architecture instancing and materials, keeping these added facade elements in a small number of draw-call batches.
+- Preserved the existing detailed procedural player fallback and current rig qualification checks. This pass prioritizes measurable environment depth without swapping in an unverified external character.
+- Build, in-game WebGL appearance, and Android performance must be verified on the new preview before this is considered complete.

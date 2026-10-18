@@ -310,13 +310,13 @@ renderer.domElement.addEventListener('pointerdown',e=>{if(e.target.closest?.('bu
 function rapierStaticBlocked(x,z,r){let shape=rapierShapeCache.get(r);if(!shape){shape=new RAPIER.Cuboid(r,.9,r);rapierShapeCache.set(r,shape)}let hit=false;physicsWorld.intersectionsWithShape({x,y:.9,z},{x:0,y:0,z:0,w:1},shape,()=>{hit=true;return false});return hit}
 function blocked(x,z,r=.65,ignoreVehicle=null){if(interiorMode)return Math.abs(x-roomX)>4.35-r||Math.abs(z-roomZ)>4.35-r;if(Math.abs(x)>169-r||Math.abs(z)>169-r)return true;if(rapierStaticBlocked(x,z,r))return true;for(const v of vehicles){if(v===ignoreVehicle)continue;const dx=x-v.g.position.x,dz=z-v.g.position.z,ang=v.g.rotation.y,c=Math.cos(ang),s=Math.sin(ang),lx=dx*c-dz*s,lz=dx*s+dz*c;if(Math.abs(lx)<1.05+r*.35&&Math.abs(lz)<2.0+r*.45)return true}return false}
 function vehicleBlocked(x,z,angle,vehicle){if(Math.abs(x)>167||Math.abs(z)>167)return true;const rot={x:0,y:Math.sin(angle/2),z:0,w:Math.cos(angle/2)};let hit=false;physicsWorld.intersectionsWithShape({x,y:.8,z},rot,rapierVehicleShape,()=>{hit=true;return false});if(hit)return true;for(const other of vehicles){if(other===vehicle)continue;const dx=other.g.position.x-x,dz=other.g.position.z-z;if(Math.abs(dx)<2.1&&Math.abs(dz)<3.6)return true}return false}
-const PED_LANE_OFFSET=5.8;
+
 function pedestrianCrowded(x,z,ignore=null,radius=1.05){for(const other of pedestrians){if(other===ignore)continue;const dx=other.position.x-x,dz=other.position.z-z;if(dx*dx+dz*dz<radius*radius)return true}return false}
 function pickPedestrianWaypoint(origin=null,maxDistance=180,ignore=null){
  for(let attempt=0;attempt<64;attempt++){
   const k=Math.floor(rand()*15)-7,j=Math.floor(rand()*15)-7;
   const sx=rand()<.5?-1:1,sz=rand()<.5?-1:1;
-  const x=k*20+sx*PED_LANE_OFFSET,z=j*20+sz*PED_LANE_OFFSET;
+  const x=k*20+sx*5.8,z=j*20+sz*5.8;
   if(Math.abs(x)>160||Math.abs(z)>160||blocked(x,z,.42)||pedestrianCrowded(x,z,ignore,1.15))continue;
   if(origin&&Math.hypot(x-origin.x,z-origin.z)>maxDistance)continue;
   return {x,z};

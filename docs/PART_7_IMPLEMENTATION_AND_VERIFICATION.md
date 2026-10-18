@@ -27,10 +27,10 @@ Source contains a procedural city, grid-based road and sidewalk geometry, distri
 |---|---|---|
 | Branch / repository | PASS | Changes committed to the dedicated `part-7-open-world-systems` branch. |
 | Source patch integrity | PASS | Follow-up source read confirms the sidewalk offset/fallback and honest HUD text; unsupported benchmark-complete field is absent. Character-loader quality gate is present in the latest source commit, but its effect awaits the next build/runtime check. |
-| Vercel production build | PASS for prior code commit `763a139e7b74e2031decf81314c479aa33ef08b5`; new quality-gate build pending | Vercel deployment `dpl_7Ch42v4f17JX7ptDVEugAKXFjAAY` is READY; log reports Vite `✓ built in 2.89s` and `Build Completed`. |
-| Bundle size | WARNING | Build reports `index-CeCjUOH5.js` at 3,034.15 kB before gzip / 1,059.19 kB gzip; Vite warns that chunks exceed 500 kB. |
-| Preview HTTP response | PASS for deployment `763a139...` | Vercel deployment state is READY. A READY state alone does not prove WebGL initialization or runtime gameplay. |
-| New documentation deployment | PENDING at last status check | Documentation commit `eaa4fab...` had a Vercel deployment in BUILDING state at the time of inspection. |
+| Vercel production build | PASS for code commit `167f74e23f3673aeebc7a5668cd175b4759b804b` | Vercel deployment `dpl_76Pnu4ogPqBNNcD4bYuzm2Jxpkmz` is READY; log reports Vite `✓ built in 3.64s` and `Build Completed`. |
+| Bundle size | WARNING | Build reports `index-D0ohMQdg.js` at 3,034.54 kB before gzip / 1,059.36 kB gzip; Vite warns that chunks exceed 500 kB. |
+| Preview HTTP response | PASS for deployment `167f74e...` | The preview returned HTTP 200 and HTML title `REALCITY — Part 7 Living City Systems`; deployed JavaScript bundle also returned HTTP 200. This does not prove WebGL initialization or runtime gameplay. |
+| Newest documentation deployment | PENDING at last status check | Documentation commit `393ef85...` was queued at the time of inspection. The game-code preview for `167f74e...` is READY. |
 | Browser console / network errors | NOT TESTED | No interactive browser DevTools session available. |
 | Rendered player appearance and skin deformation | NOT TESTED | The code validates bounds, bone count and finger-bone naming, but the actual mesh, skin weights, bone axes and visible deformation have not been visually inspected in a running browser. |
 | External GLB licensing/provenance | PARTIALLY VERIFIED | Upstream `ASSETS.md` identifies the model as Quaternius Universal Base Characters — Standard under CC0 1.0 and records the source pack/checksum: https://github.com/programasweights/avatar/blob/main/ASSETS.md. The loader now rejects its single-material untextured mannequin appearance; REALCITY still loads the file remotely rather than versioning it locally. |

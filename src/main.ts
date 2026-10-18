@@ -49,7 +49,7 @@ if(asphaltDetail){asphalt.map=asphaltDetail;asphaltAlt.map=asphaltDetail;asphalt
 if(concreteDetail){concrete.map=concreteDetail;curbMat.map=concreteDetail;concrete.needsUpdate=curbMat.needsUpdate=true}
 const windowBuckets=windowMats.map(material=>({material,matrices:[]})),windowGeometry=new THREE.BoxGeometry(.56,.88,.055),windowDummy=new THREE.Object3D();
 // Instanced architectural trim gives each district a readable facade rhythm without multiplying draw calls.
-const architectureBatches=[{material:mat(0x3d4b50,.78,.16),matrices:[]},{material:mat(0x667d80,.68,.12),matrices:[]},{material:mat(0x6bd0bd,.58,.08),matrices:[]},{material:mat(0x48565a,.84,.12),matrices:[]},{material:mat(0x6c8586,.72,.16),matrices:[]}],architectureGeometry=new THREE.BoxGeometry(1,1,1),architectureDummy=new THREE.Object3D();
+const architectureBatches=[{material:mat(0x3d4b50,.78,.16),matrices:[]},{material:mat(0x667d80,.68,.12),matrices:[]},{material:mat(0x6bd0bd,.58,.08),matrices:[]},{material:mat(0x48565a,.84,.12),matrices:[]},{material:mat(0x6c8586,.72,.16),matrices:[]},{material:mat(0xb9c0bc,.82,.04),matrices:[]},{material:mat(0x39474a,.92,.02),matrices:[]}],architectureGeometry=new THREE.BoxGeometry(1,1,1),architectureDummy=new THREE.Object3D();
 function queueArchitecture(kind,x,y,z,sx,sy,sz,rotation=0){architectureDummy.position.set(x,y,z);architectureDummy.rotation.set(0,rotation,0);architectureDummy.scale.set(sx,sy,sz);architectureDummy.updateMatrix();architectureBatches[kind].matrices.push(architectureDummy.matrix.clone())}
 function queueWindow(index,x,y,z,rotation=0){windowDummy.position.set(x,y,z);windowDummy.rotation.set(0,rotation,0);windowDummy.scale.set(1,1,1);windowDummy.updateMatrix();windowBuckets[index].matrices.push(windowDummy.matrix.clone())}
 const roadMarkMaterial=mat(0xb8b7a7),roadMarkGeometry=new THREE.BoxGeometry(.12,.14,2.5),roadMarkMatrices=[],roadMarkDummy=new THREE.Object3D();
@@ -81,8 +81,12 @@ if(h>13&&rand()<.62){const unitMat=mat(0x697477,.82,.18);box(w*.22,.72,d*.24,uni
 // Instanced rooftop HVAC housings and occasional antenna masts create a more believable roofline at low draw-call cost.
 if(h>11){queueArchitecture(3,x+w*.2,h+.48,z-d*.18,w*.2,.72,d*.18);if(rand()<.44)queueArchitecture(3,x-w*.2,h+.35,z+d*.18,w*.13,.46,d*.13);if(rand()<.32){queueArchitecture(4,x-w*.28,h+.9,z-d*.22,.075,1.35,.075);queueArchitecture(4,x-w*.28+.18,h+1.25,z-d*.22,.42,.055,.055)}}
 const floors=Math.max(2,Math.floor((h-1.8)/2.6));
-for(let f=0;f<floors;f++){let yy=2+f*2.55;for(let xx=-w/2+.8;xx<w/2-.25;xx+=1.35){queueWindow(Math.floor(rand()*windowMats.length),x+xx,yy,z+d/2+.035,0)}
-for(let zz=-d/2+.8;zz<d/2-.25;zz+=1.35){for(let side of [-1,1])queueWindow(Math.floor(rand()*windowMats.length),x+side*(w/2+.035),yy,z+zz,side===1?Math.PI/2:-Math.PI/2)}}
+for(let f=0;f<floors;f++){let yy=2+f*2.55;for(let xx=-w/2+.8;xx<w/2-.25;xx+=1.35){queueWindow(Math.floor(rand()*windowMats.length),x+xx,yy,z+d/2+.035,0);
+// Thin instanced lintels, sills and jambs add real facade depth around the window glass.
+queueArchitecture(5,x+xx,yy+.49,z+d/2+.075,.72,.075,.095);queueArchitecture(5,x+xx,yy-.49,z+d/2+.075,.72,.075,.095);for(const side of [-1,1])queueArchitecture(5,x+xx+side*.32,yy,z+d/2+.075,.075,.98,.095)}
+for(let zz=-d/2+.8;zz<d/2-.25;zz+=1.35){for(let side of [-1,1]){const rot=side===1?Math.PI/2:-Math.PI/2,fx=x+side*(w/2+.075),fz=z+zz;queueWindow(Math.floor(rand()*windowMats.length),x+side*(w/2+.035),yy,z+zz,rot);queueArchitecture(5,fx,yy+.49,fz,.72,.075,.095,rot);queueArchitecture(5,fx,yy-.49,fz,.72,.075,.095,rot);for(const edge of [-1,1])queueArchitecture(5,fx,yy,fz+edge*.32,.075,.98,.095,rot)}}}
+// Dark recessed base plinths and continuous floor bands give street-level buildings a stronger grounded scale.
+queueArchitecture(6,x,0.24,z+d/2+.045,w,.42,.12);
 // Continuous floor bands, corner pilasters and occasional balconies break up the plain box-building silhouette.
 for(let f=0;f<=floors;f++){const yy=1.12+f*2.55;if(yy<h-.15)queueArchitecture(0,x,yy,z+d/2+.07,w,.095,.13);}
 for(const side of [-1,1])queueArchitecture(1,x+side*(w/2-.09),h/2,z+d/2+.065,.13,h,.15);

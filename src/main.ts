@@ -207,15 +207,32 @@ function setPlayerFingerPose(pose='relaxed',side='both',finger='all'){
 }
 function animateRiggedPlayer(gait,moving,time,dt){
  const rig=player.userData.rig;if(!rig)return;
- for(const item of rig.bodyBones){const b=item.bone;b.quaternion.copy(item.rest);let angle=0;
-   if(item.kind==='leftLeg')angle=gait*.9;else if(item.kind==='rightLeg')angle=-gait*.9;
-   else if(item.kind==='leftArm')angle=-gait*.58;else if(item.kind==='rightArm')angle=gait*.58;
-   else if(item.kind==='leftForearm')angle=-Math.max(0,gait)*.18;else if(item.kind==='rightForearm')angle=Math.max(0,gait)*.18;
-   else if(item.kind==='spine')angle=Math.sin(time*2.4)*.018;
-   if(angle)b.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,angle));
+ if(rig.mixer){
+   const airborne=player.position.y>.08;
+   const desired=airborne?rig.actions.jump:(moving?(Math.abs(gait)>.65?rig.actions.run:rig.actions.walk):rig.actions.idle);
+   if(desired&&desired!==rig.activeAction){
+     desired.reset().play();
+     if(rig.activeAction)rig.activeAction.crossFadeTo(desired,.18,true);
+     rig.activeAction=desired;
+   }
+   rig.mixer.update(dt);
+ }else{
+   for(const item of rig.bodyBones){const b=item.bone;b.quaternion.copy(item.rest);let angle=0;
+     if(item.kind==='leftLeg')angle=gait*.9;else if(item.kind==='rightLeg')angle=-gait*.9;
+     else if(item.kind==='leftArm')angle=-gait*.58;else if(item.kind==='rightArm')angle=gait*.58;
+     else if(item.kind==='leftForearm')angle=-Math.max(0,gait)*.18;else if(item.kind==='rightForearm')angle=Math.max(0,gait)*.18;
+     else if(item.kind==='spine')angle=Math.sin(time*2.4)*.018;
+     if(angle)b.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,angle));
+   }
  }
- if(rig.mixer){rig.mixer.update(dt);return}
- if(moving){for(const item of rig.fingerBones){const base=fingerPoseValue('relaxed'),wiggle=Math.sin(time*5+item.index*.8+(item.side==='left'?1:0))*.018;item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,base+wiggle))}}
+ // Apply finger pose AFTER the animation mixer so clips cannot silently overwrite it.
+ // This is a procedural pose overlay on the actual recognized rig bones, not a claim that
+ // every third-party skeleton's local finger axis has been visually validated.
+ for(const item of rig.fingerBones){
+   const base=fingerPoseValue('relaxed');
+   const wiggle=moving?Math.sin(time*5+item.index*.8+(item.side==='left'?1:0))*.018:0;
+   item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,base+wiggle));
+ }
 }
 function installRiggedPlayer(gltf){
  const model=gltf.scene;model.updateMatrixWorld(true);
@@ -240,11 +257,30 @@ function installRiggedPlayer(gltf){
    else if(/spine1|spine2|chest/.test(n))kind='spine';
    if(kind)bodyBones.push({bone,kind,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0)});
  }
- const mixer=gltf.animations?.length?new THREE.AnimationMixer(model):null;
- if(mixer&&gltf.animations.length)mixer.clipAction(gltf.animations[0]).play();
+ const clips=gltf.animations||[];
+ const mixer=clips.length?new THREE.AnimationMixer(model):null;
+ const actions={idle:null,walk:null,run:null,jump:null};
+ if(mixer){
+   for(const clip of clips){
+     const n=String(clip.name||'').toLowerCase();
+     const action=mixer.clipAction(clip);
+     action.enabled=true;
+     if(/idle|stand|breath|rest/.test(n)&&!actions.idle)actions.idle=action;
+     else if(/walk|walking|locomotion/.test(n)&&!actions.walk)actions.walk=action;
+     else if(/run|running|sprint/.test(n)&&!actions.run)actions.run=action;
+     else if(/jump|land|leap/.test(n)&&!actions.jump)actions.jump=action;
+   }
+   const fallback=actions.idle||actions.walk||actions.run||mixer.clipAction(clips[0]);
+   actions.idle=actions.idle||fallback;
+   actions.walk=actions.walk||actions.idle;
+   actions.run=actions.run||actions.walk;
+   actions.jump=actions.jump||actions.idle;
+   for(const action of new Set(Object.values(actions)))if(action){action.setLoop(THREE.LoopRepeat,Infinity);action.clampWhenFinished=false}
+   actions.idle.reset().play();
+ }
  for(const child of [...player.children]){player.remove(child);child.traverse?.(o=>{if(o.isMesh)o.geometry?.dispose?.()})}
  player.add(modelRoot);player.userData.legs=[];player.userData.arms=[];player.userData.hands=[];
- player.userData.rig={model,modelRoot,bones,fingerBones,bodyBones,mixer,clips:gltf.animations||[]};
+ player.userData.rig={model,modelRoot,bones,fingerBones,bodyBones,mixer,clips,actions,activeAction:actions.idle,actionNames:clips.map(c=>c.name||'(unnamed)')};
  player.userData.riggedAsset=true;player.userData.setFingerPose=setPlayerFingerPose;
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');

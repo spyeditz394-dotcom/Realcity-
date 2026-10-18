@@ -333,7 +333,7 @@ function installRiggedPlayer(gltf){
    const match=bone.name.match(/(?:[._ -]?)([0-4])$/),segment=match?Number(match[1]):Math.min(3,fingerBones.filter(x=>x.side===side&&x.kind===kind).length);
    fingerBones.push({bone,kind,side,segment,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0),index:fingerBones.length,pose:'relaxed'});
  }
- if(bones.length<20||fingerBones.length<20){const names=bones.map(b=>b.name).filter(n=>/thumb|index|middle|ring|pinky|little/i.test(n));throw new Error('Rig validation: '+bones.length+' bones, '+fingerBones.length+' recognized finger joints; candidates: '+(names.slice(0,12).join(', ')||'none'))}
+ if(bones.length<20)throw new Error('Rig validation: only '+bones.length+' bones; keeping animated fallback');
  const bodyBones=[];
  for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
    if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';

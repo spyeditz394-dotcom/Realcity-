@@ -141,7 +141,7 @@ interiorBox(2.2,1.8,.16,mat(0x374d55),rx,1.15,rz-4.72);interiorBox(1.4,1.1,.08,m
 interiorBox(1.25,.85,.75,mat(palette.wood),rx-2.7,.43,rz+1.7);interiorBox(.18,1.6,.18,mat(0x4a5553),rx-3.15,.8,rz+1.7);interiorBox(.18,1.6,.18,mat(0x4a5553),rx-2.25,.8,rz+1.7);
 interiorBox(.55,1.2,.55,mat(0x6a8e6b),rx+3.4,.6,rz-2.7);interiorBox(.9,.1,.7,mat(palette.wood),rx+.7,.55,rz+1.8);
 }
-const characterGeometryCache=new Map();function characterGeo(type,...args){const key=type+':'+args.join(',');let geometry=characterGeometryCache.get(key);if(!geometry){const Ctor=THREE[type];geometry=new Ctor(...args);characterGeometryCache.set(key,geometry)}return geometry}
+const characterGeometryCache=new Map();function characterGeo(type,...args){const key=type+':'+args.join(',');let geometry=characterGeometryCache.get(key);if(!geometry){const Ctor=type==='SphereGeometry'?THREE.SphereGeometry:type==='CapsuleGeometry'?THREE.CapsuleGeometry:type==='CylinderGeometry'?THREE.CylinderGeometry:THREE.BoxGeometry;geometry=new Ctor(...args);characterGeometryCache.set(key,geometry)}return geometry}
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
  // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.

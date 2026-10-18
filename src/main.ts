@@ -146,10 +146,12 @@ interiorBox(1.25,.85,.75,mat(palette.wood),rx-2.7,.43,rz+1.7);interiorBox(.18,1.
 interiorBox(.55,1.2,.55,mat(0x6a8e6b),rx+3.4,.6,rz-2.7);interiorBox(.9,.1,.7,mat(palette.wood),rx+.7,.55,rz+1.8);
 }
 const characterGeometryCache=new Map();function characterGeo(type,...args){const key=type+':'+args.join(',');let geometry=characterGeometryCache.get(key);if(!geometry){const Ctor=type==='SphereGeometry'?THREE.SphereGeometry:type==='CapsuleGeometry'?THREE.CapsuleGeometry:type==='CylinderGeometry'?THREE.CylinderGeometry:THREE.BoxGeometry;geometry=new Ctor(...args);characterGeometryCache.set(key,geometry)}return geometry}
+const characterMaterialCache=new Map();
+function characterMat(color,roughness=.85,metalness=0){const key=`${color}|${roughness}|${metalness}`;let material=characterMaterialCache.get(key);if(!material){material=mat(color,roughness,metalness);characterMaterialCache.set(key,material)}return material}
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
  // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.
- const g=new THREE.Group(),shirt=mat(color,.78),pants=mat([0x263440,0x39434a,0x51483e,0x303d35,0x4a3b4a][Math.floor(rand()*5)],.88),skin=mat([0xf0c8a4,0xd6a77f,0xb9825e,0x8d6049,0xe0b08b,0x9d6d50][Math.floor(rand()*6)],.88),shoe=mat([0x20262a,0x3a3029,0x171d21,0x4b4740][Math.floor(rand()*4)],.76),hairMat=mat([0x30251f,0x17191b,0x5c3d2a,0x74604a,0x272d34][Math.floor(rand()*5)],.94),seamMat=mat(0x202b30,.9),bodyScale=0.94+rand()*.12,legScale=.94+rand()*.12,shoulderScale=.92+rand()*.16;
+ const g=new THREE.Group(),shirt=characterMat(color,.78),pants=characterMat([0x263440,0x39434a,0x51483e,0x303d35,0x4a3b4a][Math.floor(rand()*5)],.88),skin=characterMat([0xf0c8a4,0xd6a77f,0xb9825e,0x8d6049,0xe0b08b,0x9d6d50][Math.floor(rand()*6)],.88),shoe=characterMat([0x20262a,0x3a3029,0x171d21,0x4b4740][Math.floor(rand()*4)],.76),hairMat=characterMat([0x30251f,0x17191b,0x5c3d2a,0x74604a,0x272d34][Math.floor(rand()*5)],.94),seamMat=characterMat(0x202b30,.9),bodyScale=0.94+rand()*.12,legScale=.94+rand()*.12,shoulderScale=.92+rand()*.16;
  const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
  // Torso layers give a clearer shoulder/chest-to-waist silhouette than a single capsule.
  const torso=addMesh(g,characterGeo('CapsuleGeometry',.255,.48,5,12),shirt,0,1.13,0,1.02*shoulderScale,1,.88);
@@ -162,18 +164,18 @@ function person(color){
  addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,-.176,1.72,0,.035,.06,.045);
  addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,.176,1.72,0,.035,.06,.045);
  addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,0,1.72,.163,.038,.052,.05);
- const mouth=addMesh(g,characterGeo('BoxGeometry',.07,.012,.012),mat(0x784b45,.9),0,1.648,.158,.95,1,1,false);
+ const mouth=addMesh(g,characterGeo('BoxGeometry',.07,.012,.012),characterMat(0x784b45,.9),0,1.648,.158,.95,1,1,false);
  for(const side of [-1,1]){
-   addMesh(g,characterGeo('SphereGeometry',1,10,8),mat(0xf1e9db,.55),side*.067,1.765,.151,.035,.024,.012,false);
-   addMesh(g,characterGeo('SphereGeometry',1,10,8),mat(0x263039,.45),side*.067,1.765,.163,.014,.018,.008,false);
+   addMesh(g,characterGeo('SphereGeometry',1,10,8),characterMat(0xf1e9db,.55),side*.067,1.765,.151,.035,.024,.012,false);
+   addMesh(g,characterGeo('SphereGeometry',1,10,8),characterMat(0x263039,.45),side*.067,1.765,.163,.014,.018,.008,false);
    const brow=addMesh(g,characterGeo('CapsuleGeometry',.012,.045,3,6),hairMat,side*.067,1.801,.15,1,1,1,false);brow.rotation.z=side*.12;
  }
  // Hair cap plus a short rear hair volume avoids the featureless spherical head.
  addMesh(g,characterGeo('SphereGeometry',1,16,10,0,Math.PI*2,0,Math.PI*.54),hairMat,0,1.82,.002,.184,.15,.17);
  addMesh(g,characterGeo('SphereGeometry',1,12,8),hairMat,0,1.755,-.105,.16,.13,.09);
  // Belt, waistband, cuffs and seams provide clothing separation.
- addMesh(g,characterGeo('CylinderGeometry',.225,.24,.075,14),mat(0x35302b,.82),0,.82,0);
- addMesh(g,characterGeo('BoxGeometry',.075,.055,.025),mat(0xc2a66a,.55,.5),0,.82,.239,1,1,1,false);
+ addMesh(g,characterGeo('CylinderGeometry',.225,.24,.075,14),characterMat(0x35302b,.82),0,.82,0);
+ addMesh(g,characterGeo('BoxGeometry',.075,.055,.025),characterMat(0xc2a66a,.55,.5),0,.82,.239,1,1,1,false);
  const legs=[],knees=[],arms=[],hands=[];
  for(let i=0;i<2;i++){
    const side=i===0?1:-1,hip=new THREE.Group();hip.position.set(side*.125,.81,0);g.add(hip);
@@ -185,7 +187,7 @@ function person(color){
    addMesh(knee,characterGeo('CylinderGeometry',.078,.075,.045,10),seamMat,0,-.215,.007);
    // Foot/shoe includes a shaped upper, toe box and visible sole.
    addMesh(knee,characterGeo('SphereGeometry',1,12,9),shoe,0,-.27,.065,.09,.07,.16);
-   addMesh(knee,characterGeo('BoxGeometry',.18,.035,.29),mat(0x101619,.95),0,-.311,.06);
+   addMesh(knee,characterGeo('BoxGeometry',.18,.035,.29),characterMat(0x101619,.95),0,-.311,.06);
    knees.push(knee);legs.push(hip);
    const arm=new THREE.Group();arm.position.set(side*.285,1.355,0);g.add(arm);
    addMesh(arm,characterGeo('SphereGeometry',1,12,10),shirt,side*.008,-.045,0,.105,.12,.11);
@@ -214,9 +216,9 @@ function person(color){
    arms.push(arm);hands.push({palm,fingers:fingerGroups,side,elbow:elbowGroup});
  }
  // Backpack, shoulder seams, pocket and shoe accents add silhouette and fabric detail.
- addMesh(g,characterGeo('BoxGeometry',.27,.37,.12),mat(0x384b49,.92),0,1.13,-.235);
- addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),mat(0x4d6260,.95),-.11,1.04,.205);
- addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),mat(0x4d6260,.95),.11,1.04,.205);
+ addMesh(g,characterGeo('BoxGeometry',.27,.37,.12),characterMat(0x384b49,.92),0,1.13,-.235);
+ addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),characterMat(0x4d6260,.95),-.11,1.04,.205);
+ addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),characterMat(0x4d6260,.95),.11,1.04,.205);
  g.scale.set(bodyScale,legScale,bodyScale);g.userData={legs,knees,arms,hands,torso,phase:rand()*7,speed:.78+rand()*.48,dir:rand()*Math.PI*2};
  return g
 }

@@ -49,12 +49,12 @@ if(asphaltDetail){asphalt.map=asphaltDetail;asphaltAlt.map=asphaltDetail;asphalt
 if(concreteDetail){concrete.map=concreteDetail;curbMat.map=concreteDetail;concrete.needsUpdate=curbMat.needsUpdate=true}
 const windowBuckets=windowMats.map(material=>({material,matrices:[]})),windowGeometry=new THREE.BoxGeometry(.56,.88,.055),windowDummy=new THREE.Object3D();
 // Instanced architectural trim gives each district a readable facade rhythm without multiplying draw calls.
-const architectureBatches=[{material:mat(0x3d4b50,.78,.16),matrices:[]},{material:mat(0x667d80,.68,.12),matrices:[]},{material:mat(0x6bd0bd,.58,.08),matrices:[]}],architectureGeometry=new THREE.BoxGeometry(1,1,1),architectureDummy=new THREE.Object3D();
+const architectureBatches=[{material:mat(0x3d4b50,.78,.16),matrices:[]},{material:mat(0x667d80,.68,.12),matrices:[]},{material:mat(0x6bd0bd,.58,.08),matrices:[]},{material:mat(0x48565a,.84,.12),matrices:[]},{material:mat(0x6c8586,.72,.16),matrices:[]}],architectureGeometry=new THREE.BoxGeometry(1,1,1),architectureDummy=new THREE.Object3D();
 function queueArchitecture(kind,x,y,z,sx,sy,sz,rotation=0){architectureDummy.position.set(x,y,z);architectureDummy.rotation.set(0,rotation,0);architectureDummy.scale.set(sx,sy,sz);architectureDummy.updateMatrix();architectureBatches[kind].matrices.push(architectureDummy.matrix.clone())}
 function queueWindow(index,x,y,z,rotation=0){windowDummy.position.set(x,y,z);windowDummy.rotation.set(0,rotation,0);windowDummy.scale.set(1,1,1);windowDummy.updateMatrix();windowBuckets[index].matrices.push(windowDummy.matrix.clone())}
 const roadMarkMaterial=mat(0xb8b7a7),roadMarkGeometry=new THREE.BoxGeometry(.12,.14,2.5),roadMarkMatrices=[],roadMarkDummy=new THREE.Object3D();
 function queueRoadMark(x,y,z,rotation=0){roadMarkDummy.position.set(x,y,z);roadMarkDummy.rotation.set(0,rotation,0);roadMarkDummy.scale.set(1,1,1);roadMarkDummy.updateMatrix();roadMarkMatrices.push(roadMarkDummy.matrix.clone())}
-const ground=new THREE.Mesh(new THREE.PlaneGeometry(360,360),mat(0x697a68));ground.rotation.x=-Math.PI/2;ground.position.y=-.13;ground.receiveShadow=true;scene.add(ground);
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(700,700),mat(0x697a68));ground.rotation.x=-Math.PI/2;ground.position.y=-.13;ground.receiveShadow=true;scene.add(ground);
 const buildings=[],pedestrians=[],vehicles=[],solid=[],windowMeshes=[],streetBulbs=[],nightPointLights=[],carLamps=[],cameraBlockers=[],cityStaticMeshes=[],doors=[],worldObjects=[],interiorMeshes=[];let interiorMode=false,currentInteriorDoorIndex=-1;
 const boxGeometryCache=new Map();
 function getBoxGeometry(w,h,d){const key=`${w}|${h}|${d}`;let geometry=boxGeometryCache.get(key);if(!geometry){geometry=new THREE.BoxGeometry(w,h,d);boxGeometryCache.set(key,geometry)}return geometry}
@@ -78,6 +78,8 @@ for(const side of [-1,1]){box(.16,.62,d+.12,mat(0x4b565a,.86),x+side*(w/2-.08),h
 if(h>10){const roofMat=mat(district==='Industrial'?0x505b5d:0x697579,.82,.12);box(w*.24,.55,d*.22,roofMat,x-w*.2,h+.48,z-d*.15,true);box(w*.12,.32,d*.16,roofMat,x+w*.2,h+.36,z+d*.16,true)}
 
 if(h>13&&rand()<.62){const unitMat=mat(0x697477,.82,.18);box(w*.22,.72,d*.24,unitMat,x-w*.18,h+.48,z-d*.12,true);box(w*.12,.42,d*.15,unitMat,x+w*.22,h+.33,z+d*.16,true)}
+// Instanced rooftop HVAC housings and occasional antenna masts create a more believable roofline at low draw-call cost.
+if(h>11){queueArchitecture(3,x+w*.2,h+.48,z-d*.18,w*.2,.72,d*.18);if(rand()<.44)queueArchitecture(3,x-w*.2,h+.35,z+d*.18,w*.13,.46,d*.13);if(rand()<.32){queueArchitecture(4,x-w*.28,h+.9,z-d*.22,.075,1.35,.075);queueArchitecture(4,x-w*.28+.18,h+1.25,z-d*.22,.42,.055,.055)}}
 const floors=Math.max(2,Math.floor((h-1.8)/2.6));
 for(let f=0;f<floors;f++){let yy=2+f*2.55;for(let xx=-w/2+.8;xx<w/2-.25;xx+=1.35){queueWindow(Math.floor(rand()*windowMats.length),x+xx,yy,z+d/2+.035,0)}
 for(let zz=-d/2+.8;zz<d/2-.25;zz+=1.35){for(let side of [-1,1])queueWindow(Math.floor(rand()*windowMats.length),x+side*(w/2+.035),yy,z+zz,side===1?Math.PI/2:-Math.PI/2)}}
@@ -89,6 +91,21 @@ if(h>16&&rand()<.72){const by=4.5+rand()*Math.max(1,h-8);queueArchitecture(1,x,b
 if(rand()<.78){box(w*.68,1.4,.1,mat(0x334e51),x,1.1,z+d/2+.08);box(w*.42,.09,.12,mat(0x6dd8c5),x,1.82,z+d/2+.14);for(let q=-1;q<=1;q++)box(.05,.72,.14,mat(0xb5b7ae),x+q*w*.16,1.1,z+d/2+.16)}
 if(((gx+6)*12+(gz+6))%4===0){const doorPanel=box(1.02,1.9,.075,mat(0x273d42),x,1.02,z+d/2+.23,true);box(.11,2.08,.12,mat(0x87999a),x-.57,1.04,z+d/2+.22,true);box(.11,2.08,.12,mat(0x87999a),x+.57,1.04,z+d/2+.22,true);box(1.25,.12,.12,mat(0x70d9c4),x,2.12,z+d/2+.22,true);doors.push({x,z:z+d/2+1.12,outsideX:x,outsideZ:z+d/2+1.12,district,mesh:doorPanel})}
 }
+
+// Distant skyline ring: one batched layer extends the city silhouette beyond the playable boundary without adding collisions.
+const skylineGeometry=new THREE.BoxGeometry(1,1,1),skylineBatches=[
+ {material:mat(0x56666f,.94,.02),matrices:[]},
+ {material:mat(0x64747b,.96,.015),matrices:[]},
+ {material:mat(0x465861,.94,.025),matrices:[]}
+],skylineDummy=new THREE.Object3D();
+for(let x=-315;x<=315;x+=18)for(let z=-315;z<=315;z+=18){
+ const edge=Math.max(Math.abs(x),Math.abs(z));if(edge<190||edge>315||rand()<.18)continue;
+ const w=8+rand()*9,d=8+rand()*9,h=17+rand()*73;
+ skylineDummy.position.set(x+(rand()-.5)*5,h/2,z+(rand()-.5)*5);
+ skylineDummy.rotation.set(0,(rand()-.5)*.16,0);skylineDummy.scale.set(w,h,d);skylineDummy.updateMatrix();
+ skylineBatches[Math.floor(rand()*skylineBatches.length)].matrices.push(skylineDummy.matrix.clone());
+}
+for(const batch of skylineBatches){if(!batch.matrices.length)continue;const mesh=new THREE.InstancedMesh(skylineGeometry,batch.material,batch.matrices.length);for(let i=0;i<batch.matrices.length;i++)mesh.setMatrixAt(i,batch.matrices[i]);mesh.instanceMatrix.needsUpdate=true;mesh.userData.cityStatic=true;mesh.userData.alwaysVisible=true;mesh.frustumCulled=false;scene.add(mesh);cityStaticMeshes.push(mesh)}
 
 for(const bucket of windowBuckets){if(!bucket.matrices.length)continue;const inst=new THREE.InstancedMesh(windowGeometry,bucket.material,bucket.matrices.length);for(let i=0;i<bucket.matrices.length;i++)inst.setMatrixAt(i,bucket.matrices[i]);inst.instanceMatrix.needsUpdate=true;inst.userData.cityStatic=true;inst.userData.alwaysVisible=true;scene.add(inst);cityStaticMeshes.push(inst);windowMeshes.push(inst)}
 for(const batch of architectureBatches){if(!batch.matrices.length)continue;const inst=new THREE.InstancedMesh(architectureGeometry,batch.material,batch.matrices.length);for(let i=0;i<batch.matrices.length;i++)inst.setMatrixAt(i,batch.matrices[i]);inst.instanceMatrix.needsUpdate=true;inst.castShadow=true;inst.receiveShadow=true;inst.userData.cityStatic=true;inst.userData.alwaysVisible=true;scene.add(inst);cityStaticMeshes.push(inst)}
@@ -124,74 +141,75 @@ interiorBox(2.2,1.8,.16,mat(0x374d55),rx,1.15,rz-4.72);interiorBox(1.4,1.1,.08,m
 interiorBox(1.25,.85,.75,mat(palette.wood),rx-2.7,.43,rz+1.7);interiorBox(.18,1.6,.18,mat(0x4a5553),rx-3.15,.8,rz+1.7);interiorBox(.18,1.6,.18,mat(0x4a5553),rx-2.25,.8,rz+1.7);
 interiorBox(.55,1.2,.55,mat(0x6a8e6b),rx+3.4,.6,rz-2.7);interiorBox(.9,.1,.7,mat(palette.wood),rx+.7,.55,rz+1.8);
 }
+const characterGeometryCache=new Map();function characterGeo(type,...args){const key=type+':'+args.join(',');let geometry=characterGeometryCache.get(key);if(!geometry){const Ctor=THREE[type];geometry=new Ctor(...args);characterGeometryCache.set(key,geometry)}return geometry}
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
  // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.
  const g=new THREE.Group(),shirt=mat(color,.78),pants=mat([0x263440,0x39434a,0x51483e,0x303d35,0x4a3b4a][Math.floor(rand()*5)],.88),skin=mat([0xf0c8a4,0xd6a77f,0xb9825e,0x8d6049,0xe0b08b,0x9d6d50][Math.floor(rand()*6)],.88),shoe=mat([0x20262a,0x3a3029,0x171d21,0x4b4740][Math.floor(rand()*4)],.76),hairMat=mat([0x30251f,0x17191b,0x5c3d2a,0x74604a,0x272d34][Math.floor(rand()*5)],.94),seamMat=mat(0x202b30,.9),bodyScale=0.94+rand()*.12,legScale=.94+rand()*.12,shoulderScale=.92+rand()*.16;
  const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
  // Torso layers give a clearer shoulder/chest-to-waist silhouette than a single capsule.
- const torso=addMesh(g,new THREE.CapsuleGeometry(.255,.48,5,12),shirt,0,1.13,0,1.02*shoulderScale,1,.88);
- addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,1.34,0,.32*shoulderScale,.19,.205);
- addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,.99,.006,.245,.19,.19);
- const collar=addMesh(g,new THREE.CylinderGeometry(.105,.12,.07,12),seamMat,0,1.445,0);
- const neck=addMesh(g,new THREE.CylinderGeometry(.085,.105,.18,12),skin,0,1.51,.012);
+ const torso=addMesh(g,characterGeo('CapsuleGeometry',.255,.48,5,12),shirt,0,1.13,0,1.02*shoulderScale,1,.88);
+ addMesh(g,characterGeo('SphereGeometry',1,14,10),shirt,0,1.34,0,.32*shoulderScale,.19,.205);
+ addMesh(g,characterGeo('SphereGeometry',1,14,10),shirt,0,.99,.006,.245,.19,.19);
+ const collar=addMesh(g,characterGeo('CylinderGeometry',.105,.12,.07,12),seamMat,0,1.445,0);
+ const neck=addMesh(g,characterGeo('CylinderGeometry',.085,.105,.18,12),skin,0,1.51,.012);
  // Head shape, ears, nose, lips, eyes and brows are separate readable forms.
- addMesh(g,new THREE.SphereGeometry(1,20,16),skin,0,1.735,.012,.177,.225,.16);
- addMesh(g,new THREE.SphereGeometry(1,12,10),skin,-.176,1.72,0,.035,.06,.045);
- addMesh(g,new THREE.SphereGeometry(1,12,10),skin,.176,1.72,0,.035,.06,.045);
- addMesh(g,new THREE.SphereGeometry(1,12,10),skin,0,1.72,.163,.038,.052,.05);
- const mouth=addMesh(g,new THREE.BoxGeometry(.07,.012,.012),mat(0x784b45,.9),0,1.648,.158,.95,1,1,false);
+ addMesh(g,characterGeo('SphereGeometry',1,20,16),skin,0,1.735,.012,.177,.225,.16);
+ addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,-.176,1.72,0,.035,.06,.045);
+ addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,.176,1.72,0,.035,.06,.045);
+ addMesh(g,characterGeo('SphereGeometry',1,12,10),skin,0,1.72,.163,.038,.052,.05);
+ const mouth=addMesh(g,characterGeo('BoxGeometry',.07,.012,.012),mat(0x784b45,.9),0,1.648,.158,.95,1,1,false);
  for(const side of [-1,1]){
-   addMesh(g,new THREE.SphereGeometry(1,10,8),mat(0xf1e9db,.55),side*.067,1.765,.151,.035,.024,.012,false);
-   addMesh(g,new THREE.SphereGeometry(1,10,8),mat(0x263039,.45),side*.067,1.765,.163,.014,.018,.008,false);
-   const brow=addMesh(g,new THREE.CapsuleGeometry(.012,.045,3,6),hairMat,side*.067,1.801,.15,1,1,1,false);brow.rotation.z=side*.12;
+   addMesh(g,characterGeo('SphereGeometry',1,10,8),mat(0xf1e9db,.55),side*.067,1.765,.151,.035,.024,.012,false);
+   addMesh(g,characterGeo('SphereGeometry',1,10,8),mat(0x263039,.45),side*.067,1.765,.163,.014,.018,.008,false);
+   const brow=addMesh(g,characterGeo('CapsuleGeometry',.012,.045,3,6),hairMat,side*.067,1.801,.15,1,1,1,false);brow.rotation.z=side*.12;
  }
  // Hair cap plus a short rear hair volume avoids the featureless spherical head.
- addMesh(g,new THREE.SphereGeometry(1,16,10,0,Math.PI*2,0,Math.PI*.54),hairMat,0,1.82,.002,.184,.15,.17);
- addMesh(g,new THREE.SphereGeometry(1,12,8),hairMat,0,1.755,-.105,.16,.13,.09);
+ addMesh(g,characterGeo('SphereGeometry',1,16,10,0,Math.PI*2,0,Math.PI*.54),hairMat,0,1.82,.002,.184,.15,.17);
+ addMesh(g,characterGeo('SphereGeometry',1,12,8),hairMat,0,1.755,-.105,.16,.13,.09);
  // Belt, waistband, cuffs and seams provide clothing separation.
- addMesh(g,new THREE.CylinderGeometry(.225,.24,.075,14),mat(0x35302b,.82),0,.82,0);
- addMesh(g,new THREE.BoxGeometry(.075,.055,.025),mat(0xc2a66a,.55,.5),0,.82,.239,1,1,1,false);
+ addMesh(g,characterGeo('CylinderGeometry',.225,.24,.075,14),mat(0x35302b,.82),0,.82,0);
+ addMesh(g,characterGeo('BoxGeometry',.075,.055,.025),mat(0xc2a66a,.55,.5),0,.82,.239,1,1,1,false);
  const legs=[],arms=[],hands=[];
  for(let i=0;i<2;i++){
    const side=i===0?1:-1,hip=new THREE.Group();hip.position.set(side*.125,.81,0);g.add(hip);
-   addMesh(hip,new THREE.CapsuleGeometry(.105,.31,4,8),pants,0,-.205,0,1,1,.98);
-   addMesh(hip,new THREE.SphereGeometry(1,12,9),pants,0,-.405,.005,.082,.09,.082);
-   addMesh(hip,new THREE.CapsuleGeometry(.073,.29,4,8),pants,0,-.49,.008,1,1,.96);
-   addMesh(hip,new THREE.CylinderGeometry(.078,.075,.045,10),seamMat,0,-.62,.012);
+   addMesh(hip,characterGeo('CapsuleGeometry',.105,.31,4,8),pants,0,-.205,0,1,1,.98);
+   addMesh(hip,characterGeo('SphereGeometry',1,12,9),pants,0,-.405,.005,.082,.09,.082);
+   addMesh(hip,characterGeo('CapsuleGeometry',.073,.29,4,8),pants,0,-.49,.008,1,1,.96);
+   addMesh(hip,characterGeo('CylinderGeometry',.078,.075,.045,10),seamMat,0,-.62,.012);
    // Foot/shoe includes a shaped upper, toe box and visible sole.
-   addMesh(hip,new THREE.SphereGeometry(1,12,9),shoe,0,-.675,.07,.09,.07,.16);
-   addMesh(hip,new THREE.BoxGeometry(.18,.035,.29),mat(0x101619,.95),0,-.716,.065);
+   addMesh(hip,characterGeo('SphereGeometry',1,12,9),shoe,0,-.675,.07,.09,.07,.16);
+   addMesh(hip,characterGeo('BoxGeometry',.18,.035,.29),mat(0x101619,.95),0,-.716,.065);
    legs.push(hip);
    const arm=new THREE.Group();arm.position.set(side*.285,1.355,0);g.add(arm);
-   addMesh(arm,new THREE.SphereGeometry(1,12,10),shirt,side*.008,-.045,0,.105,.12,.11);
-   const upper=addMesh(arm,new THREE.CapsuleGeometry(.071,.245,4,8),shirt,0,-.185,0,1,1,.98);
-   const elbow=addMesh(arm,new THREE.SphereGeometry(1,12,9),shirt,0,-.33,.006,.068,.075,.07);
-   const fore=addMesh(arm,new THREE.CapsuleGeometry(.055,.23,4,8),skin,0,-.425,.014,1,1,.95);
+   addMesh(arm,characterGeo('SphereGeometry',1,12,10),shirt,side*.008,-.045,0,.105,.12,.11);
+   const upper=addMesh(arm,characterGeo('CapsuleGeometry',.071,.245,4,8),shirt,0,-.185,0,1,1,.98);
+   const elbow=addMesh(arm,characterGeo('SphereGeometry',1,12,9),shirt,0,-.33,.006,.068,.075,.07);
+   const fore=addMesh(arm,characterGeo('CapsuleGeometry',.055,.23,4,8),skin,0,-.425,.014,1,1,.95);
    // Sleeve cuff and palm are sized separately so the hand reads as a hand, not a ball.
-   addMesh(arm,new THREE.CylinderGeometry(.063,.06,.055,10),shirt,0,-.34,.012);
-   const palm=addMesh(arm,new THREE.SphereGeometry(1,14,10),skin,0,-.535,.025,.073,.087,.043);
+   addMesh(arm,characterGeo('CylinderGeometry',.063,.06,.055,10),shirt,0,-.34,.012);
+   const palm=addMesh(arm,characterGeo('SphereGeometry',1,14,10),skin,0,-.535,.025,.073,.087,.043);
    const fingerGroups=[];
    const fingerDefs=[{x:-.047,len:.078,r:.012},{x:-.019,len:.095,r:.013},{x:.011,len:.101,r:.013},{x:.039,len:.085,r:.011}];
    for(let fi=0;fi<fingerDefs.length;fi++){
      const fd=fingerDefs[fi],fg=new THREE.Group();fg.position.set(fd.x,-.585,.027);fg.rotation.z=(fd.x/.05)*-.08;arm.add(fg);
-     addMesh(fg,new THREE.CapsuleGeometry(fd.r,fd.len*.52,3,6),skin,0,-fd.len*.28,0,1,1,.9);
-     addMesh(fg,new THREE.SphereGeometry(fd.r*1.03,8,6),skin,0,-fd.len*.56,0);
-     const distal=addMesh(fg,new THREE.CapsuleGeometry(fd.r*.78,fd.len*.30,3,6),skin,0,-fd.len*.72,.001,1,1,.9);
+     addMesh(fg,characterGeo('CapsuleGeometry',fd.r,fd.len*.52,3,6),skin,0,-fd.len*.28,0,1,1,.9);
+     addMesh(fg,characterGeo('SphereGeometry',fd.r*1.03,8,6),skin,0,-fd.len*.56,0);
+     const distal=addMesh(fg,characterGeo('CapsuleGeometry',fd.r*.78,fd.len*.30,3,6),skin,0,-fd.len*.72,.001,1,1,.9);
      fingerGroups.push(fg);
    }
    // Opposing, angled thumb with two segments and a knuckle.
    const thumb=new THREE.Group();thumb.position.set(side*.063,-.535,.035);thumb.rotation.z=side*-.72;arm.add(thumb);
-   addMesh(thumb,new THREE.CapsuleGeometry(.014,.055,3,6),skin,side*.015,-.025,0,1,1,.9);
-   addMesh(thumb,new THREE.SphereGeometry(.014,8,6),skin,side*.03,-.058,.002);
-   addMesh(thumb,new THREE.CapsuleGeometry(.011,.04,3,6),skin,side*.035,-.079,.002,1,1,.9);
+   addMesh(thumb,characterGeo('CapsuleGeometry',.014,.055,3,6),skin,side*.015,-.025,0,1,1,.9);
+   addMesh(thumb,characterGeo('SphereGeometry',.014,8,6),skin,side*.03,-.058,.002);
+   addMesh(thumb,characterGeo('CapsuleGeometry',.011,.04,3,6),skin,side*.035,-.079,.002,1,1,.9);
    fingerGroups.push(thumb);
    arms.push(arm);hands.push({palm,fingers:fingerGroups,side});
  }
  // Backpack, shoulder seams, pocket and shoe accents add silhouette and fabric detail.
- addMesh(g,new THREE.BoxGeometry(.27,.37,.12),mat(0x384b49,.92),0,1.13,-.235);
- addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),-.11,1.04,.205);
- addMesh(g,new THREE.BoxGeometry(.11,.16,.018),mat(0x4d6260,.95),.11,1.04,.205);
+ addMesh(g,characterGeo('BoxGeometry',.27,.37,.12),mat(0x384b49,.92),0,1.13,-.235);
+ addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),mat(0x4d6260,.95),-.11,1.04,.205);
+ addMesh(g,characterGeo('BoxGeometry',.11,.16,.018),mat(0x4d6260,.95),.11,1.04,.205);
  g.scale.set(bodyScale,legScale,bodyScale);g.userData={legs,arms,hands,torso,phase:rand()*7,speed:.78+rand()*.48,dir:rand()*Math.PI*2};
  return g
 }
@@ -339,7 +357,7 @@ function installRiggedPlayer(gltf){
    for(const action of new Set(Object.values(actions)))if(action){action.setLoop(THREE.LoopRepeat,Infinity);action.clampWhenFinished=false}
    actions.idle.reset().play();
  }
- for(const child of [...player.children]){player.remove(child);child.traverse?.(o=>{if(o.isMesh)o.geometry?.dispose?.()})}
+ for(const child of [...player.children])player.remove(child); // Procedural character geometries are shared with pedestrians, so retain the cache during rig swaps.
  player.add(modelRoot);player.userData.legs=[];player.userData.arms=[];player.userData.hands=[];
  player.userData.rig={model,modelRoot,bones,fingerBones,bodyBones,mixer,clips,actions,activeAction:actions.idle,actionNames:clips.map(c=>c.name||'(unnamed)')};
  player.userData.riggedAsset=true;player.userData.setFingerPose=setPlayerFingerPose;
@@ -408,4 +426,4 @@ bindHold('gasBtn','w');bindHold('brakeBtn','s');
 addEventListener('pagehide',()=>{clearInputs();saveSettings()});let autosaveElapsed=0,cpuMsSum=0,cpuMsSamples=0,cpuMsPeak=0;let shadowFollowElapsed=0;function frame(){requestAnimationFrame(frame);const workStart=performance.now();let dt=Math.min(clock.getDelta(),.04);shadowFollowElapsed+=dt;if(!interiorMode&&shadowFollowElapsed>=.2){shadowFollowElapsed=0;const targetX=inCar?inCar.g.position.x:player.position.x,targetZ=inCar?inCar.g.position.z:player.position.z;sun.position.set(targetX+(nightMode?34:-48),nightMode?28:85,targetZ+(nightMode?-26:34));sun.target.position.set(targetX,0,targetZ);sun.target.updateMatrixWorld();sun.updateMatrixWorld()}autosaveElapsed+=dt;if(autosaveElapsed>=12){autosaveElapsed=0;saveSettings()}fpsElapsed+=dt;fpsFrames++;if(fpsElapsed>=.5){shownFps=Math.round(fpsFrames/fpsElapsed);const avgCpu=cpuMsSamples?cpuMsSum/cpuMsSamples:0;$('perf').textContent='FPS '+shownFps+' · JS '+avgCpu.toFixed(1)+'/'+cpuMsPeak.toFixed(1)+'ms · DC '+renderer.info.render.calls+' · TRI '+renderer.info.render.triangles+' · GEO '+renderer.info.memory.geometries+' · TEX '+renderer.info.memory.textures+' · MEM: n/a · '+['LOW','BALANCED','HIGH','ULTRA'][quality]+' · '+playerAssetStatus;fpsFrames=0;fpsElapsed=0;cpuMsSum=0;cpuMsSamples=0;cpuMsPeak=0}if(!paused){update(dt);renderer.render(scene,camera)}const cpuMs=performance.now()-workStart;cpuMsSum+=cpuMs;cpuMsSamples++;cpuMsPeak=Math.max(cpuMsPeak,cpuMs)}frame();if(saved.version>=7)applyQuality(quality);else applyQuality(1);if(nightMode)setNight(true);
 // One four-preset graphics controller is shared by the HUD and pause menu.
 addEventListener('resize',()=>{camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();renderer.setPixelRatio(Math.min(devicePixelRatio,[1.0,Math.min(devicePixelRatio,1.25),Math.min(devicePixelRatio,1.5),Math.min(devicePixelRatio,2.0)][quality]));renderer.setSize(innerWidth,innerHeight)});
-loadfill.style.width='100%';loadnote.textContent='City ready · entering world';setTimeout(()=>{load.style.opacity='0';setTimeout(()=>load.remove(),550);say('REALCITY PART 11 · Visual realism overhaul ready')},450);
+loadfill.style.width='100%';loadnote.textContent='City ready · entering world';setTimeout(()=>{load.style.opacity='0';setTimeout(()=>load.remove(),550);say('REALCITY PART 13 · City depth & character performance')},450);

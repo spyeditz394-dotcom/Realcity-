@@ -2,44 +2,61 @@
 
 Date: 2026-10-18  
 Branch: `part-7-open-world-systems`  
-Base: `part-6-animation-and-research-fixes` at `cf17ae7b797cea77632e7998d41ad7310d47131e`
+Latest code change in this slice: `763a139e7b74e2031decf81314c479aa33ef08b5`  
+Documentation commits: `962baa4a473c4aaf98395d91039d79aeb479f218`, `eaa4fab67d62798897b821faefe7eec3b1231481`
 
-## Scope of this implementation slice
+## Existing implementation inspected
 
-This is an incremental change to the existing Vite/Three.js/Rapier project. It does not replace the game with a separate demo, and it does not touch ANICORE.
+This remains the existing Vite / Three.js / Rapier browser game, not a replacement demo. The package declares Three.js 0.160.0, `@dimforge/rapier3d-compat` 0.17.3, Vite 6.4.4 and TypeScript 5.8.3. The game is still concentrated in `src/main.ts` with interface markup in `index.html`.
 
-### Implemented in source
+Source contains a procedural city, grid-based road and sidewalk geometry, district palettes, local detail textures, instanced window/road-marking batches, street props, a procedural NPC crowd, procedural cars/traffic, Rapier collision setup, a remote GLB player-loading attempt with validation/fallback, controls, vehicle interactions, day/night, settings persistence, and one interior. Presence in source is not equivalent to runtime verification.
 
-- Replaced city-wide random pedestrian spawn points and arbitrary world-coordinate goals with candidate sidewalk-grid waypoints aligned to the existing 20-unit street grid.
-- Added candidate validation against the existing static/vehicle collision query and nearby pedestrian spacing before selecting a waypoint.
-- Added adjacent waypoint selection, bounded rerouting when a pedestrian is blocked, and a nearby safe-waypoint fallback rather than repeatedly choosing random coordinates across buildings.
-- Kept the existing 22 pedestrians, procedural person appearance, locomotion pose, and distance-based update skipping. This is a navigation foundation, not a claim of production-quality human animation or a full pedestrian crossing system.
-- Bumped saved settings schema to version 6 so the first run after this Part 7 migration starts at ULTRA. Later quality choices continue to persist. This is intended to preserve an honest initial baseline rather than silently lower quality.
-- Updated the browser title, loading label, and ready toast from the stale Part 4.5 label to Part 7.
+## Changes implemented in this Part 7 slice
 
-## Verification status
+- Pedestrian candidate waypoints moved from `±5.8` to `±4.72` units so the nodes sit within the generated sidewalk strip centered around `±4.76`, rather than outside its outer edge.
+- The fallback pedestrian waypoint changed from `(5.8, 25.8)` to `(4.72, 24.72)` to follow the same coordinate convention.
+- Removed the unsupported `characterUltraBenchmarkDone: true` property from saved settings. A real ULTRA benchmark has not yet been run, so the game must not persist a claim that it has.
+- Changed the HUD's unsupported `MAP≈1MB*` text to `MEM: n/a`. The HUD still exposes renderer counters and CPU-side callback timing, but no actual memory-byte measurement.
+- Added `docs/PART_7_REALISM_AUDIT.md` with evidence categories, prioritized defects, acceptance tests and release gates.
+- Added `docs/PART_7_REFERENCE_GAME_STUDY.md` with public-source boundaries and a reference comparison matrix.
 
-| Area | Status | Evidence / limitation |
+## Verification record
+
+| Check | Status | Evidence / limitation |
 |---|---|---|
-| Branch checkpoint | PASS | Dedicated branch created from the verified Part 6 branch head. |
-| Source changes | PASS | GitHub commits exist on `part-7-open-world-systems`. |
-| Waypoint design | IMPLEMENTED / NOT RUNTIME-TESTED | Code uses safe candidate nodes and local rerouting; visual navigation must still be observed in a running WebGL session. |
-| TypeScript / Vite production build | PASS | Vercel build log for source commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c` reports `✓ built in 3.45s` and `Build Completed`; this is a production build check, not a runtime test. |
-| Preview HTTP / version marker | PASS | Vercel preview returned HTTP 200 and the HTML title `REALCITY — Part 7 Living City Systems` for source commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c`; later commits only corrected the verification report. |
-| Browser runtime / console / WebGL | NOT TESTED | The page response was fetched, but no interactive browser session, rendered-scene inspection, console inspection, or gameplay recording was available. |
-| Character mesh, skeleton, skin weights, fingers | NOT TESTED | The external GLB remains unverified; the procedural fallback is not equivalent to a high-quality skinned human. |
-| Traffic / driving / collisions | NOT TESTED | No behavior regression run was performed. |
-| Save/load / touch controls | NOT TESTED | No interactive regression pass was performed. |
-| ULTRA benchmark | NOT TESTED | Schema migration sets the initial preset to ULTRA; it does not constitute a benchmark. |
-| OPPO A5 Pro | NOT TESTED | The physical target device was not used. |
-| Production deployment | NOT ATTEMPTED | No merge to `main` and no production release was performed. |
-| ANICORE | PRESERVED | No ANICORE files or repositories were accessed for editing. |
+| Branch / repository | PASS | Changes committed to the dedicated `part-7-open-world-systems` branch. |
+| Source patch integrity | PASS | Follow-up source read confirms the sidewalk offset/fallback and honest HUD text; unsupported benchmark-complete field is absent. |
+| Vercel production build | PASS for code commit `763a139e7b74e2031decf81314c479aa33ef08b5` | Vercel deployment `dpl_7Ch42v4f17JX7ptDVEugAKXFjAAY` is READY; log reports Vite `✓ built in 2.89s` and `Build Completed`. |
+| Bundle size | WARNING | Build reports `index-CeCjUOH5.js` at 3,034.15 kB before gzip / 1,059.19 kB gzip; Vite warns that chunks exceed 500 kB. |
+| Preview HTTP response | PASS for deployment `763a139...` | Vercel deployment state is READY. A READY state alone does not prove WebGL initialization or runtime gameplay. |
+| New documentation deployment | PENDING at last status check | Documentation commit `eaa4fab...` had a Vercel deployment in BUILDING state at the time of inspection. |
+| Browser console / network errors | NOT TESTED | No interactive browser DevTools session available. |
+| Rendered player appearance and skin deformation | NOT TESTED | The code validates bounds, bone count and finger-bone naming, but the actual mesh, skin weights, bone axes and visible deformation have not been visually inspected in a running browser. |
+| External GLB licensing/provenance | BLOCKED | The URL is external and no definitive license/author record was verified in the inspected source/docs. Do not treat a commit message or URL alone as a license. |
+| Animation transitions | NOT TESTED | Source has name-based idle/walk/run/jump action buckets and mixer update; no rendered locomotion capture was collected. |
+| Pedestrian sidewalk traversal | NOT TESTED | Waypoint coordinates were corrected in source, but path segments, corners, obstacles, spacing and sustained movement must be observed in-game. |
+| Driving / traffic / collisions / service | NOT TESTED | No interactive regression session was performed. |
+| Touch controls / save-load / day-night / interiors | NOT TESTED | No interactive regression session was performed. |
+| ULTRA performance on OPPO A5 Pro | NOT TESTED | No physical device session or measured FPS/frame-time run was available. |
+| Production merge/release | NOT ATTEMPTED | No merge to the production branch was performed. |
+| ANICORE | PRESERVED | No ANICORE repository or files were edited. |
 
-## Build note\n\nVite reports a large-bundle warning: `dist/assets/index-BR0qWvoa.js` is about 3,034.18 kB before gzip and 1,059.22 kB gzip. This is an optimization follow-up, not a build failure. No code splitting or visual-quality reduction was introduced in this slice.\n\n## Known risks and next gates
+## Known limitations and next gates
 
-1. The production build and Part 7 preview title are verified for commit `e5dc5b23e90a9177ce4cd02c4ac6cb0b516ce83c`. Continue with interactive browser inspection; an HTTP 200/title check alone does not prove the WebGL scene runs correctly.
-2. Observe pedestrian spawn points and route traversal in the running scene. Check that the lane offset is clear of building colliders in all generated blocks; inspect stuck/re-route behavior over several minutes.
-3. Inspect the external character asset's author, license, file size, mesh materials, skeleton hierarchy, skin weights, animation clips, and finger axes before distribution. Its source URL remains undocumented for licensing purposes.
-4. Add automated tests or a repeatable browser test harness before extending the AI system. The current package has only `dev`, `build`, and `preview` scripts.
-5. Only after the waypoint system passes visual testing, continue to the next milestone: reuse a verified character pipeline for NPCs, then test vehicle traffic, city visuals, interactions, and mobile controls in focused slices.
-6. Capture ULTRA baseline metrics on a fixed route before optimizing. Current HUD counters are renderer/CPU-side indicators, not complete GPU timing or memory-byte measurements.
+1. The procedural person is a fallback made from separate meshes. It is not equivalent to a fully skinned, production-quality human character.
+2. The remote GLB must be approved for license, provenance, file size, skinning, clip compatibility and reliable delivery. Prefer a reviewed local asset when redistribution is permitted.
+3. The pedestrian waypoint implementation remains a small grid-based selector, not a complete pedestrian navigation/crowd system. The offset correction must be tested in a running scene.
+4. The city remains procedural and box-heavy. District differentiation is currently mainly palette, height range and frontage variation. Build a few coherent authored architectural kits and landmarks only after baseline captures.
+5. The one interior is a single reusable room placed at remote world coordinates and toggled visible/invisible. Test entry/exit, collision, camera, save/reload and recovery before adding more.
+6. The current build is large. Profile before introducing code splitting or lowering quality; do not treat bundle size alone as measured frame-rate evidence.
+7. No runtime, browser-console, real-device or visual acceptance test is claimed PASS until it has actually been performed.
+
+## Immediate acceptance sequence
+
+- [ ] Open the newest READY preview in an interactive browser and inspect console/network failures.
+- [ ] Verify remote GLB success and fallback by testing with and without network access.
+- [ ] Capture the player idle/walk/run/jump and inspect skinning/finger deformation.
+- [ ] Observe pedestrians on straight sidewalks, at corners, near buildings, near other pedestrians and over a sustained session.
+- [ ] Repeat driving, collision, service, enter/exit, pause/resume, recovery, save/reload, day/night and quality-preset tests.
+- [ ] Record a fixed-route ULTRA benchmark on OPPO A5 Pro with browser version, scene route, duration, median/low FPS and CPU-side timing. Do not invent GPU time or memory metrics.
+- [ ] Only after these gates pass, consider broader visual changes or a production merge.

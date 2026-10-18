@@ -256,9 +256,10 @@ function installRiggedPlayer(gltf){
  // Reject the upstream matte-jade mannequin: it has one untextured material and is the reason
  // the visible player can regress to a pale, featureless placeholder. Keep the detailed fallback
  // until a visually qualified, licensed character is supplied.
- const modelMaterials=new Set();let hasTextureOrVertexColor=false;
- model.traverse(o=>{if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const material of materials){if(!material)continue;modelMaterials.add(material);if(material.map||material.normalMap||material.roughnessMap||material.metalnessMap||material.emissiveMap)hasTextureOrVertexColor=true}if(o.geometry?.getAttribute('color'))hasTextureOrVertexColor=true});
- if(modelMaterials.size<2&&!hasTextureOrVertexColor)throw new Error('Visual quality gate: single-material untextured mannequin; keeping detailed fallback');
+ const modelMaterials=new Set();let hasTextureOrVertexColor=false,hasUsefulMaterialColor=false;
+ model.traverse(o=>{if(!o.isMesh)return;const materials=Array.isArray(o.material)?o.material:[o.material];for(const material of materials){if(!material)continue;modelMaterials.add(material);if(material.map||material.normalMap||material.roughnessMap||material.metalnessMap||material.emissiveMap)hasTextureOrVertexColor=true;const color=material.color;if(color&&Math.max(color.r,color.g,color.b)-Math.min(color.r,color.g,color.b)>.12&&Math.max(color.r,color.g,color.b)<.97)hasUsefulMaterialColor=true}if(o.geometry?.getAttribute('color'))hasTextureOrVertexColor=true});
+ // Rig and bone count are not visual-quality evidence. Reject untextured, uncolored white mannequins even when their skeleton is valid.
+ if(!hasTextureOrVertexColor&&!hasUsefulMaterialColor)throw new Error('Visual quality gate: untextured monochrome mannequin; keeping clothed procedural character');
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
  if(!Number.isFinite(size.y)||size.y<.25)throw new Error('Humanoid model has invalid bounds');
  const modelRoot=new THREE.Group(),scale=1.78/size.y;model.scale.setScalar(scale);model.position.y=-bounds.min.y*scale;modelRoot.add(model);

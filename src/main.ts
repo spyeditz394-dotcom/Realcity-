@@ -1,6 +1,5 @@
 
 import * as THREE from 'three';
-import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 const $=id=>document.getElementById(id),root=$('game'),load=$('loading'),loadfill=$('loadfill'),loadnote=$('loadnote');
 let startupErrorShown=false;
 function reportStartupFailure(reason){
@@ -332,7 +331,7 @@ function installRiggedPlayer(gltf){
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');
 }
-function loadRiggedPlayer(){const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}
+async function loadRiggedPlayer(){try{const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}catch(err){playerAssetStatus='Rig loader unavailable · using procedural fallback';console.warn('REALCITY rig loader import failed; keeping fallback.',err)}}
 
 loadRiggedPlayer();
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}

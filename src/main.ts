@@ -332,7 +332,7 @@ for(const spec of trafficSpecs){
 }
 // Use local GLB vehicle bodies when licensed binaries are bundled; preserve procedural fallback.
 async function loadImportedVehicleVisuals(){
- const paths=['/models/realcity-sedan.glb','/models/realcity-hatchback-sports.glb','/models/realcity-suv.glb'];
+ const paths=['/models/realcity-sedan-cc0.glb'];
  try{
   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
   const loader=new GLTFLoader(),assets=[];

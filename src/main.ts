@@ -526,7 +526,7 @@ async function loadRiggedPlayer(){
  }catch(err){
   playerAssetStatus='Rig unavailable · built-in character active';
   const status=$('characterStatus');if(status){status.textContent='3D MODEL: BUILT-IN';status.style.color='#ffd18a'}
-  console.error('REALCITY imported character failed; built-in articulated human remains active. To enable offline/local loading, place the verified GLB at public/models/realcity-protagonist.glb.',err);
+  console.error('REALCITY imported character failed; built-in articulated human remains active. Expected bundled asset: public/models/realcity-protagonist-upgraded.glb.',err);
  }
 }
 

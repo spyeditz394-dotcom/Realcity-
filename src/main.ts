@@ -5,7 +5,7 @@ import { clone as cloneSkeleton } from 'three/addons/utils/SkeletonUtils.js';
 const $=id=>document.getElementById(id),root=$('game'),load=$('loading'),loadfill=$('loadfill'),loadnote=$('loadnote');const yieldFrame=()=>new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
 const deviceMemoryGB=(navigator as Navigator & {deviceMemory?:number}).deviceMemory;const mobileSafeDefault=matchMedia('(pointer: coarse)').matches||(typeof deviceMemoryGB==='number'&&deviceMemoryGB<=4)||navigator.hardwareConcurrency<=4;let quality=1,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=4?Math.max(0,Math.min(3,saved.quality)):(mobileSafeDefault?1:2);const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4d1);scene.fog=new THREE.FogExp2(0xa3c3ca,.00055);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,420);
-const renderer=new THREE.WebGLRenderer({antialias:!mobileSafeDefault,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,mobileSafeDefault?1.0:[1.0,1.25,1.5,2.0][quality]));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=quality>=1;renderer.shadowMap.type=THREE.PCFSoftShadowMap;root.appendChild(renderer.domElement);
+const renderer=new THREE.WebGLRenderer({antialias:!mobileSafeDefault,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,mobileSafeDefault?0.85:[1.0,1.25,1.5,2.0][quality]));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=quality>=1;renderer.shadowMap.type=THREE.PCFSoftShadowMap;root.appendChild(renderer.domElement);
 const hemi=new THREE.HemisphereLight(0xdff6ff,0x5c6554,2.0);scene.add(hemi);const sun=new THREE.DirectionalLight(0xffedce,3.0);sun.position.set(-48,85,34);sun.castShadow=true;sun.shadow.mapSize.set(1024,1024);sun.shadow.camera.left=-85;sun.shadow.camera.right=85;sun.shadow.camera.top=85;sun.shadow.camera.bottom=-85;sun.shadow.bias=-.0005;scene.add(sun);
 const mat=(c,r=.85,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,metalness:m});
 // Small procedural detail maps are generated locally: no external downloads and safe fallbacks.
@@ -495,7 +495,7 @@ function updateStaticCityVisibility(dt){
  if(staticCullElapsed<.18)return;
  staticCullElapsed=0;
  // Tighten low/mobile visibility radii to avoid submitting hundreds of distant facade/detail meshes.
- const radius=[58,78,125,175][quality],radiusSq=radius*radius,cx=camera.position.x,cz=camera.position.z;
+ const radius=[42,56,92,140][quality],radiusSq=radius*radius,cx=camera.position.x,cz=camera.position.z;
  for(const mesh of cityStaticMeshes){
   if(mesh.userData.cityStatic===false||mesh.userData.alwaysVisible)continue;
   const mx=typeof mesh.userData.cullX==='number'?mesh.userData.cullX:mesh.position.x,mz=typeof mesh.userData.cullZ==='number'?mesh.userData.cullZ:mesh.position.z;
@@ -506,9 +506,9 @@ function updateStaticCityVisibility(dt){
  // Skinned pedestrians and multi-part traffic models are draw-call expensive.
  // Keep simulation/collision active but only render actors near the player.
  const target=inCar?inCar.g.position:player.position,tx=target.x,tz=target.z;
- const pedRadius=[52,68,88,115][quality],pedRadiusSq=pedRadius*pedRadius;
+ const pedRadius=[36,48,70,95][quality],pedRadiusSq=pedRadius*pedRadius;
  for(const p of pedestrians){const dx=p.position.x-tx,dz=p.position.z-tz,show=dx*dx+dz*dz<=pedRadiusSq;if(p.visible!==show)p.visible=show}
- const vehicleRadius=[72,92,120,155][quality],vehicleRadiusSq=vehicleRadius*vehicleRadius;
+ const vehicleRadius=[48,64,90,120][quality],vehicleRadiusSq=vehicleRadius*vehicleRadius;
  for(const v of vehicles){if(v===inCar){if(!v.g.visible)v.g.visible=true;continue}const dx=v.g.position.x-tx,dz=v.g.position.z-tz,show=dx*dx+dz*dz<=vehicleRadiusSq;if(v.g.visible!==show)v.g.visible=show}
 }
 function setPaused(v){paused=v;$('pauseMenu').classList.toggle('open',paused);$('pauseBtn').textContent=paused?'▶ RESUME':'Ⅱ PAUSE';if(paused)clearInputs();say(paused?'Game paused':'Back to the city')}

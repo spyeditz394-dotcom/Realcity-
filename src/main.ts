@@ -477,7 +477,7 @@ function updateStaticCityVisibility(dt){
  staticCullElapsed=0;
  const radius=[118,158,208,270][quality],radiusSq=radius*radius,cx=camera.position.x,cz=camera.position.z;
  for(const mesh of cityStaticMeshes){
-  if(mesh.userData.alwaysVisible)continue;
+  if(mesh.userData.cityStatic===false||mesh.userData.alwaysVisible)continue;
   const dx=mesh.position.x-cx,dz=mesh.position.z-cz;
   const shouldShow=dx*dx+dz*dz<=radiusSq;
   if(mesh.visible!==shouldShow)mesh.visible=shouldShow;

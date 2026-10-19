@@ -67,11 +67,12 @@ interiorBox(10,3.3,.18,mat(0xc8c0b2),roomX,1.55,roomZ-4.95);interiorBox(10,3.3,.
 interiorBox(2.8,.12,1.5,mat(0x6e5946),roomX-1.6,.65,roomZ-1.5);interiorBox(2.8,.72,.18,mat(0x8a735d),roomX-1.6,1.05,roomZ-2.12);
 interiorBox(1.8,.82,.8,mat(0x477b78),roomX+2.3,.41,roomZ-1.6);interiorBox(.7,1.7,.7,mat(0x6a8e6b),roomX+3.3,.85,roomZ+2.5);
 interiorBox(2.2,1.8,.16,mat(0x374d55),roomX,1.15,roomZ-4.72);interiorBox(1.4,1.1,.08,mat(0x6bd9c6),roomX,1.3,roomZ-4.61);interiorBox(1.4,.08,.08,mat(0xb9d3cf),roomX,1.9,roomZ-4.6);
+const primitiveGeometryCache=new Map();function reusePrimitiveGeometry(geometry){const key=geometry.type+':'+JSON.stringify(geometry.parameters||{});const cached=primitiveGeometryCache.get(key);if(cached){geometry.dispose();return cached}primitiveGeometryCache.set(key,geometry);return geometry}
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.
  // This is an in-project model, not a downloaded/licensed AAA asset; keep it compatible with the existing gait controller.
  const g=new THREE.Group(),shirt=mat(color,.78),pants=mat(0x263440,.88),skin=mat(0xd6a77f,.88),shoe=mat(0x20262a,.76),hairMat=mat(0x30251f,.94),seamMat=mat(0x202b30,.9);
- const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
+ const addMesh=(parent,geometry,material,x,y,z,sx=1,sy=1,sz=1,cast=true)=>{geometry=reusePrimitiveGeometry(geometry);const m=new THREE.Mesh(geometry,material);m.position.set(x,y,z);m.scale.set(sx,sy,sz);m.castShadow=cast;m.receiveShadow=true;parent.add(m);return m};
  // Torso layers give a clearer shoulder/chest-to-waist silhouette than a single capsule.
  const torso=addMesh(g,new THREE.CapsuleGeometry(.255,.48,5,12),shirt,0,1.13,0,1.02,1,.88);
  addMesh(g,new THREE.SphereGeometry(1,14,10),shirt,0,1.34,0,.32,.19,.205);

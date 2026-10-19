@@ -36,9 +36,9 @@ try {
   await page.keyboard.up('w');
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   await page.locator('#jump').click();
-  await page.waitForFunction(() => window.__REALCITY_QA__().active === 'jump', null, { timeout: 5000 });
+  await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.jumpPeak > 0.01 && q.jumpFrames > 0; }, null, { timeout: 5000 });
   const jump = await page.evaluate(() => window.__REALCITY_QA__());
-  if (jump.position.y <= 0.01) throw new Error('Jump animation activated without upward player movement');
+  if (jump.jumpPeak <= 0.01 || jump.jumpFrames < 1) throw new Error('Jump input did not produce upward movement and airborne animation frames: ' + JSON.stringify(jump));
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 15000 });
   await page.evaluate(() => window.__REALCITY_QA__().prepareVehicle());
   await page.keyboard.press('e');
@@ -57,7 +57,7 @@ try {
   if (!carBefore.inCar || carAfter.vehiclePosition === null || Math.hypot(carAfter.vehiclePosition.x-carBefore.vehiclePosition.x,carAfter.vehiclePosition.z-carBefore.vehiclePosition.z)<0.05) throw new Error('Imported sedan did not move under throttle: '+JSON.stringify({carBefore,carAfter}));
   if (Math.hypot(walk.position.x-idle.position.x, walk.position.z-idle.position.z) < 0.01) throw new Error('Player position did not respond to forward input');
   if (errors.length) throw new Error('Browser errors: ' + errors.join(' | '));
-  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpAnimation: idle.jumpAnimation, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, pedestrianAssets: idle.pedestrianAssets, vehicles: idle.vehicles, sedanImported: idle.sedanImported, vehicleMoved: true, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
+  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpAnimation: idle.jumpAnimation, jumpPeak: jump.jumpPeak, jumpFrames: jump.jumpFrames, pedestrians: idle.pedestrians, pedestrianAssets: idle.pedestrianAssets, vehicles: idle.vehicles, sedanImported: idle.sedanImported, vehicleMoved: true, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');

@@ -8,7 +8,8 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:types": "tsc --noEmit",
-    "test:browser": "node scripts/realcity-browser-smoke.mjs"
+    "test:browser": "node scripts/realcity-browser-smoke.mjs",
+    "test:performance": "node scripts/realcity-mobile-performance.mjs"
   },
   "dependencies": {
     "three": "0.160.0"

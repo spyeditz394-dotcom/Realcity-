@@ -144,7 +144,7 @@ function person(color){
  g.userData={legs,knees,feet,arms,elbows,hands,torso,phase:rand()*7,speed:.28+rand()*.3,dir:rand()*Math.PI*2};
  return g
 }
-for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);p.position.set((rand()-.5)*205,0,(rand()-.5)*205);p.userData.goalX=(rand()-.5)*220;p.userData.goalZ=(rand()-.5)*220;p.userData.pause=rand()*2;scene.add(p);pedestrians.push(p)}
+const pedestrianCount=mobileSafeDefault?12:22;for(let i=0;i<pedestrianCount;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);p.position.set((rand()-.5)*205,0,(rand()-.5)*205);p.userData.goalX=(rand()-.5)*220;p.userData.goalZ=(rand()-.5)*220;p.userData.pause=rand()*2;scene.add(p);pedestrians.push(p)}
 loadfill.style.width='65%';loadnote.textContent='Preparing player and vehicles…';
 function car(color,x,z,rot=0,style='sedan'){
  const isSUV=style==='suv',isVan=style==='van',bodyWidth=isVan?2.02:isSUV?2:1.9,bodyLength=isVan?4.05:isSUV?3.9:3.75,cabinHeight=isVan?.78:isSUV?.72:.62;const g=new THREE.Group();g.userData.vehicleStyle=style;const bodyMat=new THREE.MeshPhysicalMaterial({color,roughness:.25,metalness:.34,clearcoat:.62,clearcoatRoughness:.24}),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78),rubberTrim=mat(0x303638,.78,.05);

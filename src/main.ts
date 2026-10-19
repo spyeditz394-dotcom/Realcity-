@@ -308,7 +308,7 @@ function loadRiggedPlayer(){
 }
 
 loadRiggedPlayer();
-if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],position:{x:player.position.x,y:player.position.y,z:player.position.z},canvas:!!renderer.domElement});}
+if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],pedestrians:pedestrians.length,vehicles:vehicles.length,position:{x:player.position.x,y:player.position.y,z:player.position.z},canvas:!!renderer.domElement});}
 
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}
 loadfill.style.width='82%';loadnote.textContent='Initializing controls and minimap…';

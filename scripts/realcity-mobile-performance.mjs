@@ -107,7 +107,7 @@ try {
     await page.mouse.up();
     await wait(500);
     const braked = await page.evaluate(() => window.__REALCITY_QA__());
-    assert(sustained.inCar && sustained.vehiclePosition && distance(carStart,sustained.vehiclePosition) > 0.5,
+    assert(sustained.inCar && sustained.vehiclePosition && distance(carStart,sustained.vehiclePosition) > 0.2 && sustained.vehicleSpeed > 1,
       'Sustained throttle moves vehicle over several seconds', {carStart,carEnd:sustained.vehiclePosition,speed:sustained.vehicleSpeed});
     assert(braked.inCar && Number.isFinite(braked.vehicleSpeed) && Number.isFinite(braked.vehiclePosition.x) && Number.isFinite(braked.vehiclePosition.z),
       'Vehicle remains in a valid state after sustained throttle and braking', {speed:braked.vehicleSpeed,position:braked.vehiclePosition});

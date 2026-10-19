@@ -15,7 +15,7 @@ try {
   if (!ready) throw new Error('Vite preview did not become ready');
   browser = await chromium.launch({ headless: true, args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
-  page.on('pageerror', e => errors.push('pageerror: ' + e.message));
+  page.on('pageerror', e => errors.push('pageerror: ' + (e.stack || e.message)));
   page.on('console', msg => { if (msg.type() === 'error') errors.push('console: ' + msg.text()); });
   let assetStatus = 0;
   page.on('response', response => { if (response.url().endsWith('/models/realcity-protagonist.glb')) assetStatus = response.status(); });

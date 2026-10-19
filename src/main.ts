@@ -194,7 +194,7 @@ for(const spec of trafficSpecs){
 }
 const player=person(0x20b7a5);let spawnX=Number.isFinite(saved.spawnX)?Math.max(-165,Math.min(165,saved.spawnX)):0,spawnZ=Number.isFinite(saved.spawnZ)?Math.max(-165,Math.min(165,saved.spawnZ)):23;if(saved.interior===true&&Number.isInteger(saved.interiorDoorIndex)&&doors[saved.interiorDoorIndex]){interiorMode=true;currentInteriorDoorIndex=saved.interiorDoorIndex;spawnX=roomX;spawnZ=roomZ;interiorMeshes.forEach(o=>o.visible=true)}if(blocked(spawnX,spawnZ,.55)){spawnX=0;spawnZ=23}player.position.set(spawnX,0,spawnZ);scene.add(player);
 
-let playerAssetStatus='Loading rigged human…',playerAssetLoadMs=0,playerFingerBoneCount=0;
+let playerAssetStatus='Loading rigged human…',playerAssetLoadMs=0,playerFingerBoneCount=0,playerAssetLoadStarted=false;
 const playerAssetStarted=performance.now();
 function getFingerKind(name){const n=name.toLowerCase().replace(/[^a-z0-9]/g,'');if(n.includes('thumb'))return 'thumb';if(n.includes('index'))return 'index';if(n.includes('middle'))return 'middle';if(n.includes('ring'))return 'ring';if(n.includes('pinky')||n.includes('little'))return 'little';return null}
 function getHandSide(name){const raw=name.toLowerCase(),n=raw.replace(/[^a-z0-9]/g,'');if(n.includes('left')||n.startsWith('lhand')||n.startsWith('lthumb')||n.startsWith('lindex')||n.startsWith('lmiddle')||n.startsWith('lring')||n.startsWith('lpinky')||n.startsWith('llittle')||/(?:^|[._ -])l(?:$|[._ -])/.test(raw)||/(?:^|[._ -])left(?:$|[._ -])/.test(raw))return 'left';if(n.includes('right')||n.startsWith('rhand')||n.startsWith('rthumb')||n.startsWith('rindex')||n.startsWith('rmiddle')||n.startsWith('rring')||n.startsWith('rpinky')||n.startsWith('rlittle')||/(?:^|[._ -])r(?:$|[._ -])/.test(raw)||/(?:^|[._ -])right(?:$|[._ -])/.test(raw))return 'right';return null}
@@ -246,7 +246,7 @@ function installRiggedPlayer(gltf){
    const match=bone.name.match(/(?:[._ -]?)([0-4])$/),segment=match?Number(match[1]):Math.min(3,fingerBones.filter(x=>x.side===side&&x.kind===kind).length);
    fingerBones.push({bone,kind,side,segment,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0),index:fingerBones.length});
  }
- if(bones.length<20||fingerBones.length<20){const names=bones.map(b=>b.name).filter(n=>/thumb|index|middle|ring|pinky|little/i.test(n));throw new Error('Rig validation: '+bones.length+' bones, '+fingerBones.length+' recognized finger joints; candidates: '+(names.slice(0,12).join(', ')||'none'))}
+ if(bones.length<20){throw new Error('Rig validation: expected at least 20 humanoid bones; found '+bones.length)}
  const bodyBones=[];
  for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
    if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
@@ -278,8 +278,8 @@ function installRiggedPlayer(gltf){
      animationActions[name]=action;
    }
  }
- if(bodyBones.length<4&&Object.keys(animationActions).length===0)throw new Error('Asset quality gate: no recognized locomotion bones or named animation clips; keeping animated human fallback');
- for(const child of [...player.children]){player.remove(child);child.traverse?.(o=>{if(o.isMesh)o.geometry?.dispose?.()})}
+ if(!animationActions.idle||!animationActions.walk||!animationActions.run)throw new Error('Asset quality gate: idle, walk and run clips are required; found '+clips.map(c=>c.name).join(', '));
+ for(const child of [...player.children])player.remove(child);
  player.add(modelRoot);player.userData.legs=[];player.userData.arms=[];player.userData.hands=[];
  player.userData.rig={model,modelRoot,bones,fingerBones,bodyBones,mixer,clips,animationActions,activeAction:null,activeActionName:null};
  player.userData.riggedAsset=true;player.userData.setFingerPose=setPlayerFingerPose;
@@ -287,6 +287,8 @@ function installRiggedPlayer(gltf){
  setPlayerFingerPose('relaxed');
 }
 function loadRiggedPlayer(){
+ if(playerAssetLoadStarted)return;
+ playerAssetLoadStarted=true;
  // Only load a model shipped with REALCITY. Do not silently depend on an
  // unverified third-party URL or an asset with unknown licensing.
  const url='/models/realcity-protagonist.glb';
@@ -294,8 +296,8 @@ function loadRiggedPlayer(){
  loader.load(url,gltf=>{
   try{
    installRiggedPlayer(gltf);
-   playerAssetStatus='Rigged human loaded · local REALCITY asset';
-   console.info('REALCITY character asset loaded:',url);
+   playerAssetStatus='Rigged human · '+gltf.animations.map(c=>c.name.split('|').pop()).join(', ');
+   console.info('REALCITY character asset loaded:',url,{bytes:'bundled GLB',bones:player.userData.rig.bones.length,skinnedMeshes:gltf.scene.children.length,clips:gltf.animations.map(c=>c.name)});
   }catch(err){
    playerAssetStatus='Local rig rejected · procedural animated fallback active';
    console.warn('REALCITY local character rig rejected; keeping animated fallback:',err);

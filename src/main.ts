@@ -411,11 +411,14 @@ function installRiggedPlayer(gltf){
 }
 async function loadRiggedPlayer(){
  // Pin the asset to an immutable upstream commit: "main" can change without a REALCITY code change.
- const assetPath='/public/assets/vendor/quaternius/night-striker.glb';
  const assetCommit='aa02a4e6d8337a0604d2da131bcbbeb1f01badf0';
+ const assetPath='/models/realcity-protagonist.glb';
+ // Prefer a branch-bundled binary; use the immutable, license-documented upstream only
+ // while the binary cannot yet be committed to this repository.
  const sources=[
-  'https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@'+assetCommit+assetPath,
-  'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/'+assetCommit+assetPath
+  assetPath,
+  'https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@'+assetCommit+'/public/assets/vendor/quaternius/night-striker.glb',
+  'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/'+assetCommit+'/public/assets/vendor/quaternius/night-striker.glb'
  ];
  try{
   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
@@ -424,7 +427,7 @@ async function loadRiggedPlayer(){
    const controller=new AbortController();
    const timeout=setTimeout(()=>controller.abort(),12000);
    try{
-    const response=await fetch(url,{mode:'cors',credentials:'omit',cache:'force-cache',signal:controller.signal});
+    const response=await fetch(url,{mode:url.startsWith('http')?'cors':'same-origin',credentials:'omit',cache:'force-cache',signal:controller.signal});
     if(!response.ok)throw new Error('HTTP '+response.status+' while fetching character GLB');
     const bytes=await response.arrayBuffer();
     if(bytes.byteLength<20)throw new Error('Character GLB is empty or truncated ('+bytes.byteLength+' bytes)');
@@ -439,14 +442,14 @@ async function loadRiggedPlayer(){
     console.info('REALCITY character asset validated',JSON.stringify({source:url,bytes:bytes.byteLength,meshes:gltf.scene.children.length,animations:(gltf.animations||[]).map(c=>c.name),bones:player.userData.rig?.bones.length,loadMs:Math.round(performance.now()-playerAssetStarted)}));
     clearTimeout(timeout);
     return;
-   }catch(err){lastError=err;console.warn('REALCITY character source failed; trying pinned fallback source.',url,err)}
+   }catch(err){lastError=err;console.warn('REALCITY character source failed; trying next source.',url,err)}
    finally{clearTimeout(timeout)}
   }
   throw lastError||new Error('All pinned character sources failed');
  }catch(err){
   playerAssetStatus='Rig unavailable · built-in character active';
   const status=$('characterStatus');if(status){status.textContent='3D MODEL: BUILT-IN';status.style.color='#ffd18a'}
-  console.error('REALCITY imported character failed; built-in articulated human remains active.',err);
+  console.error('REALCITY imported character failed; built-in articulated human remains active. To enable offline/local loading, place the verified GLB at public/models/realcity-protagonist.glb.',err);
  }
 }
 

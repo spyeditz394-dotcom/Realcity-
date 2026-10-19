@@ -63,6 +63,8 @@ try {
   const collision = await page.evaluate(() => window.__REALCITY_QA__().collisionProbe());
   assert(collision && collision.buildingCount >= 1 && collision.playerBlockedAtBuilding && collision.vehicleBlockedAtBuilding,
     'Player and vehicle are blocked by building collision volumes', collision);
+  assert(collision.playerBoundaryBlocked && collision.playerClearOutsideEdge && collision.vehicleClearOutsideEdge,
+    'Collision boundary blocks penetration while allowing clearance outside the wall', collision);
 
   // Check the real keyboard path, not just the exposed animation state.
   await page.keyboard.down('w');

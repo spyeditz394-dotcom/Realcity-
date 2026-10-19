@@ -146,13 +146,13 @@ function person(color){
 }
 for(let i=0;i<22;i++){const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);p.position.set((rand()-.5)*205,0,(rand()-.5)*205);p.userData.goalX=(rand()-.5)*220;p.userData.goalZ=(rand()-.5)*220;p.userData.pause=rand()*2;scene.add(p);pedestrians.push(p)}
 loadfill.style.width='65%';loadnote.textContent='Preparing player and vehicles…';
-function car(color,x,z,rot=0){
- const g=new THREE.Group(),bodyMat=new THREE.MeshPhysicalMaterial({color,roughness:.25,metalness:.34,clearcoat:.62,clearcoatRoughness:.24}),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78),rubberTrim=mat(0x303638,.78,.05);
- const body=new THREE.Mesh(new THREE.BoxGeometry(1.9,.58,3.75),bodyMat);body.position.y=.72;body.castShadow=true;g.add(body);
+function car(color,x,z,rot=0,style='sedan'){
+ const isSUV=style==='suv',isVan=style==='van',bodyWidth=isVan?2.02:isSUV?2:1.9,bodyLength=isVan?4.05:isSUV?3.9:3.75,cabinHeight=isVan?.78:isSUV?.72:.62;const g=new THREE.Group();g.userData.vehicleStyle=style;const bodyMat=new THREE.MeshPhysicalMaterial({color,roughness:.25,metalness:.34,clearcoat:.62,clearcoatRoughness:.24}),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78),rubberTrim=mat(0x303638,.78,.05);
+ const body=new THREE.Mesh(new THREE.BoxGeometry(bodyWidth,isSUV?.68:.58,bodyLength),bodyMat);body.position.y=isSUV?.78:.72;body.castShadow=true;g.add(body);
  const hood=new THREE.Mesh(new THREE.BoxGeometry(1.72,.20,1.05),bodyMat);hood.position.set(0,1.02,1.12);hood.castShadow=true;g.add(hood);
  const trunk=new THREE.Mesh(new THREE.BoxGeometry(1.68,.18,.78),bodyMat);trunk.position.set(0,.99,-1.35);g.add(trunk);
- const cabin=new THREE.Mesh(new THREE.BoxGeometry(1.43,.62,1.82),glass);cabin.position.set(0,1.28,-.22);cabin.castShadow=true;g.add(cabin);
- const roof=new THREE.Mesh(new THREE.BoxGeometry(1.27,.10,1.12),bodyMat);roof.position.set(0,1.61,-.26);g.add(roof);
+ const cabin=new THREE.Mesh(new THREE.BoxGeometry(isVan?1.55:isSUV?1.52:1.43,cabinHeight,isVan?2.15:isSUV?1.95:1.82),glass);cabin.position.set(0,isVan?1.42:isSUV?1.38:1.28,isVan?-.05:-.22);cabin.castShadow=true;g.add(cabin);
+ const roof=new THREE.Mesh(new THREE.BoxGeometry(isVan?1.48:isSUV?1.36:1.27,.10,isVan?1.7:isSUV?1.45:1.12),bodyMat);roof.position.set(0,isVan?1.84:isSUV?1.78:1.61,isVan?-.05:-.26);g.add(roof);if(isSUV){for(const side of [-1,1]){const rail=new THREE.Mesh(new THREE.BoxGeometry(.055,.06,1.5),trim);rail.position.set(side*.58,1.88,-.24);g.add(rail)}}if(isVan){const cargo=new THREE.Mesh(new THREE.BoxGeometry(1.5,.34,1.05),bodyMat);cargo.position.set(0,1.98,-1.12);g.add(cargo)}
  const dash=new THREE.Mesh(new THREE.BoxGeometry(1.27,.17,.36),trim);dash.position.set(0,1.02,.55);g.add(dash);
  const consoleBox=new THREE.Mesh(new THREE.BoxGeometry(.28,.25,.48),trim);consoleBox.position.set(0,.91,-.08);g.add(consoleBox);
  for(const side of [-1,1]){const seat=new THREE.Mesh(new THREE.BoxGeometry(.48,.16,.48),mat(0x30383a,.9));seat.position.set(side*.39,.86,-.48);g.add(seat);const back=new THREE.Mesh(new THREE.BoxGeometry(.46,.52,.16),mat(0x30383a,.9));back.position.set(side*.39,1.13,-.67);g.add(back);const headrest=new THREE.Mesh(new THREE.BoxGeometry(.23,.19,.13),trim);headrest.position.set(side*.39,1.48,-.67);g.add(headrest)}
@@ -175,7 +175,7 @@ const frontGrille=new THREE.Mesh(new THREE.BoxGeometry(.55,.14,.055),trim);front
  const plate=new THREE.Mesh(new THREE.BoxGeometry(.42,.12,.04),mat(0xe4e7df));plate.position.set(0,.65,-1.91);g.add(plate);
  g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);const v={g,speed:0,steer:0,health:100,trafficData:null,lastCollisionTime:-10};vehicles.push(v);return v
 }
-car(0xb9473e,5,17,.1);car(0x347f9d,-35,24,Math.PI/2);car(0xc3a64b,39,-23,-Math.PI/2);
+car(0xb9473e,5,17,.1);car(0x347f9d,-35,24,Math.PI/2,'suv');car(0xc3a64b,39,-23,-Math.PI/2,'van');
 // Ambient traffic: lightweight lane-following cars on the existing road grid.
 const traffic=[];
 const trafficSpecs=[
@@ -189,7 +189,7 @@ const trafficSpecs=[
  {axis:'x',lane:-62,dir:-1,z:2,color:0xb7b9b1}
 ];
 for(const spec of trafficSpecs){
- const v=car(spec.color,spec.axis==='x'?spec.z:spec.lane,spec.axis==='z'?spec.z:spec.lane,spec.axis==='z'?(spec.dir>0?0:Math.PI):(spec.dir>0?Math.PI/2:-Math.PI/2));
+ const v=car(spec.color,spec.axis==='x'?spec.z:spec.lane,spec.axis==='z'?spec.z:spec.lane,spec.axis==='z'?(spec.dir>0?0:Math.PI):(spec.dir>0?Math.PI/2:-Math.PI/2),traffic.length%3===0?'suv':traffic.length%3===1?'van':'sedan');
  (v as any).traffic=true;(v as any).trafficData={axis:spec.axis,lane:spec.lane,dir:spec.dir,speed:3.2+rand()*2.1};traffic.push(v as any);
 }
 const player=person(0x20b7a5);let spawnX=Number.isFinite(saved.spawnX)?Math.max(-165,Math.min(165,saved.spawnX)):0,spawnZ=Number.isFinite(saved.spawnZ)?Math.max(-165,Math.min(165,saved.spawnZ)):23;if(saved.interior===true&&Number.isInteger(saved.interiorDoorIndex)&&doors[saved.interiorDoorIndex]){interiorMode=true;currentInteriorDoorIndex=saved.interiorDoorIndex;spawnX=roomX;spawnZ=roomZ;interiorMeshes.forEach(o=>o.visible=true)}if(blocked(spawnX,spawnZ,.55)){spawnX=0;spawnZ=23}player.position.set(spawnX,0,spawnZ);scene.add(player);

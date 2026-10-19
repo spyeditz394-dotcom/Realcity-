@@ -73,7 +73,7 @@ try {
   for (let i = 0; i < 16; i++) {
     await page.waitForTimeout(500);
     const text = await page.locator('#perf').innerText().catch(() => '');
-    const match = text.match(/FPS\\s+(\\d+).*?JS\\s+([\\d.]+)\\/([\\d.]+)ms.*?DC\\s+(\\d+).*?TRI\\s+(\\d+).*?GEO\\s+(\\d+).*?TEX\\s+(\\d+)/);
+    const match = text.match(/FPS\s+(\d+).*?JS\s+([\d.]+)\/([\d.]+)ms.*?DC\s+(\d+).*?TRI\s+(\d+).*?GEO\s+(\d+).*?TEX\s+(\d+)/);
     if (match) perfSamples.push({ fps: Number(match[1]), jsMsAvg: Number(match[2]), jsMsPeak: Number(match[3]), drawCalls: Number(match[4]), triangles: Number(match[5]), geometries: Number(match[6]), textures: Number(match[7]) });
   }
   const sortedFps = perfSamples.map(sample => sample.fps).sort((a, b) => a - b);

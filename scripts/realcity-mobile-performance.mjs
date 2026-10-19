@@ -127,7 +127,7 @@ try {
           if (!start) start = now;
           if (last) samples.push(now - last);
           last = now;
-          if (now - start < 5000) requestAnimationFrame(tick); else resolve();
+          if (now - start < 8000) requestAnimationFrame(tick); else resolve();
         };
         requestAnimationFrame(tick);
       });

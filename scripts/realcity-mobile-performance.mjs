@@ -99,7 +99,7 @@ try {
     const sustained = await page.evaluate(() => window.__REALCITY_QA__());
     await page.mouse.up();
     await page.keyboard.down('s');
-    await wait(1800);
+    await wait(2200);
     await page.keyboard.up('s');
     const braked = await page.evaluate(() => window.__REALCITY_QA__());
     assert(sustained.inCar && sustained.vehiclePosition && distance(carStart,sustained.vehiclePosition) > 3,

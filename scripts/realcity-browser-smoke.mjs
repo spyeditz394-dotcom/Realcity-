@@ -142,7 +142,44 @@ try {
     controls.exitedVehicle = false;
   }
 
-  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, controls, modelResponses, assetRuntimeLogs, consoleErrors, pageErrors, failedLocalRequests };
+  // Matched A/B run on the same CI machine/browser: compare imported GLBs with procedural fallbacks.
+  const baselineContext = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
+  await baselineContext.route(/\\/models\\/.*\\.glb(?:$|\\?)/i, route => route.fulfill({ status: 404, contentType: 'text/plain', body: 'paired benchmark: imported GLB disabled' }));
+  const baselinePage = await baselineContext.newPage();
+  const baselineErrors = [];
+  baselinePage.on('pageerror', error => baselineErrors.push(error.message));
+  await baselinePage.goto(host, { waitUntil: 'domcontentloaded', timeout: 30_000 });
+  await baselinePage.waitForSelector('#game canvas', { timeout: 20_000 });
+  await baselinePage.waitForFunction(() => (document.querySelector('#characterStatus')?.textContent ?? '').includes('3D MODEL: BUILT-IN'), { timeout: 25_000 });
+  await baselinePage.waitForTimeout(8000);
+  const baselineSamples = [];
+  for (let i = 0; i < 16; i++) {
+    await baselinePage.waitForTimeout(500);
+    const text = await baselinePage.locator('#perf').innerText().catch(() => '');
+    const match = text.match(/FPS\\s+(\\d+).*?JS\\s+([\\d.]+)\\/([\\d.]+)ms.*?DC\\s+(\\d+).*?TRI\\s+(\\d+).*?GEO\\s+(\\d+).*?TEX\\s+(\\d+)/);
+    if (match) baselineSamples.push({ fps: Number(match[1]), jsMsAvg: Number(match[2]), jsMsPeak: Number(match[3]), drawCalls: Number(match[4]), triangles: Number(match[5]), geometries: Number(match[6]), textures: Number(match[7]) });
+  }
+  const median = values => { const sorted = [...values].sort((a,b)=>a-b); return sorted.length ? sorted[Math.floor(sorted.length/2)] : null; };
+  const baselinePerformance = {
+    durationMs: 8000,
+    sampleCount: baselineSamples.length,
+    medianFps: median(baselineSamples.map(sample => sample.fps)),
+    drawCalls: baselineSamples.length ? Math.round(baselineSamples.reduce((sum,sample)=>sum+sample.drawCalls,0)/baselineSamples.length) : null,
+    triangles: baselineSamples.length ? Math.round(baselineSamples.reduce((sum,sample)=>sum+sample.triangles,0)/baselineSamples.length) : null,
+    jsMsAvg: baselineSamples.length ? Math.round(baselineSamples.reduce((sum,sample)=>sum+sample.jsMsAvg,0)/baselineSamples.length*10)/10 : null,
+    limitations: 'Same CI runner and browser; software-rendered SwiftShader. This isolates model loading/rendering effects approximately, not physical-phone performance.'
+  };
+  const matchedPerformance = {
+    assetEnabled: { medianFps: performanceSummary.medianFps, drawCalls: performanceSummary.drawCalls, triangles: performanceSummary.triangles, jsMsAvg: performanceSummary.jsMsAvg },
+    proceduralFallback: baselinePerformance,
+    delta: {
+      medianFps: performanceSummary.medianFps == null || baselinePerformance.medianFps == null ? null : performanceSummary.medianFps - baselinePerformance.medianFps,
+      drawCalls: performanceSummary.drawCalls == null || baselinePerformance.drawCalls == null ? null : performanceSummary.drawCalls - baselinePerformance.drawCalls,
+      triangles: performanceSummary.triangles == null || baselinePerformance.triangles == null ? null : performanceSummary.triangles - baselinePerformance.triangles
+    }
+  };
+  await baselineContext.close();
+  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, matchedPerformance, baselineSamples, perfSamples, controls, modelResponses, assetRuntimeLogs, consoleErrors, pageErrors, failedLocalRequests, baselineErrors };
   console.log(JSON.stringify(report, null, 2));
 
   if (!controls.pauseOpened || !controls.resumeClosedPauseMenu || !controls.touchControlsPresent) throw new Error('Pause/resume or touch-control smoke check failed: ' + JSON.stringify(controls));
@@ -155,6 +192,8 @@ try {
   if (pageErrors.length) throw new Error('Browser page errors: ' + pageErrors.join(' | '));
   if (consoleErrors.some(line => /REALCITY imported character failed|REALCITY bundled sedan unavailable|GLTFLoader|WebGLRenderer.*ERROR/i.test(line))) throw new Error('Critical browser console errors: ' + consoleErrors.join(' | '));
   if (failedLocalRequests.length) throw new Error('Failed local model requests: ' + JSON.stringify(failedLocalRequests));
+  if (baselineErrors.length) throw new Error('Procedural baseline browser errors: ' + baselineErrors.join(' | '));
+  if (performanceSummary.sampleCount < 12 || baselinePerformance.sampleCount < 12) throw new Error('Matched performance test did not collect enough samples: ' + JSON.stringify({ current: performanceSummary.sampleCount, baseline: baselinePerformance.sampleCount }));
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');

@@ -69,20 +69,31 @@ try {
 
   await mkdir('artifacts', { recursive: true });
   await page.screenshot({ path: 'artifacts/realcity-mobile-smoke.png', fullPage: false });
-  const fps = await page.evaluate(async () => {
-    let frames = 0;
-    const start = performance.now();
-    return await new Promise(resolve => {
-      function tick(now) {
-        frames++;
-        if (now - start >= 8000) resolve({ frames, durationMs: Math.round(now - start), averageFps: Math.round(frames * 1000 / (now - start) * 10) / 10 });
-        else requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-    });
-  });
+  const perfSamples = [];
+  for (let i = 0; i < 16; i++) {
+    await page.waitForTimeout(500);
+    const text = await page.locator('#perf').innerText().catch(() => '');
+    const match = text.match(/FPS\\s+(\\d+).*?JS\\s+([\\d.]+)\\/([\\d.]+)ms.*?DC\\s+(\\d+).*?TRI\\s+(\\d+).*?GEO\\s+(\\d+).*?TEX\\s+(\\d+)/);
+    if (match) perfSamples.push({ fps: Number(match[1]), jsMsAvg: Number(match[2]), jsMsPeak: Number(match[3]), drawCalls: Number(match[4]), triangles: Number(match[5]), geometries: Number(match[6]), textures: Number(match[7]) });
+  }
+  const sortedFps = perfSamples.map(sample => sample.fps).sort((a, b) => a - b);
+  const percentile = (values, p) => values.length ? values[Math.min(values.length - 1, Math.ceil(values.length * p) - 1)] : null;
+  const performanceSummary = {
+    durationMs: 8000,
+    sampleCount: perfSamples.length,
+    fpsSamples: perfSamples.map(sample => sample.fps),
+    medianFps: sortedFps.length ? sortedFps[Math.floor(sortedFps.length / 2)] : null,
+    p95FrameTimeMsApprox: percentile(sortedFps.map(fps => 1000 / Math.max(1, fps)).sort((a, b) => a - b), 0.95),
+    drawCalls: perfSamples.length ? Math.round(perfSamples.reduce((sum, sample) => sum + sample.drawCalls, 0) / perfSamples.length) : null,
+    triangles: perfSamples.length ? Math.round(perfSamples.reduce((sum, sample) => sum + sample.triangles, 0) / perfSamples.length) : null,
+    geometries: perfSamples.length ? Math.max(...perfSamples.map(sample => sample.geometries)) : null,
+    textures: perfSamples.length ? Math.max(...perfSamples.map(sample => sample.textures)) : null,
+    jsMsAvg: perfSamples.length ? Math.round(perfSamples.reduce((sum, sample) => sum + sample.jsMsAvg, 0) / perfSamples.length * 10) / 10 : null,
+    jsMsPeak: perfSamples.length ? Math.max(...perfSamples.map(sample => sample.jsMsPeak)) : null,
+    limitations: 'Headless Chromium + SwiftShader emulation, not physical-device FPS; p95 frame time is estimated from sampled HUD FPS.'
+  };
 
-  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, fps, modelResponses, pageErrors, failedLocalRequests };
+  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, modelResponses, pageErrors, failedLocalRequests };
   console.log(JSON.stringify(report, null, 2));
 
   if (!result.canvas || result.startupFailureText) throw new Error('Canvas missing or startup failure displayed');

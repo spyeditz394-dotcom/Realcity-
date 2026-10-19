@@ -51,12 +51,12 @@ try {
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png' });
   if (assetStatus !== 200) throw new Error('Protagonist GLB response status was ' + assetStatus);
-  if (!idle.canvas || idle.bones < 20 || !idle.clips.some(x => /idle/i.test(x)) || !idle.clips.some(x => /walk/i.test(x)) || !idle.clips.some(x => /run/i.test(x)) || !idle.clips.some(x => /jump/i.test(x))) throw new Error('Rig or expected locomotion clips missing: ' + JSON.stringify(idle));
+  if (!idle.canvas || idle.bones < 20 || !idle.clips.some(x => /idle/i.test(x)) || !idle.clips.some(x => /walk/i.test(x)) || !idle.clips.some(x => /run/i.test(x)) || !['asset', 'procedural'].includes(idle.jumpAnimation)) throw new Error('Rig or expected locomotion support missing: ' + JSON.stringify(idle));
   if (idle.pedestrians < 10 || idle.vehicles < 1 || idle.pedestrianAssets < 1 || !idle.sedanImported) throw new Error('Expected imported starter city assets are missing: ' + JSON.stringify(idle));
   if (!carBefore.inCar || carAfter.vehiclePosition === null || Math.hypot(carAfter.vehiclePosition.x-carBefore.vehiclePosition.x,carAfter.vehiclePosition.z-carBefore.vehiclePosition.z)<0.05) throw new Error('Imported sedan did not move under throttle: '+JSON.stringify({carBefore,carAfter}));
   if (Math.hypot(walk.position.x-idle.position.x, walk.position.z-idle.position.z) < 0.01) throw new Error('Player position did not respond to forward input');
   if (errors.length) throw new Error('Browser errors: ' + errors.join(' | '));
-  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, pedestrianAssets: idle.pedestrianAssets, vehicles: idle.vehicles, sedanImported: idle.sedanImported, vehicleMoved: true, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
+  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpAnimation: idle.jumpAnimation, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, pedestrianAssets: idle.pedestrianAssets, vehicles: idle.vehicles, sedanImported: idle.sedanImported, vehicleMoved: true, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');

@@ -33,13 +33,19 @@ try {
   await page.locator('#sprint').dispatchEvent('pointerup', { pointerId: 1 });
   await page.keyboard.up('w');
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
+  await page.locator('#jump').click();
+  await page.waitForFunction(() => window.__REALCITY_QA__().active === 'jump', null, { timeout: 5000 });
+  const jump = await page.evaluate(() => window.__REALCITY_QA__());
+  if (jump.position.y <= 0.01) throw new Error('Jump animation activated without upward player movement');
+  await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png' });
   if (assetStatus !== 200) throw new Error('Protagonist GLB response status was ' + assetStatus);
-  if (!idle.canvas || idle.bones < 20 || !idle.clips.some(x => /idle/i.test(x)) || !idle.clips.some(x => /walk/i.test(x)) || !idle.clips.some(x => /run/i.test(x))) throw new Error('Rig or expected locomotion clips missing: ' + JSON.stringify(idle));
+  if (!idle.canvas || idle.bones < 20 || !idle.clips.some(x => /idle/i.test(x)) || !idle.clips.some(x => /walk/i.test(x)) || !idle.clips.some(x => /run/i.test(x)) || !idle.clips.some(x => /jump/i.test(x))) throw new Error('Rig or expected locomotion clips missing: ' + JSON.stringify(idle));
+  if (idle.pedestrians < 10 || idle.vehicles < 1) throw new Error('Expected starter city life is missing: ' + JSON.stringify({pedestrians: idle.pedestrians, vehicles: idle.vehicles}));
   if (Math.hypot(walk.position.x-idle.position.x, walk.position.z-idle.position.z) < 0.01) throw new Error('Player position did not respond to forward input');
   if (errors.length) throw new Error('Browser errors: ' + errors.join(' | '));
-  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
+  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, vehicles: idle.vehicles, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');

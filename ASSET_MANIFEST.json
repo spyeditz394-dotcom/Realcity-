@@ -1,16 +1,15 @@
 {
   "schemaVersion": 1,
-  "generatedFromCommit": "635666fee3fcd7862331dc8c505c0a11294c84f9",
+  "verifiedAt": "2026-10-19",
   "character": {
-    "file": "public/assets/vendor/quaternius/night-striker.glb",
-    "runtimeBundledLocally": false,
-    "runtimeSource": "https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius/night-striker.glb",
-    "fallbackSource": "https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius/night-striker.glb",
-    "sourceProject": "https://github.com/Seyamalam/blood-league-kickoff",
+    "file": "public/models/realcity-protagonist-upgraded.glb",
+    "bundledLocally": true,
+    "source": "https://github.com/Seyamalam/blood-league-kickoff/tree/aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius",
     "originalPack": "https://quaternius.com/packs/universalbasecharacters.html",
-    "license": "CC0 1.0 Universal (Quaternius pack; source project asset ledger)",
-    "validation": "PASS: pinned GLB structure and embedded image dependencies checked by GitHub Actions",
-    "verifiedProperties": {
+    "license": "CC0 1.0 Universal",
+    "provenance": "Pinned upstream GLB copied into REALCITY by the vendor-realcity-assets GitHub Actions workflow.",
+    "validationStatus": "PASS: local GLB header, glTF version, mesh/accessor, skin, material, embedded-image and dependency checks passed in GitHub Actions.",
+    "measuredProperties": {
       "bytes": 6465208,
       "meshes": 3,
       "primitives": 3,
@@ -23,14 +22,44 @@
       "animationClips": 0,
       "externalImageDependencies": 0
     },
-    "runtimeAnimation": "Procedural bone animation; this GLB contains no animation clips.",
-    "visualQuality": "Textured stylized character, not photorealistic.",
-    "remainingWork": "Vendor a size-optimized local GLB and visually inspect gameplay poses and texture quality."
+    "runtime": "Loaded from /models/realcity-protagonist-upgraded.glb using Three.js GLTFLoader; built-in procedural character remains the fallback.",
+    "visualQuality": "Textured stylized character; not photorealistic and not verified to match jacket/cargo-trouser streetwear art direction.",
+    "remaining": "Visually inspect loaded character in gameplay, verify procedural pose mapping on the 65-joint skeleton, and replace with a more appropriate civilian model if needed."
   },
-  "vehicles": {
-    "importedModelBinariesPresent": false,
-    "runtimeRepresentation": "Procedural vehicle geometry in src/main.ts",
-    "verifiedAsImportedAsset": false,
-    "remainingWork": "Replace or supplement procedural bodies with locally bundled, licensed GLB vehicle models; validate scale, wheels, collision alignment, and night/day appearance."
+  "vehicles": [
+    {
+      "file": "public/models/realcity-sedan-cc0.glb",
+      "bundledLocally": true,
+      "source": "https://github.com/Hidencod/tge-assets/tree/2c8950b716e6765930b2b51409c59adf3d66fd5c/packs/car-kit",
+      "originalPack": "https://kenney.nl/assets/car-kit",
+      "license": "CC0 1.0 Universal",
+      "provenance": "Kenney Car Kit sedan GLB from the pinned tge-assets commit; copied locally by the vendor-realcity-assets workflow.",
+      "validationStatus": "PASS: local GLB header, glTF version, mesh/accessor, material and external-image dependency checks passed in GitHub Actions.",
+      "measuredProperties": {
+        "bytes": 184504,
+        "meshes": 5,
+        "primitives": 5,
+        "vertices": 3184,
+        "skins": 0,
+        "joints": 0,
+        "materials": 1,
+        "images": 1,
+        "textures": 1,
+        "animationClips": 0,
+        "externalImageDependencies": 0
+      },
+      "runtime": "Loaded once and cloned into vehicle groups as a visual-only model; existing vehicle group remains the gameplay/physics transform.",
+      "visualQuality": "Optimized low-poly everyday sedan, not photorealistic.",
+      "remaining": "Visual review required for orientation, scale, wheel alignment, lamp alignment, damage state, and night/day appearance. Confirm wheel animation after import."
+    }
+  ],
+  "gates": {
+    "typecheck": "PASS",
+    "localAssetStructure": "PASS",
+    "productionBuild": "PASS",
+    "browserGameplay": "PENDING",
+    "matchedPerformanceBenchmark": "PENDING",
+    "vercelPreviewForLatestCommit": "PENDING",
+    "physicalOPPOA5Pro": "PENDING"
   }
 }

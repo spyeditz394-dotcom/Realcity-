@@ -23,7 +23,7 @@ jobs:
         run: npm install
       - name: TypeScript validation
         run: npm run check:types
-      - name: Validate pinned character GLB
+      - name: Validate bundled character and sedan GLBs
         run: npm run test:asset
       - name: Production build
         run: npm run build

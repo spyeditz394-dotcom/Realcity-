@@ -1,0 +1,10 @@
+REALCITY vehicle asset provenance
+
+File: public/models/realcity-sedan-cc0.glb
+Source asset: Kenney Car Kit sedan.glb
+Pinned source mirror: https://github.com/Hidencod/tge-assets/tree/2c8950b716e6765930b2b51409c59adf3d66fd5c/packs/car-kit/sedan.glb
+Source project license: CC0 1.0 Universal.
+License text: https://creativecommons.org/publicdomain/zero/1.0/
+Local license summary: Kenney models in the source mirror are explicitly released under CC0; attribution is appreciated but not required.
+
+This is a game-ready stylized vehicle mesh, not a photorealistic scan. The model is used as a visual asset only; REALCITY retains responsibility for vehicle movement, collision bounds, condition, recovery, and save/load.

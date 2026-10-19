@@ -231,6 +231,10 @@ function animateRiggedPlayer(gait,moving,time,dt,airborne=false,sprintingNow=fal
 }
 function installRiggedPlayer(gltf){
  const model=gltf.scene;model.updateMatrixWorld(true);
+ // Reject skeleton-only or unskinned GLBs before they replace the working procedural human.
+ let skinnedMeshCount=0,renderableVertexCount=0,materialCount=0;
+ model.traverse(o=>{if(o.isSkinnedMesh){skinnedMeshCount++;renderableVertexCount+=o.geometry?.attributes?.position?.count||0;const materials=Array.isArray(o.material)?o.material:[o.material];materialCount+=materials.filter(Boolean).length;}});
+ if(skinnedMeshCount<1||renderableVertexCount<300||materialCount<1)throw new Error('Asset quality gate: no usable skinned character mesh; keeping animated human fallback');
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
  if(!Number.isFinite(size.y)||size.y<.25)throw new Error('Humanoid model has invalid bounds');
  const modelRoot=new THREE.Group(),scale=1.78/size.y;model.scale.setScalar(scale);model.position.y=-bounds.min.y*scale;modelRoot.add(model);

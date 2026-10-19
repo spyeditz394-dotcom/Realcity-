@@ -276,6 +276,7 @@ function installRiggedPlayer(gltf){
      animationActions[name]=action;
    }
  }
+ if(bodyBones.length<4&&Object.keys(animationActions).length===0)throw new Error('Asset quality gate: no recognized locomotion bones or named animation clips; keeping animated human fallback');
  for(const child of [...player.children]){player.remove(child);child.traverse?.(o=>{if(o.isMesh)o.geometry?.dispose?.()})}
  player.add(modelRoot);player.userData.legs=[];player.userData.arms=[];player.userData.hands=[];
  player.userData.rig={model,modelRoot,bones,fingerBones,bodyBones,mixer,clips,animationActions,activeAction:null,activeActionName:null};

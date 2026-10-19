@@ -341,7 +341,7 @@ function installPedestrianAssets(gltf){
     p.userData.importedPedestrian={model,modelName:source.name,mixer,actions,activeAction:actions.idle,activeActionName:'idle',baseY,proceduralBones:null};
    }else{
     const names=[['leftThigh','thigh_l',1,1],['rightThigh','thigh_r',-1,1],['leftCalf','calf_l',1,.55],['rightCalf','calf_r',-1,.55],['leftArm','upperarm_l',-1,.68],['rightArm','upperarm_r',1,.68],['leftForearm','lowerarm_l',-1,.25],['rightForearm','lowerarm_r',1,.25],['spine','spine_03',1,.035]];
-    const proceduralBones={};
+    const proceduralBones:Record<string,any>={};
     for(const [key,boneName,sign,weight] of names){const bone=model.getObjectByName(boneName);if(bone)proceduralBones[key]={bone,rest:bone.quaternion.clone(),sign,weight,axis:new THREE.Vector3(1,0,0),delta:new THREE.Quaternion()}}
     if(!proceduralBones.leftThigh||!proceduralBones.rightThigh||!proceduralBones.leftArm||!proceduralBones.rightArm){console.warn('REALCITY Quaternius pedestrian rig missing expected limb bones:',source.name);continue}
     for(const child of [...p.children])p.remove(child);p.add(model);

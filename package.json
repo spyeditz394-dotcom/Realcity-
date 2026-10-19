@@ -8,13 +8,15 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:types": "tsc --noEmit",
-    "test:asset": "node scripts/validate-local-models.mjs"
+    "test:asset": "node scripts/validate-local-models.mjs",
+    "test:browser": "node scripts/realcity-browser-smoke.mjs"
   },
   "dependencies": {
     "three": "0.160.0"
   },
   "devDependencies": {
     "vite": "6.4.4",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "playwright": "1.55.0"
   }
 }

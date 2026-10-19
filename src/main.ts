@@ -287,34 +287,23 @@ function installRiggedPlayer(gltf){
  setPlayerFingerPose('relaxed');
 }
 function loadRiggedPlayer(){
+ // Only load a model shipped with REALCITY. Do not silently depend on an
+ // unverified third-party URL or an asset with unknown licensing.
+ const url='/models/realcity-protagonist.glb';
  const loader=new GLTFLoader();
- const candidates=[
-  '/models/realcity-protagonist.glb',
-  'https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb'
- ];
- const tryCandidate=(index)=>{
-  if(index>=candidates.length){
-   playerAssetStatus='Rig unavailable · procedural animated fallback active';
-   console.warn('REALCITY character assets unavailable; keeping procedural fallback.');
-   return;
+ loader.load(url,gltf=>{
+  try{
+   installRiggedPlayer(gltf);
+   playerAssetStatus='Rigged human loaded · local REALCITY asset';
+   console.info('REALCITY character asset loaded:',url);
+  }catch(err){
+   playerAssetStatus='Local rig rejected · procedural animated fallback active';
+   console.warn('REALCITY local character rig rejected; keeping animated fallback:',err);
   }
-  const url=candidates[index];
-  loader.load(url,gltf=>{
-   try{
-    installRiggedPlayer(gltf);
-    playerAssetStatus='Rigged human loaded · '+(url.startsWith('/')?'local REALCITY asset':'remote compatibility asset');
-    console.info('REALCITY character asset loaded:',url);
-   }catch(err){
-    playerAssetStatus='Rig rejected · procedural fallback active';
-    console.warn('REALCITY character rig rejected; trying next asset:',url,err);
-    tryCandidate(index+1);
-   }
-  },undefined,err=>{
-   console.warn('REALCITY character asset failed; trying next candidate:',url,err);
-   tryCandidate(index+1);
-  });
- };
- tryCandidate(0);
+ },undefined,err=>{
+  playerAssetStatus='Local model missing · procedural animated fallback active';
+  console.info('No bundled REALCITY protagonist GLB; procedural animated fallback remains active.',err);
+ });
 }
 
 loadRiggedPlayer();

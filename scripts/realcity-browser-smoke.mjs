@@ -36,7 +36,7 @@ try {
   const consoleErrors = [];
   page.on('console', message => {
     const text = message.text();
-    if (text.includes('REALCITY character asset validated') || text.includes('REALCITY CC0 sedan loaded')) assetRuntimeLogs.push(text);
+    if (text.includes('REALCITY character asset validated') || text.includes('REALCITY imported vehicle models applied')) assetRuntimeLogs.push(text);
     if (message.type() === 'error') consoleErrors.push(text);
   });
   page.on('pageerror', error => pageErrors.push(error.message));
@@ -118,7 +118,7 @@ try {
   if (result.characterStatus !== '3D MODEL: LOADED') throw new Error('Imported character did not load; observed ' + result.characterStatus);
   if (!modelResponses.some(item => item.url.includes('realcity-protagonist-upgraded.glb') && item.status === 200)) throw new Error('Local protagonist GLB was not requested successfully');
   if (!modelResponses.some(item => item.url.includes('realcity-sedan-cc0.glb') && item.status === 200)) throw new Error('Local sedan GLB was not requested successfully');
-  if (!assetRuntimeLogs.some(line => line.includes('REALCITY CC0 sedan loaded'))) throw new Error('Local sedan GLB downloaded but did not finish GLTFLoader parsing');
+  if (!assetRuntimeLogs.some(line => line.includes('REALCITY imported vehicle models applied') && /\"vehiclesUpdated\":\s*[1-9]/.test(line))) throw new Error('Local sedan GLB downloaded but was not applied to any gameplay vehicle');
   if (pageErrors.length) throw new Error('Browser page errors: ' + pageErrors.join(' | '));
   if (consoleErrors.some(line => /REALCITY imported character failed|REALCITY bundled sedan unavailable|GLTFLoader|WebGLRenderer.*ERROR/i.test(line))) throw new Error('Critical browser console errors: ' + consoleErrors.join(' | '));
   if (failedLocalRequests.length) throw new Error('Failed local model requests: ' + JSON.stringify(failedLocalRequests));

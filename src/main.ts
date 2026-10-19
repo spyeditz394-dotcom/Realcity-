@@ -296,25 +296,45 @@ for(const spec of trafficSpecs){
  const v=car(spec.color,spec.axis==='x'?spec.z:spec.lane,spec.axis==='z'?spec.z:spec.lane,spec.axis==='z'?(spec.dir>0?0:Math.PI):(spec.dir>0?Math.PI/2:-Math.PI/2));
  (v as any).traffic=true;(v as any).trafficData={axis:spec.axis,lane:spec.lane,dir:spec.dir,speed:3.2+rand()*2.1};traffic.push(v as any);
 }
-// Load a locally bundled vehicle model when one is supplied; otherwise keep the working built-in cars.
-async function tryLoadLocalVehicleModel(){
+// Use local GLB vehicle bodies when licensed binaries are bundled; preserve procedural fallback.
+async function loadImportedVehicleVisuals(){
+ const paths=['/models/realcity-sedan.glb','/models/realcity-hatchback-sports.glb','/models/realcity-suv.glb'];
  try{
   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
-  const response=await fetch('/models/realcity-sedan.glb',{cache:'force-cache'});
-  if(!response.ok)throw new Error('Local sedan model is not bundled (HTTP '+response.status+')');
-  const bytes=await response.arrayBuffer(),view=new DataView(bytes);
-  if(bytes.byteLength<20||view.getUint32(0,true)!==0x46546c67||view.getUint32(8,true)!==bytes.byteLength)throw new Error('Invalid local sedan GLB');
-  const gltf=await new GLTFLoader().parseAsync(bytes,'/models/');
-  const source=gltf.scene;source.updateMatrixWorld(true);
-  const bounds=new THREE.Box3().setFromObject(source),size=bounds.getSize(new THREE.Vector3());
-  if(size.x<.1||size.y<.1||size.z<.1)throw new Error('Local sedan model has invalid dimensions');
-  console.info('REALCITY local sedan GLB validated',JSON.stringify({bytes:bytes.byteLength,meshes:(()=>{let n=0;source.traverse(o=>{if(o.isMesh)n++});return n})(),materials:(()=>{let n=0;source.traverse(o=>{if(o.isMesh)n+=Array.isArray(o.material)?o.material.length:1});return n})(),dimensions:[size.x,size.y,size.z]}));
-  // Keep the imported scene available for the next visual-integration pass. Do not replace
-  // current vehicle visuals until wheel pivots and body bounds can be matched safely.
-  (window as any).__realcityLocalSedanAsset={loaded:true,bytes:bytes.byteLength,scene:source};
- }catch(error){console.info('REALCITY: local sedan model not installed; existing vehicle visuals remain active.',error)}
+  const loader=new GLTFLoader(),assets=[];
+  for(const path of paths){
+   try{
+    const response=await fetch(path,{cache:'force-cache'});if(!response.ok)continue;
+    const bytes=await response.arrayBuffer(),view=new DataView(bytes);
+    if(bytes.byteLength<20||view.getUint32(0,true)!==0x46546c67||view.getUint32(8,true)!==bytes.byteLength)continue;
+    const gltf=await loader.parseAsync(bytes,'/models/'),model=gltf.scene;
+    model.updateMatrixWorld(true);
+    let meshCount=0,materialCount=0;model.traverse(o=>{if(o.isMesh){meshCount++;materialCount+=Array.isArray(o.material)?o.material.length:1}});
+    if(!meshCount||!materialCount)continue;
+    assets.push({path,model,bytes:bytes.byteLength,meshCount,materialCount});
+   }catch(error){console.warn('REALCITY optional vehicle asset failed validation:',path,error)}
+  }
+  if(!assets.length){console.info('REALCITY: no local vehicle GLBs found; procedural vehicles remain active.');return}
+  const lampMeshes=new Set(carLamps.map(item=>item.mesh)),wheelName=/wheel|tire|tyre|rim|hub/i;
+  let applied=0;
+  for(let i=0;i<vehicles.length;i++){
+   const entry=assets[i%assets.length],v=vehicles[i],model=entry.model.clone(true);
+   model.rotation.y=0;model.updateMatrixWorld(true);
+   let bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+   if(size.x>size.z){model.rotation.y=Math.PI/2;model.updateMatrixWorld(true);bounds=new THREE.Box3().setFromObject(model);size=bounds.getSize(new THREE.Vector3())}
+   if(size.x<.1||size.y<.1||size.z<.1)continue;
+   const scale=Math.min(2.05/size.x,1.72/size.y,4.15/size.z);
+   model.traverse(o=>{if(o.isMesh&&wheelName.test(o.name))o.visible=false});
+   model.scale.setScalar(scale);
+   model.position.set(-(bounds.min.x+bounds.max.x)*.5*scale,-bounds.min.y*scale,-(bounds.min.z+bounds.max.z)*.5*scale);
+   const keep=new Set([...(v.g.userData.wheels||[]),...lampMeshes]);
+   for(const child of [...v.g.children])if(!keep.has(child))child.visible=false;
+   v.g.add(model);(v as any).assetVisual=true;(v as any).assetModelPath=entry.path;applied++;
+  }
+  console.info('REALCITY imported vehicle models applied',JSON.stringify({assets:assets.map(a=>({path:a.path,bytes:a.bytes,meshes:a.meshCount,materials:a.materialCount})),vehiclesUpdated:applied}));
+ }catch(error){console.warn('REALCITY vehicle GLB loader unavailable; procedural vehicles remain active.',error)}
 }
-void tryLoadLocalVehicleModel();
+void loadImportedVehicleVisuals();
 const player=person(0x20b7a5);let spawnX=Number.isFinite(saved.spawnX)?Math.max(-165,Math.min(165,saved.spawnX)):0,spawnZ=Number.isFinite(saved.spawnZ)?Math.max(-165,Math.min(165,saved.spawnZ)):23;if(saved.interior===true&&Number.isInteger(saved.interiorDoorIndex)&&doors[saved.interiorDoorIndex]){interiorMode=true;currentInteriorDoorIndex=saved.interiorDoorIndex;const room=interiorRooms.find(r=>r.district===doors[currentInteriorDoorIndex].district)||interiorRooms[0];roomX=room.x;roomZ=room.z;spawnX=roomX;spawnZ=roomZ;interiorMeshes.forEach(o=>o.visible=true)}if(blocked(spawnX,spawnZ,.55)){spawnX=0;spawnZ=23}player.position.set(spawnX,0,spawnZ);scene.add(player);
 
 let playerAssetStatus='Loading rigged human…',playerAssetLoadMs=0,playerFingerBoneCount=0;

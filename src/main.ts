@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { addFutureCityLayer } from './future-assets';
-const $=id=>document.getElementById(id),root=$('game'),load=$('loading'),loadfill=$('loadfill'),loadnote=$('loadnote');const yieldFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
+const $=id=>document.getElementById(id),root=$('game'),load=$('loading'),loadfill=$('loadfill'),loadnote=$('loadnote');const yieldFrame=()=>new Promise<void>(resolve=>requestAnimationFrame(()=>resolve()));
 let quality=1,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=4?Math.max(0,Math.min(3,saved.quality)):2;const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4d1);scene.fog=new THREE.FogExp2(0xa3c3ca,.00055);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,420);
 const renderer=new THREE.WebGLRenderer({antialias:true,powerPreference:'high-performance',alpha:false});renderer.setPixelRatio(Math.min(devicePixelRatio,[1.0,Math.min(devicePixelRatio,1.25),Math.min(devicePixelRatio,1.5),Math.min(devicePixelRatio,2.0)][quality]));renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.15;renderer.shadowMap.enabled=quality>=1;renderer.shadowMap.type=THREE.PCFSoftShadowMap;root.appendChild(renderer.domElement);
@@ -267,7 +267,7 @@ function installRiggedPlayer(gltf){
    run:findClip(/run|sprint/i),
    jump:findClip(/jump|leap/i)
  };
- const animationActions={};
+ const animationActions:Record<string,THREE.AnimationAction|undefined>={};
  if(mixer){
    for(const [name,clip] of Object.entries(animationClips)){
      if(!clip)continue;

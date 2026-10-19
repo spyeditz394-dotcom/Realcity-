@@ -451,14 +451,11 @@ function installRiggedPlayer(gltf){
 async function loadRiggedPlayer(){
  // Pin the asset to an immutable upstream commit: "main" can change without a REALCITY code change.
  const assetCommit='aa02a4e6d8337a0604d2da131bcbbeb1f01badf0';
- const assetPath='/models/realcity-protagonist.glb';
+ const assetPath='/models/realcity-protagonist-upgraded.glb';
  // Prefer a branch-bundled binary; use the immutable, license-documented upstream only
  // while the binary cannot yet be committed to this repository.
- const sources=[
-  assetPath,
-  'https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@'+assetCommit+'/public/assets/vendor/quaternius/night-striker.glb',
-  'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/'+assetCommit+'/public/assets/vendor/quaternius/night-striker.glb'
- ];
+ // Local, pinned CC0 binary is bundled in public/models; no runtime CDN request is required.
+ const sources=[assetPath];
  try{
   const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
   const loader=new GLTFLoader();let lastError=null;

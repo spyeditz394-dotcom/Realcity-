@@ -11,6 +11,24 @@ const mat=(c,r=.85,m=0)=>new THREE.MeshStandardMaterial({color:c,roughness:r,met
 // Small procedural detail maps are generated locally: no external downloads and safe fallbacks.
 function makeDetailMap(seed,count,base=208){const canvas=document.createElement('canvas');canvas.width=256;canvas.height=256;const c=canvas.getContext('2d');if(!c)return null;c.fillStyle=`rgb(${base},${base},${base})`;c.fillRect(0,0,256,256);let state=seed>>>0;const rnd=()=>{state=(state*1664525+1013904223)>>>0;return state/4294967296};for(let i=0;i<count;i++){const v=Math.floor(115+rnd()*125),a=.08+rnd()*.34;c.fillStyle=`rgba(${v},${v},${v},${a})`;const x=rnd()*256,y=rnd()*256,w=.5+rnd()*2.5,h=.5+rnd()*2.5;c.fillRect(x,y,w,h)}const t=new THREE.CanvasTexture(canvas);t.colorSpace=THREE.SRGBColorSpace;t.wrapS=t.wrapT=THREE.RepeatWrapping;t.repeat.set(3,3);t.generateMipmaps=true;t.minFilter=THREE.LinearMipmapLinearFilter;t.magFilter=THREE.LinearFilter;return t}
 const asphaltDetail=makeDetailMap(431,6200,205),concreteDetail=makeDetailMap(982,4600,216),facadeDetail=makeDetailMap(713,3500,224);
+// Restore coherent PBR response while preserving base colors and any valid embedded maps.
+function styleImportedMaterial(source:THREE.Material,meshName:string,role:'character'|'vehicle',tint?:THREE.Color):THREE.Material{
+ const copy=source.clone(),label=(meshName+' '+source.name).toLowerCase();
+ if(!(copy instanceof THREE.MeshStandardMaterial))return copy;
+ if(tint)copy.color.multiply(tint);
+ if(role==='character'){
+  copy.metalness=0;
+  if(/skin|face|head|hand/i.test(label))copy.roughness=.74;
+  else if(/hair|beard/i.test(label))copy.roughness=.9;
+  else if(/shoe|boot/i.test(label))copy.roughness=.86;
+  else {copy.roughness=.84;if(/shirt|jacket|coat|pants|trouser|cloth|fabric|uniform|vest|sleeve|hoodie|jean|skirt/i.test(label)&&!copy.map&&facadeDetail)copy.map=facadeDetail}
+ }else{
+  if(/wheel|tire|rubber/i.test(label)){copy.roughness=.94;copy.metalness=0}
+  else if(/glass|window|windshield/i.test(label)){copy.roughness=.24;copy.metalness=.12}
+  else {copy.roughness=Math.min(copy.roughness||.7,.48);copy.metalness=Math.max(copy.metalness,.08);if(/body|paint|shell|door|hood|bonnet|fender|roof|car/i.test(label)&&!copy.map&&facadeDetail)copy.map=facadeDetail}
+ }
+ copy.needsUpdate=true;return copy;
+}
 const concrete=mat(0x929890,.92),asphalt=mat(0x30383c,.98),asphaltAlt=mat(0x353b3e,.96),curbMat=mat(0x858b86,.88),paint=mat(0xe4d7a0,.8),grass=mat(0x47684b),trunkMat=mat(0x65452e),leafMats=[mat(0x2d6545),mat(0x39744d),mat(0x477b4a)],glass=new THREE.MeshStandardMaterial({color:0x6aabb9,roughness:.28,metalness:.15,transparent:true,opacity:.38,depthWrite:false}),windowMats=[mat(0x8fc8d3,.28,.12),mat(0x3f606b,.32,.1),mat(0xd7b988,.4,.05)];
 if(asphaltDetail){asphalt.map=asphaltDetail;asphaltAlt.map=asphaltDetail;asphalt.needsUpdate=asphaltAlt.needsUpdate=true}
 if(concreteDetail){concrete.map=concreteDetail;curbMat.map=concreteDetail;concrete.needsUpdate=curbMat.needsUpdate=true}
@@ -250,7 +268,7 @@ function installRiggedPlayer(gltf){
  const model=cloneSkeleton(gltf.scene);model.updateMatrixWorld(true);
  // Reject skeleton-only or unskinned GLBs before they replace the working procedural human.
  let skinnedMeshCount=0,renderableVertexCount=0,materialCount=0;
- model.traverse(o=>{if(o.isSkinnedMesh){skinnedMeshCount++;renderableVertexCount+=o.geometry?.attributes?.position?.count||0;const materials=Array.isArray(o.material)?o.material:[o.material];materialCount+=materials.filter(Boolean).length;}});
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const style=m=>styleImportedMaterial(m,o.name,'character');o.material=Array.isArray(o.material)?o.material.map(style):style(o.material)}if(o.isSkinnedMesh){skinnedMeshCount++;renderableVertexCount+=o.geometry?.attributes?.position?.count||0;const materials=Array.isArray(o.material)?o.material:[o.material];materialCount+=materials.filter(Boolean).length;}});
  if(skinnedMeshCount<1||renderableVertexCount<300||materialCount<1)throw new Error('Asset quality gate: no usable skinned character mesh; keeping animated human fallback');
  const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
  if(!Number.isFinite(size.y)||size.y<.25)throw new Error('Humanoid model has invalid bounds');
@@ -332,7 +350,7 @@ function installPedestrianAssets(gltf){
    model.position.set(-(bounds.min.x+bounds.max.x)*.5*scale,baseY,-(bounds.min.z+bounds.max.z)*.5*scale);
    model.userData.realcityPedestrianModel=source.name;
    const tint=new THREE.Color(palette[i%palette.length]);
-   model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const colorize=m=>{const copy=m.clone();if(copy.color)copy.color.multiply(tint);return copy};o.material=Array.isArray(o.material)?o.material.map(colorize):colorize(o.material)});
+   model.traverse(o=>{if(!o.isMesh)return;o.castShadow=true;o.receiveShadow=true;const style=m=>styleImportedMaterial(m,o.name,'character',tint);o.material=Array.isArray(o.material)?o.material.map(style):style(o.material)});
    if(source.kind==='clips'){
     const mixer=new THREE.AnimationMixer(model),idle=source.animations.find(c=>/idle|stand|breath/i.test(c.name)),walk=source.animations.find(c=>/walk|walking/i.test(c.name));
     if(!idle||!walk)continue;
@@ -362,7 +380,7 @@ function loadSedanAsset(){
    if(vehicle.g.userData.importedModel)return;const model=gltf.scene;model.updateMatrixWorld(true);
    const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());if(!Number.isFinite(size.z)||size.z<.1)throw new Error('Sedan model has invalid bounds');
    const scale=3.75/size.z;model.scale.setScalar(scale);model.position.set(-(bounds.min.x+bounds.max.x)*.5*scale,-bounds.min.y*scale,-(bounds.min.z+bounds.max.z)*.5*scale);
-   const wheels=[];model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;if(/wheel|tire/i.test(o.name)){o.userData.steerable=/wheel-front/i.test(o.name);wheels.push(o)}}});
+   const wheels=[];model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const style=m=>styleImportedMaterial(m,o.name,'vehicle');o.material=Array.isArray(o.material)?o.material.map(style):style(o.material);if(/wheel|tire/i.test(o.name)){o.userData.steerable=/wheel-front/i.test(o.name);wheels.push(o)}}});
    if(wheels.length<4)throw new Error('Sedan model wheel validation failed: '+wheels.length);
    for(const child of [...vehicle.g.children])vehicle.g.remove(child);vehicle.g.add(model);vehicle.g.userData.wheels=wheels;vehicle.g.userData.importedModel='kenney-sedan';
    console.info('REALCITY CC0 sedan integrated:',{wheels:wheels.length,scale,source:'/models/realcity-sedan.glb'});
@@ -397,6 +415,7 @@ function loadTrafficVehicleAssets(){
     model.traverse(o=>{
      if(!o.isMesh)return;
      o.castShadow=true;o.receiveShadow=true;
+     const style=m=>styleImportedMaterial(m,o.name,'vehicle');o.material=Array.isArray(o.material)?o.material.map(style):style(o.material);
      if(/wheel|tire/i.test(o.name)){o.userData.steerable=/wheel[-_ ]?front/i.test(o.name);wheels.push(o)}
     });
     if(wheels.length<4)throw new Error('Expected at least four named wheel meshes; found '+wheels.length);

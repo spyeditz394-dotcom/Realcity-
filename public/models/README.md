@@ -4,7 +4,7 @@ Place the exported, rigged protagonist at:
 
 `public/models/realcity-protagonist.glb`
 
-Vite serves this file at `/models/realcity-protagonist.glb`. The game now tries this project-local asset first, then its legacy remote compatibility asset. If both fail or the model fails validation, the in-game procedural animated character remains active.
+Vite serves this file at `/models/realcity-protagonist.glb`. The game requests only this project-local asset. If it is missing or fails validation, the in-game procedural animated character remains active. No third-party model URL is used as an implicit fallback.
 
 ## Runtime acceptance checks
 

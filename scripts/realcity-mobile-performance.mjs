@@ -25,6 +25,8 @@ try {
     page.on('pageerror', e => errors.push(e.message));
     await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().canvas, null, { timeout: 20000 });
+    const startupQuality = await page.locator('#qualityText').textContent();
+    if (profile.name.startsWith('mobile') && startupQuality !== 'BALANCED') throw new Error(`Expected mobile-safe BALANCED startup, got ${startupQuality}`);
     // Apply the selected quality through the same persisted settings contract used by the game.
     await page.evaluate(q => {
       const key = 'realcity-settings';
@@ -68,7 +70,7 @@ try {
         userAgent: navigator.userAgent
       };
     });
-    results.push({ profile, ...measurement, browserErrors: errors });
+    results.push({ profile, startupQuality, ...measurement, browserErrors: errors });
     await context.close();
   }
   await mkdir('test-results', { recursive: true });

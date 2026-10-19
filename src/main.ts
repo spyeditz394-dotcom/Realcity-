@@ -232,7 +232,7 @@ function animateRiggedPlayer(gait,moving,time,dt,airborne=false,sprintingNow=fal
  if(moving){for(const item of rig.fingerBones){const base=fingerPoseValue('relaxed'),wiggle=Math.sin(time*5+item.index*.8+(item.side==='left'?1:0))*.018;item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,base+wiggle))}}
 }
 function installRiggedPlayer(gltf){
- const model=gltf.scene;model.updateMatrixWorld(true);
+ const model=cloneSkeleton(gltf.scene);model.updateMatrixWorld(true);
  // Reject skeleton-only or unskinned GLBs before they replace the working procedural human.
  let skinnedMeshCount=0,renderableVertexCount=0,materialCount=0;
  model.traverse(o=>{if(o.isSkinnedMesh){skinnedMeshCount++;renderableVertexCount+=o.geometry?.attributes?.position?.count||0;const materials=Array.isArray(o.material)?o.material:[o.material];materialCount+=materials.filter(Boolean).length;}});

@@ -6,17 +6,68 @@ import * as THREE from 'three';
  * Shared geometry/materials and instancing keep the mobile asset budget controlled.
  */
 export function addFutureCityLayer(scene: THREE.Scene, quality: number): void {
+  // Small deterministic canvas-generated material maps: no external download and no large binary payload.
+  // They provide surface variation while keeping texture memory controlled on mobile.
+  const makeTexture = (kind: 'concrete' | 'metal' | 'glass' | 'solar', size = 256) => {
+    const canvas = document.createElement('canvas'); canvas.width = canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return null;
+    const palettes = {
+      concrete: ['#465158','#596168','#687078'],
+      metal: ['#35464e','#50616a','#78878c'],
+      glass: ['#102b3c','#194457','#28657a'],
+      solar: ['#071b34','#0e3155','#174b70']
+    } as const;
+    const colors = palettes[kind];
+    ctx.fillStyle = colors[0]; ctx.fillRect(0,0,size,size);
+    // Deterministic noise: subtle mottling, not random every frame.
+    let seed = kind.length * 982451653;
+    const rand = () => { seed = (Math.imul(seed,1664525)+1013904223)>>>0; return seed/4294967296; };
+    for(let i=0;i<1600;i++){
+      const v = rand(); ctx.globalAlpha = .025 + rand()*.11;
+      ctx.fillStyle = v>.66?colors[2]:v>.32?colors[1]:'#080e12';
+      const x=rand()*size,y=rand()*size,w=1+rand()*7,h=1+rand()*5;
+      ctx.fillRect(x,y,w,h);
+    }
+    ctx.globalAlpha=1;
+    if(kind==='concrete'){
+      ctx.strokeStyle='rgba(210,220,220,.15)'; ctx.lineWidth=1;
+      for(let y=0;y<size;y+=64){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(size,y);ctx.stroke();}
+      for(let x=0;x<size;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,size);ctx.stroke();}
+    } else if(kind==='metal'){
+      ctx.fillStyle='rgba(200,230,235,.22)'; ctx.fillRect(0,0,size,3);
+      ctx.fillStyle='rgba(0,0,0,.22)'; ctx.fillRect(0,size-3,size,3);
+      for(let x=16;x<size;x+=64){ctx.fillStyle='rgba(8,14,18,.55)';ctx.beginPath();ctx.arc(x,16,2,0,Math.PI*2);ctx.fill();}
+    } else if(kind==='glass'){
+      ctx.fillStyle='rgba(110,225,255,.14)'; ctx.fillRect(8,8,size-16,2);
+      ctx.strokeStyle='rgba(100,210,245,.12)';ctx.lineWidth=1;
+      for(let x=0;x<size;x+=64){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,size);ctx.stroke();}
+    } else {
+      ctx.strokeStyle='rgba(60,190,255,.55)';ctx.lineWidth=2;
+      for(let x=0;x<size;x+=32){ctx.beginPath();ctx.moveTo(x,0);ctx.lineTo(x,size);ctx.stroke();}
+      for(let y=0;y<size;y+=32){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(size,y);ctx.stroke();}
+    }
+    const texture = new THREE.CanvasTexture(canvas);
+    texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+    texture.colorSpace=THREE.SRGBColorSpace;
+    texture.anisotropy=1;
+    return texture;
+  };
+  const concreteMap = makeTexture('concrete');
+  const metalMap = makeTexture('metal');
+  const glassMap = makeTexture('glass');
+  const solarMap = makeTexture('solar');
   const material = (color: number, roughness = .55, metalness = .25, emissive = 0, intensity = 0) =>
     new THREE.MeshStandardMaterial({ color, roughness, metalness, emissive, emissiveIntensity: intensity });
-  const steel = material(0x26343c, .42, .72);
-  const paleAlloy = material(0x9aaeb3, .36, .68);
+  const steel = material(0x26343c, .42, .72); steel.map = metalMap;
+  const paleAlloy = material(0x9aaeb3, .36, .68); paleAlloy.map = concreteMap;
   const glass = new THREE.MeshStandardMaterial({
-    color: 0x183d50, roughness: .2, metalness: .5, transparent: true, opacity: .72
+    color: 0x183d50, roughness: .2, metalness: .5, transparent: true, opacity: .72, map: glassMap
   });
   const cyan = material(0x38f2e2, .28, .35, 0x11bcae, .85);
   const blue = material(0x388dff, .3, .3, 0x175eff, .7);
   const amber = material(0xffb65c, .35, .25, 0x8a3b09, .3);
-  const solar = material(0x102d4a, .25, .6);
+  const solar = material(0x102d4a, .25, .6); solar.map = solarMap;
   const box = new THREE.BoxGeometry(1, 1, 1);
   const cyl = new THREE.CylinderGeometry(.5, .5, 1, 8);
   const sphere = new THREE.SphereGeometry(1, 10, 8);

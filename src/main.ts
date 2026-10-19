@@ -209,6 +209,20 @@ function setPlayerFingerPose(pose='relaxed',side='both',finger='all'){
 }
 function animateRiggedPlayer(gait,moving,time,dt,airborne=false,sprintingNow=false){
  const rig=player.userData.rig;if(!rig)return;
+ // Some valid humanoid packs ship idle/walk/run but no jump clip. Keep jumping visibly animated instead of blending into idle.
+ if(airborne&&!rig.animationActions.jump){
+  if(rig.activeAction){rig.activeAction.stop();rig.activeAction=null}
+  rig.activeActionName='jump';
+  for(const item of rig.bodyBones){const b=item.bone;b.quaternion.copy(item.rest);let angle=0;
+   if(item.kind==='leftLeg'||item.kind==='rightLeg')angle=-.38;
+   else if(item.kind==='leftArm'||item.kind==='rightArm')angle=-.92;
+   else if(item.kind==='leftForearm'||item.kind==='rightForearm')angle=-.35;
+   else if(item.kind==='spine')angle=-.09;
+   if(angle)b.quaternion.multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,angle));
+  }
+  for(const item of rig.fingerBones)item.bone.quaternion.copy(item.rest);
+  return;
+ }
  const desired=airborne&&rig.animationActions.jump?'jump':moving?(sprintingNow&&rig.animationActions.run?'run':rig.animationActions.walk?'walk':rig.animationActions.run?'run':null):(rig.animationActions.idle?'idle':null);
  const nextAction=desired?rig.animationActions[desired]:null;
  if(nextAction){
@@ -346,7 +360,7 @@ function loadRiggedPlayer(){
 
 loadRiggedPlayer();
 loadSedanAsset();
-if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],pedestrians:pedestrians.length,pedestrianAssets:pedestrians.filter(p=>!!p.userData.importedPedestrian).length,pedestrianActive:pedestrians.find(p=>p.userData.importedPedestrian)?.userData.importedPedestrian?.activeActionName??null,vehicles:vehicles.length,sedanImported:!!vehicles.find(v=>!v.traffic)?.g.userData.importedModel,inCar:!!inCar,vehicleSpeed:inCar?.speed??0,vehiclePosition:inCar?{x:inCar.g.position.x,z:inCar.g.position.z}:null,prepareVehicle:()=>{const v=vehicles.find(v=>!v.traffic);if(v){inCar=null;player.visible=true;player.position.set(v.g.position.x,0,v.g.position.z+4.3)}},position:{x:player.position.x,y:player.position.y,z:player.position.z},canvas:!!renderer.domElement});}
+if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],jumpAnimation:player.userData.rig?.animationActions.jump?'asset':'procedural',pedestrians:pedestrians.length,pedestrianAssets:pedestrians.filter(p=>!!p.userData.importedPedestrian).length,pedestrianActive:pedestrians.find(p=>p.userData.importedPedestrian)?.userData.importedPedestrian?.activeActionName??null,vehicles:vehicles.length,sedanImported:!!vehicles.find(v=>!v.traffic)?.g.userData.importedModel,inCar:!!inCar,vehicleSpeed:inCar?.speed??0,vehiclePosition:inCar?{x:inCar.g.position.x,z:inCar.g.position.z}:null,prepareVehicle:()=>{const v=vehicles.find(v=>!v.traffic);if(v){inCar=null;player.visible=true;player.position.set(v.g.position.x,0,v.g.position.z+4.3)}},position:{x:player.position.x,y:player.position.y,z:player.position.z},canvas:!!renderer.domElement});}
 
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}
 loadfill.style.width='82%';loadnote.textContent='Initializing controls and minimap…';

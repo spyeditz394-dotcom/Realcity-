@@ -22,6 +22,7 @@ try {
   await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function', null, { timeout: 10000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   const idle = await page.evaluate(() => window.__REALCITY_QA__());
   await page.keyboard.down('w');
@@ -38,14 +39,24 @@ try {
   const jump = await page.evaluate(() => window.__REALCITY_QA__());
   if (jump.position.y <= 0.01) throw new Error('Jump animation activated without upward player movement');
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
+  await page.evaluate(() => window.__REALCITY_QA__().prepareVehicle());
+  await page.keyboard.press('e');
+  await page.waitForFunction(() => window.__REALCITY_QA__().inCar === true, null, { timeout: 5000 });
+  const carBefore = await page.evaluate(() => window.__REALCITY_QA__());
+  await page.keyboard.down('w');
+  await page.waitForFunction(() => window.__REALCITY_QA__().vehicleSpeed > 0.5, null, { timeout: 5000 });
+  await new Promise(resolve => setTimeout(resolve, 800));
+  await page.keyboard.up('w');
+  const carAfter = await page.evaluate(() => window.__REALCITY_QA__());
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png' });
   if (assetStatus !== 200) throw new Error('Protagonist GLB response status was ' + assetStatus);
   if (!idle.canvas || idle.bones < 20 || !idle.clips.some(x => /idle/i.test(x)) || !idle.clips.some(x => /walk/i.test(x)) || !idle.clips.some(x => /run/i.test(x)) || !idle.clips.some(x => /jump/i.test(x))) throw new Error('Rig or expected locomotion clips missing: ' + JSON.stringify(idle));
-  if (idle.pedestrians < 10 || idle.vehicles < 1) throw new Error('Expected starter city life is missing: ' + JSON.stringify({pedestrians: idle.pedestrians, vehicles: idle.vehicles}));
+  if (idle.pedestrians < 10 || idle.vehicles < 1 || idle.pedestrianAssets < 1 || !idle.sedanImported) throw new Error('Expected imported starter city assets are missing: ' + JSON.stringify(idle));
+  if (!carBefore.inCar || carAfter.vehiclePosition === null || Math.hypot(carAfter.vehiclePosition.x-carBefore.vehiclePosition.x,carAfter.vehiclePosition.z-carBefore.vehiclePosition.z)<0.05) throw new Error('Imported sedan did not move under throttle: '+JSON.stringify({carBefore,carAfter}));
   if (Math.hypot(walk.position.x-idle.position.x, walk.position.z-idle.position.z) < 0.01) throw new Error('Player position did not respond to forward input');
   if (errors.length) throw new Error('Browser errors: ' + errors.join(' | '));
-  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, vehicles: idle.vehicles, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
+  console.log(JSON.stringify({ ok: true, assetStatus, idle: idle.active, walk: walk.active, run: run.active, jump: jump.active, jumpHeight: jump.position.y, pedestrians: idle.pedestrians, pedestrianAssets: idle.pedestrianAssets, vehicles: idle.vehicles, sedanImported: idle.sedanImported, vehicleMoved: true, bones: idle.bones, clips: idle.clips, playerMoved: true, browserErrors: errors.length }, null, 2));
 } finally {
   if (browser) await browser.close();
   server.kill('SIGTERM');

@@ -35,3 +35,11 @@ The loader intentionally rejects assets that cannot replace the working characte
 - **License:** CC0 1.0 Universal; the source repository's `LICENSE` is included as `public/models/CC0-1.0.txt`.
 - **Verified GLB metadata:** one mesh, one skin with 41 joints, one material, eight clips named Human Armature|ArmatureAction.002, Death, Idle, Jump, Punch, Run, Walk and Working.
 - **Notes:** stylized/low-poly rather than photorealistic. The source mesh has a real humanoid skeleton and in-place animation clips. It does not contain every finger type; finger posing is optional and no longer blocks an otherwise valid animated humanoid.
+
+
+## Additional bundled assets
+
+- **Animated pedestrians:** clones of `realcity-protagonist.glb` share the same CC0 humanoid mesh and `Idle`/`Walk` clips through independent skeletons and animation mixers. Texture tints vary by NPC. The procedural pedestrian remains the fallback if the character asset fails to load.
+- **Drivable sedan visual:** `realcity-sedan.glb`, a 184,504-byte GLB 2.0 converted from Kenney's Car Kit. The runtime scales it to the existing vehicle footprint, aligns its lowest point to the road, rotates wheel meshes with vehicle speed and steers the front wheels. Existing acceleration, braking, reverse, collision and chase-camera logic is retained.
+- **Source:** https://github.com/Hidencod/tge-assets/tree/main/packs/car-kit/sedan.glb
+- **License:** CC0 1.0 from Kenney; source license included as `public/models/KENNEY-CC0-1.0.txt`.

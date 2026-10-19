@@ -9,7 +9,8 @@
     "preview": "vite preview",
     "check:types": "tsc --noEmit",
     "test:browser": "node scripts/realcity-browser-smoke.mjs",
-    "test:performance": "node scripts/realcity-mobile-performance.mjs"
+    "test:performance": "node scripts/realcity-mobile-performance.mjs",
+    "validate:glb": "node scripts/validate-realcity-glb.mjs"
   },
   "dependencies": {
     "three": "0.160.0"

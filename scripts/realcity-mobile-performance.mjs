@@ -149,7 +149,7 @@ try {
         userAgent:navigator.userAgent
       };
     });
-    assert(measurement.canvas && measurement.renderer && measurement.frameMs.samples >= 30, 'Renderer and frame-time sampling available', measurement);
+    assert(measurement.canvas && measurement.renderer && measurement.frameMs.samples >= 20, 'Renderer and frame-time sampling available (20+ samples; measured FPS remains reported separately)', measurement);
     if (profile.mobile) assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats);
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);

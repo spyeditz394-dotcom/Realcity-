@@ -22,7 +22,7 @@ npm run build
 npm run dev
 ```
 
-Stack: Three.js, Vite, TypeScript, and Rapier3D-compatible collision queries. Player/vehicle movement uses custom kinematic integration rather than full rigid-body vehicle dynamics.
+Stack: Three.js, Vite, and TypeScript, with lightweight local AABB collision checks to avoid a heavyweight physics runtime. Player/vehicle movement uses custom kinematic integration rather than full rigid-body vehicle dynamics.
 
 ## QA status
 

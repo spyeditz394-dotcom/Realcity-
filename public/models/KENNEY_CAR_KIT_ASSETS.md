@@ -10,3 +10,8 @@ Imported models are from Kenney's Car Kit, released under CC0 1.0 Universal. The
 - REALCITY integration is responsible for scaling each visual mesh to the existing vehicle collision footprint; these are visual meshes, not physics definitions.
 
 These are stylized game-ready vehicles, not photorealistic scans. No affiliation with any real vehicle manufacturer is implied.
+
+
+## Runtime compatibility note
+
+The imported vehicle meshes retain their geometry and wheel nodes. The original texture atlas references were removed after the pinned Three.js GLTFLoader failed to decode those embedded texture blobs in the browser smoke environment. Per-vehicle PBR body and rubber materials are used instead; physics and collision logic remain in the game controller and are not derived from these visual meshes.

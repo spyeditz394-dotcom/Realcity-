@@ -93,9 +93,20 @@ try {
     limitations: 'Headless Chromium + SwiftShader emulation, not physical-device FPS; p95 frame time is estimated from sampled HUD FPS.'
   };
 
-  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, modelResponses, pageErrors, failedLocalRequests };
+  const controls = {};
+  await page.locator('#timeBtn').click();
+  controls.dayNightButtonPresent = await page.locator('#timeBtn').count() === 1;
+  await page.locator('#qualityBtn').click();
+  controls.qualityButtonPresent = await page.locator('#qualityBtn').count() === 1;
+  await page.locator('#pauseBtn').click();
+  controls.pauseOpened = await page.locator('#pauseMenu').evaluate(el => el.classList.contains('open'));
+  await page.locator('#resumeBtn').click();
+  controls.resumeClosedPauseMenu = !(await page.locator('#pauseMenu').evaluate(el => el.classList.contains('open')));
+  controls.touchControlsPresent = await page.locator('#jump').count() === 1 && await page.locator('#sprint').count() === 1 && await page.locator('#interact').count() === 1;
+  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, controls, modelResponses, pageErrors, failedLocalRequests };
   console.log(JSON.stringify(report, null, 2));
 
+  if (!controls.pauseOpened || !controls.resumeClosedPauseMenu || !controls.touchControlsPresent) throw new Error('Pause/resume or touch-control smoke check failed: ' + JSON.stringify(controls));
   if (!result.canvas || result.startupFailureText) throw new Error('Canvas missing or startup failure displayed');
   if (result.characterStatus !== '3D MODEL: LOADED') throw new Error('Imported character did not load; observed ' + result.characterStatus);
   if (!modelResponses.some(item => item.url.includes('realcity-protagonist-upgraded.glb') && item.status === 200)) throw new Error('Local protagonist GLB was not requested successfully');

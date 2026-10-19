@@ -1,8 +1,20 @@
-# REALCITY — Part 4.5 source recovery
+# REALCITY — Part 9: Living City Systems
 
-Recovered from the public source download endpoint of the existing playable REALCITY deployment on 2026-10-18. The original game entry point is preserved at `src/main.ts`; the original Vite package versions and project configuration were recovered from the deployment file metadata. The original playable deployment remains available at https://open-world-city-prototype.vercel.app/ as a recovery reference.
+This branch continues the existing REALCITY project in `spyeditz394-dotcom/Realcity-` and keeps the established Three.js/Vite/Rapier foundation. It is a feature branch intended for preview review; it does not replace the production/main branch automatically.
 
-## Run
+## Included systems in this build
+
+- Procedurally generated city districts with road surfaces, curbs, road markings, façade variation, window instances, street furniture, trees, and rooftop details.
+- Day/night switching, shadow and texture quality presets, FPS/render diagnostics, and world-object culling.
+- A procedural articulated human fallback with visible facial/clothing detail and animated arms/legs, plus a gated GLB rig loader that refuses skeleton-only assets.
+- State-based idle/walk/run/jump animation selection when the loaded character asset provides compatible named clips.
+- Walking/running controls, touch controls, third-person camera, stamina, pedestrian roaming, vehicle traffic and driving, building-interior interaction, kiosks, minimap, and local settings persistence.
+
+## Mobile/performance behavior
+
+The first-run graphics preset is **Balanced** instead of forcing Ultra. Players can change presets in-game. Device-specific frame rate and visual quality still need to be tested on target phones; a READY deployment does not prove gameplay QA.
+
+## Run locally
 
 ```sh
 npm install
@@ -10,4 +22,8 @@ npm run build
 npm run dev
 ```
 
-Stack: Three.js, Vite, TypeScript entry point, and Rapier3D-compatible static overlap queries. Player/vehicle movement uses custom kinematic integration, not full rigid-body dynamics. See the original production report at https://open-world-city-prototype.vercel.app/realcity-part-4-report.txt.
+Stack: Three.js, Vite, TypeScript, and Rapier3D-compatible collision queries. Player/vehicle movement uses custom kinematic integration rather than full rigid-body vehicle dynamics.
+
+## QA status
+
+The Vercel preview build has reported READY for this branch. Interactive QA on Android—including player locomotion, GLB asset appearance, vehicle entry/exit, interiors, save/load, touch input, and sustained FPS—must be performed before treating Part 9 as fully verified or merging it into `main`.

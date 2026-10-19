@@ -32,6 +32,11 @@ try {
   const pageErrors = [];
   const failedLocalRequests = [];
   const modelResponses = [];
+  const assetRuntimeLogs = [];
+  page.on('console', message => {
+    const text = message.text();
+    if (text.includes('REALCITY character asset validated') || text.includes('REALCITY CC0 sedan loaded')) assetRuntimeLogs.push(text);
+  });
   page.on('pageerror', error => pageErrors.push(error.message));
   page.on('requestfailed', request => {
     if (request.url().startsWith(host) && /\.glb(?:$|\?)/i.test(request.url())) {
@@ -103,7 +108,7 @@ try {
   await page.locator('#resumeBtn').click();
   controls.resumeClosedPauseMenu = !(await page.locator('#pauseMenu').evaluate(el => el.classList.contains('open')));
   controls.touchControlsPresent = await page.locator('#jump').count() === 1 && await page.locator('#sprint').count() === 1 && await page.locator('#interact').count() === 1;
-  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, controls, modelResponses, pageErrors, failedLocalRequests };
+  const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, controls, modelResponses, assetRuntimeLogs, pageErrors, failedLocalRequests };
   console.log(JSON.stringify(report, null, 2));
 
   if (!controls.pauseOpened || !controls.resumeClosedPauseMenu || !controls.touchControlsPresent) throw new Error('Pause/resume or touch-control smoke check failed: ' + JSON.stringify(controls));
@@ -111,6 +116,7 @@ try {
   if (result.characterStatus !== '3D MODEL: LOADED') throw new Error('Imported character did not load; observed ' + result.characterStatus);
   if (!modelResponses.some(item => item.url.includes('realcity-protagonist-upgraded.glb') && item.status === 200)) throw new Error('Local protagonist GLB was not requested successfully');
   if (!modelResponses.some(item => item.url.includes('realcity-sedan-cc0.glb') && item.status === 200)) throw new Error('Local sedan GLB was not requested successfully');
+  if (!assetRuntimeLogs.some(line => line.includes('REALCITY CC0 sedan loaded'))) throw new Error('Local sedan GLB downloaded but did not finish GLTFLoader parsing');
   if (pageErrors.length) throw new Error('Browser page errors: ' + pageErrors.join(' | '));
   if (failedLocalRequests.length) throw new Error('Failed local model requests: ' + JSON.stringify(failedLocalRequests));
 } finally {

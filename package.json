@@ -8,7 +8,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "check:types": "tsc --noEmit",
-    "test:asset": "node scripts/validate-character-asset.mjs"
+    "test:asset": "node scripts/validate-local-models.mjs"
   },
   "dependencies": {
     "three": "0.160.0"

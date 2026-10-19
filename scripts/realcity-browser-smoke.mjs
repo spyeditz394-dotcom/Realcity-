@@ -110,10 +110,43 @@ try {
   await page.locator('#resumeBtn').click();
   controls.resumeClosedPauseMenu = !(await page.locator('#pauseMenu').evaluate(el => el.classList.contains('open')));
   controls.touchControlsPresent = await page.locator('#jump').count() === 1 && await page.locator('#sprint').count() === 1 && await page.locator('#interact').count() === 1;
+
+  // Gameplay regression: approach the known parked sedan, enter, accelerate, stop and exit.
+  await page.keyboard.down('w');
+  await page.keyboard.down('d');
+  await page.waitForTimeout(1100);
+  await page.keyboard.up('w');
+  await page.keyboard.up('d');
+  await page.waitForTimeout(700);
+  controls.interactLabelAfterApproach = (await page.locator('#interact').innerText()).trim();
+  if (controls.interactLabelAfterApproach === 'ENTER VEHICLE') {
+    await page.locator('#interact').click();
+    await page.waitForTimeout(350);
+    controls.enteredVehicle = (await page.locator('#interact').innerText()).trim() === 'EXIT VEHICLE'
+      && await page.locator('#drivepad').evaluate(el => el.classList.contains('visible'));
+    await page.keyboard.down('w');
+    await page.waitForTimeout(1100);
+    await page.keyboard.up('w');
+    controls.drivingStateObserved = (await page.locator('#state').innerText()).includes('Driving');
+    await page.keyboard.down('s');
+    await page.waitForTimeout(1200);
+    await page.keyboard.up('s');
+    await page.waitForTimeout(1800);
+    await page.locator('#interact').click();
+    await page.waitForTimeout(350);
+    controls.exitedVehicle = (await page.locator('#interact').innerText()).trim() !== 'EXIT VEHICLE'
+      && !(await page.locator('#drivepad').evaluate(el => el.classList.contains('visible')));
+  } else {
+    controls.enteredVehicle = false;
+    controls.drivingStateObserved = false;
+    controls.exitedVehicle = false;
+  }
+
   const report = { status: 'PASS', environment: 'GitHub Actions Ubuntu + headless Chromium + SwiftShader', viewport: '390x844 CSS px, DPR 1', smokeDurationMs: 8000, result, performanceSummary, perfSamples, controls, modelResponses, assetRuntimeLogs, consoleErrors, pageErrors, failedLocalRequests };
   console.log(JSON.stringify(report, null, 2));
 
   if (!controls.pauseOpened || !controls.resumeClosedPauseMenu || !controls.touchControlsPresent) throw new Error('Pause/resume or touch-control smoke check failed: ' + JSON.stringify(controls));
+  if (!controls.enteredVehicle || !controls.drivingStateObserved || !controls.exitedVehicle) throw new Error('Vehicle enter/drive/exit regression failed: ' + JSON.stringify(controls));
   if (!result.canvas || result.startupFailureText) throw new Error('Canvas missing or startup failure displayed');
   if (result.characterStatus !== '3D MODEL: LOADED') throw new Error('Imported character did not load; observed ' + result.characterStatus);
   if (!modelResponses.some(item => item.url.includes('realcity-protagonist-upgraded.glb') && item.status === 200)) throw new Error('Local protagonist GLB was not requested successfully');

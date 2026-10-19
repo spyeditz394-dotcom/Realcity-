@@ -1,0 +1,40 @@
+name: REALCITY asset and build validation
+
+on:
+  push:
+    branches:
+      - rebuild/stability-graphics-foundation
+  pull_request:
+    branches:
+      - part-9-visual-realism-overhaul
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: TypeScript validation
+        run: npm run check:types
+      - name: Validate bundled character and sedan GLBs
+        run: npm run test:asset
+      - name: Production build
+        run: npm run build
+      - name: Install Chromium for browser smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run browser startup and local asset checks
+        run: npm run test:browser
+      - name: Upload browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realcity-browser-smoke
+          path: artifacts/realcity-mobile-smoke.png
+          if-no-files-found: ignore

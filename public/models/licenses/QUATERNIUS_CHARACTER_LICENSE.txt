@@ -1,0 +1,9 @@
+REALCITY character asset provenance
+
+File: public/models/realcity-protagonist-upgraded.glb
+Source asset: Quaternius Universal Base Characters
+Original pack: https://quaternius.itch.io/universal-base-characters
+License: CC0 1.0 Universal, as identified in the source pack license ledger.
+License text: https://creativecommons.org/publicdomain/zero/1.0/
+
+REALCITY CI validates the GLB 2.0 structure, mesh positions, skin/joints, embedded images, and absence of external image URI dependencies. This is a textured stylized game character, not a photorealistic model. The file contains no animation clips; the game uses the skeleton for procedural locomotion.

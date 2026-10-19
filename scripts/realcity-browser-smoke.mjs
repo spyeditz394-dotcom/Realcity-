@@ -140,6 +140,8 @@ try {
     controls.exitedVehicle = false;
   }
 
+  // Close the asset-enabled page so both performance samples run without competing render loops.
+  await page.close();
   // Matched A/B run on the same CI machine/browser: compare imported GLBs with procedural fallbacks.
   const baselineContext = await browser.newContext({ viewport: { width: 390, height: 844 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true });
   await baselineContext.route(/\/models\/.*\.glb(?:$|\?)/i, route => route.fulfill({ status: 404, contentType: 'text/plain', body: 'paired benchmark: imported GLB disabled' }));

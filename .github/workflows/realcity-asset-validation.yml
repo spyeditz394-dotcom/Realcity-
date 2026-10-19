@@ -11,7 +11,7 @@ on:
 jobs:
   validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -27,3 +27,14 @@ jobs:
         run: npm run test:asset
       - name: Production build
         run: npm run build
+      - name: Install Chromium for browser smoke test
+        run: npx playwright install --with-deps chromium
+      - name: Run browser startup and local asset checks
+        run: npm run test:browser
+      - name: Upload browser screenshot
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: realcity-browser-smoke
+          path: artifacts/realcity-mobile-smoke.png
+          if-no-files-found: ignore

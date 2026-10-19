@@ -1,6 +1,7 @@
 
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { addFutureCityLayer } from './future-assets';
 const $=id=>document.getElementById(id),root=$('game'),load=$('loading'),loadfill=$('loadfill'),loadnote=$('loadnote');const yieldFrame=()=>new Promise(resolve=>requestAnimationFrame(()=>resolve()));
 let quality=1,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=4?Math.max(0,Math.min(3,saved.quality)):2;const scene=new THREE.Scene();scene.background=new THREE.Color(0x9bc4d1);scene.fog=new THREE.FogExp2(0xa3c3ca,.00055);
 const camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.1,420);
@@ -67,6 +68,8 @@ interiorBox(10,3.3,.18,mat(0xc8c0b2),roomX,1.55,roomZ-4.95);interiorBox(10,3.3,.
 interiorBox(2.8,.12,1.5,mat(0x6e5946),roomX-1.6,.65,roomZ-1.5);interiorBox(2.8,.72,.18,mat(0x8a735d),roomX-1.6,1.05,roomZ-2.12);
 interiorBox(1.8,.82,.8,mat(0x477b78),roomX+2.3,.41,roomZ-1.6);interiorBox(.7,1.7,.7,mat(0x6a8e6b),roomX+3.3,.85,roomZ+2.5);
 interiorBox(2.2,1.8,.16,mat(0x374d55),roomX,1.15,roomZ-4.72);interiorBox(1.4,1.1,.08,mat(0x6bd9c6),roomX,1.3,roomZ-4.61);interiorBox(1.4,.08,.08,mat(0xb9d3cf),roomX,1.9,roomZ-4.6);
+// Part 13: futuristic skyline, rooftop solar arrays, elevated transit, holographic pylons and delivery drones.
+loadnote.textContent='Installing future-city assets…';await yieldFrame();addFutureCityLayer(scene,quality);await yieldFrame();
 const primitiveGeometryCache=new Map();function reusePrimitiveGeometry(geometry){const key=geometry.type+':'+JSON.stringify(geometry.parameters||{});const cached=primitiveGeometryCache.get(key);if(cached){geometry.dispose();return cached}primitiveGeometryCache.set(key,geometry);return geometry}
 function person(color){
  // Procedural human fallback: shaped torso, layered facial features, fitted clothing and articulated hand geometry.

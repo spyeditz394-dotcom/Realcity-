@@ -1,0 +1,29 @@
+name: REALCITY asset and build validation
+
+on:
+  push:
+    branches:
+      - rebuild/stability-graphics-foundation
+  pull_request:
+    branches:
+      - part-9-visual-realism-overhaul
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Install dependencies
+        run: npm install
+      - name: TypeScript validation
+        run: npm run check:types
+      - name: Validate pinned character GLB
+        run: npm run test:asset
+      - name: Production build
+        run: npm run build

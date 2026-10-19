@@ -40,6 +40,7 @@ try {
   await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
+  await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.pedestrianModelNames?.length >= 3 && q.importedTrafficModels >= 4; }, null, { timeout: 20000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
 
   const initial = await page.evaluate(() => window.__REALCITY_QA__());
@@ -52,6 +53,13 @@ try {
     initial.clips.some(name => /walk/i.test(name)) && initial.clips.some(name => /run/i.test(name)) &&
     ['asset', 'procedural'].includes(initial.jumpAnimation),
     'Protagonist rig and locomotion animation support are present', { bones: initial.bones, clips: initial.clips, jumpAnimation: initial.jumpAnimation });
+  assert(initial.pedestrianModelNames?.length >= 3,
+    'Pedestrians use at least three distinct imported model sources', initial.pedestrianModelNames);
+  assert(initial.importedTrafficModels >= 4 && initial.trafficModelNames?.length >= 4,
+    'At least four imported traffic vehicle meshes are installed', {
+      importedTrafficModels: initial.importedTrafficModels, trafficModelNames: initial.trafficModelNames
+    });
+
   assert(initial.pedestrians >= 10 && initial.pedestrianAssets >= 1 && initial.vehicles >= 1 && initial.sedanImported,
     'City population and imported vehicle assets are available', {
       pedestrians: initial.pedestrians, pedestrianAssets: initial.pedestrianAssets,

@@ -26,7 +26,7 @@ try {
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   const idle = await page.evaluate(() => window.__REALCITY_QA__());
-  const collision = idle.collisionProbe;
+  const collision = await page.evaluate(() => window.__REALCITY_QA__().collisionProbe());
   if (!collision || collision.buildingCount < 1 || !collision.playerBlockedAtBuilding || !collision.vehicleBlockedAtBuilding) throw new Error('Building collision probes failed: ' + JSON.stringify(collision));
   await page.keyboard.down('w');
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'walk', null, { timeout: 5000 });

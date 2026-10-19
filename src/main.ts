@@ -58,7 +58,7 @@ for(let i=0;i<34;i++){const x=(rand()-.5)*230,z=(rand()-.5)*230;
  else {box(1.5,2.3,.16,metalMat,x,1.15,z,true);box(1.35,.78,.08,signMat,x,1.5,z+.11);box(.12,.7,.12,mat(0xd6b66b),x-.5,1.5,z+.17)}
 }
 for(let i=0;i<28;i++){const x=(rand()-.5)*225,z=(rand()-.5)*225;if(blocked(x,z,2))continue;const post=box(.12,1.2,.12,metalMat,x,.6,z,true);box(.45,.16,.42,mat(0x8ca7a6),x,1.22,z)}
-function addCityKiosk(x,z){const shell=box(.72,1.42,.58,mat(0x2c454a),x,.71,z,true),screen=box(.48,.58,.055,mat(0x6bd9c6,.35,.1),x,.94,z+.32,true);screen.material.emissive.setHex(0x1f806f);screen.material.emissiveIntensity=.65;box(.78,.1,.64,mat(0x6b7e7c),x,1.47,z,true);worldObjects.push({type:'kiosk',x,z,mesh:shell,screen})}
+function addCityKiosk(x,z){const shell=box(.72,1.42,.58,mat(0x343b3b,.72,.12),x,.71,z,true),screen=box(.48,.58,.055,mat(0x8da8a1,.58,.02),x,.94,z+.32,true);box(.78,.1,.64,mat(0x6b716c,.82),x,1.47,z,true);worldObjects.push({type:'kiosk',x,z,mesh:shell,screen})}
 for(const [x,z] of [[-4.2,-120],[-4.2,-80],[-4.2,-40],[-4.2,0],[-4.2,40],[-4.2,80],[4.2,120]])addCityKiosk(x,z);
 function interiorBox(w,h,d,m,x,y,z){const o=box(w,h,d,m,x,y,z,true);o.userData.cityStatic=false;o.userData.interior=true;o.visible=false;interiorMeshes.push(o);return o}
 const roomX=500,roomZ=500;
@@ -68,7 +68,7 @@ interiorBox(10,3.3,.18,mat(0xc8c0b2),roomX,1.55,roomZ-4.95);interiorBox(10,3.3,.
 interiorBox(2.8,.12,1.5,mat(0x6e5946),roomX-1.6,.65,roomZ-1.5);interiorBox(2.8,.72,.18,mat(0x8a735d),roomX-1.6,1.05,roomZ-2.12);
 interiorBox(1.8,.82,.8,mat(0x477b78),roomX+2.3,.41,roomZ-1.6);interiorBox(.7,1.7,.7,mat(0x6a8e6b),roomX+3.3,.85,roomZ+2.5);
 interiorBox(2.2,1.8,.16,mat(0x374d55),roomX,1.15,roomZ-4.72);interiorBox(1.4,1.1,.08,mat(0x6bd9c6),roomX,1.3,roomZ-4.61);interiorBox(1.4,.08,.08,mat(0xb9d3cf),roomX,1.9,roomZ-4.6);
-// Part 13: futuristic skyline, rooftop solar arrays, elevated transit, holographic pylons and delivery drones.
+// Modern-city art pass: contemporary facades, rooftop HVAC, street furniture, trees and realistic road details.
 loadnote.textContent='Installing future-city assets…';await yieldFrame();addFutureCityLayer(scene,quality);await yieldFrame();
 const primitiveGeometryCache=new Map();function reusePrimitiveGeometry(geometry){const key=geometry.type+':'+JSON.stringify(geometry.parameters||{});const cached=primitiveGeometryCache.get(key);if(cached){geometry.dispose();return cached}primitiveGeometryCache.set(key,geometry);return geometry}
 function person(color){

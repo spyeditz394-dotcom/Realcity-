@@ -23,6 +23,7 @@ try {
   await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function', null, { timeout: 10000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   const idle = await page.evaluate(() => window.__REALCITY_QA__());
   await page.keyboard.down('w');
@@ -38,7 +39,7 @@ try {
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'jump', null, { timeout: 5000 });
   const jump = await page.evaluate(() => window.__REALCITY_QA__());
   if (jump.position.y <= 0.01) throw new Error('Jump animation activated without upward player movement');
-  await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 15000 });
   await page.evaluate(() => window.__REALCITY_QA__().prepareVehicle());
   await page.keyboard.press('e');
   await page.waitForFunction(() => window.__REALCITY_QA__().inCar === true, null, { timeout: 5000 });

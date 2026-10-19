@@ -21,11 +21,11 @@ function styleImportedMaterial(source:THREE.Material,meshName:string,role:'chara
   if(/skin|face|head|hand/i.test(label))copy.roughness=.74;
   else if(/hair|beard/i.test(label))copy.roughness=.9;
   else if(/shoe|boot/i.test(label))copy.roughness=.86;
-  else {copy.roughness=.84;if(/shirt|jacket|coat|pants|trouser|cloth|fabric|uniform|vest|sleeve|hoodie|jean|skirt/i.test(label)&&!copy.map&&facadeDetail)copy.map=facadeDetail}
+  else {copy.roughness=.84}
  }else{
   if(/wheel|tire|rubber/i.test(label)){copy.roughness=.94;copy.metalness=0}
   else if(/glass|window|windshield/i.test(label)){copy.roughness=.24;copy.metalness=.12}
-  else {copy.roughness=Math.min(copy.roughness||.7,.48);copy.metalness=Math.max(copy.metalness,.08);if(/body|paint|shell|door|hood|bonnet|fender|roof|car/i.test(label)&&!copy.map&&facadeDetail)copy.map=facadeDetail}
+  else {copy.roughness=Math.min(copy.roughness||.7,.48);copy.metalness=Math.max(copy.metalness,.08)}
  }
  copy.needsUpdate=true;return copy;
 }
@@ -492,9 +492,10 @@ function applyQuality(q){quality=Math.max(0,Math.min(3,q));const names=['LOW','B
 let staticCullElapsed=0;
 function updateStaticCityVisibility(dt){
  staticCullElapsed+=dt;
- if(staticCullElapsed<.3)return;
+ if(staticCullElapsed<.18)return;
  staticCullElapsed=0;
- const radius=[82,112,155,210][quality],radiusSq=radius*radius,cx=camera.position.x,cz=camera.position.z;
+ // Tighten low/mobile visibility radii to avoid submitting hundreds of distant facade/detail meshes.
+ const radius=[58,78,125,175][quality],radiusSq=radius*radius,cx=camera.position.x,cz=camera.position.z;
  for(const mesh of cityStaticMeshes){
   if(mesh.userData.cityStatic===false||mesh.userData.alwaysVisible)continue;
   const mx=typeof mesh.userData.cullX==='number'?mesh.userData.cullX:mesh.position.x,mz=typeof mesh.userData.cullZ==='number'?mesh.userData.cullZ:mesh.position.z;

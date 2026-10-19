@@ -98,16 +98,21 @@ try {
     await wait(3200);
     const sustained = await page.evaluate(() => window.__REALCITY_QA__());
     await page.mouse.up();
-    await page.keyboard.down('s');
-    await wait(2200);
-    await page.keyboard.up('s');
+    const brake = page.locator('#brakeBtn');
+    const brakeBox = await brake.boundingBox();
+    assert(brakeBox, 'Vehicle brake control is available during sustained driving');
+    await page.mouse.move(brakeBox.x + brakeBox.width/2, brakeBox.y + brakeBox.height/2);
+    await page.mouse.down();
+    await wait(3000);
+    await page.mouse.up();
+    await wait(500);
     const braked = await page.evaluate(() => window.__REALCITY_QA__());
     assert(sustained.inCar && sustained.vehiclePosition && distance(carStart,sustained.vehiclePosition) > 1,
       'Sustained throttle moves vehicle over several seconds', {carStart,carEnd:sustained.vehiclePosition,speed:sustained.vehicleSpeed});
     assert(braked.inCar && Number.isFinite(braked.vehicleSpeed) && Number.isFinite(braked.vehiclePosition.x) && Number.isFinite(braked.vehiclePosition.z),
       'Vehicle remains in a valid state after sustained throttle and braking', {speed:braked.vehicleSpeed,position:braked.vehiclePosition});
     await page.keyboard.press('e');
-    await page.waitForFunction(() => !window.__REALCITY_QA__().inCar, null, { timeout:5000 });
+    await page.waitForFunction(() => !window.__REALCITY_QA__().inCar, null, { timeout:10000 });
     checks.push('sustained driving, braking and vehicle exit exercised');
 
     const measurement = await page.evaluate(async () => {

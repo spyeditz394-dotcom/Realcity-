@@ -242,6 +242,40 @@ sedanShape.lineTo(-.91,-1.62);
 sedanShape.quadraticCurveTo(-.88,-1.86,-.72,-1.88);
 const sedanBodyGeometry=new THREE.ExtrudeGeometry(sedanShape,{depth:.55,steps:1,bevelEnabled:true,bevelSegments:2,bevelSize:.045,bevelThickness:.045});
 sedanBodyGeometry.rotateX(Math.PI/2);sedanBodyGeometry.translate(0,.55,0);
+let sedanTemplate=null,sedanTemplatePromise=null;
+function loadSedanTemplate(){
+ if(sedanTemplate)return Promise.resolve(sedanTemplate);
+ if(!sedanTemplatePromise)sedanTemplatePromise=(async()=>{
+  const {GLTFLoader}=await import('three/addons/loaders/GLTFLoader.js');
+  const gltf=await new GLTFLoader().loadAsync('/models/realcity-sedan-cc0.glb');
+  let meshCount=0;
+  gltf.scene.traverse(o=>{if(o.isMesh)meshCount++});
+  if(!meshCount)throw new Error('No mesh in local sedan GLB');
+  sedanTemplate=gltf.scene;
+  return sedanTemplate;
+ })();
+ return sedanTemplatePromise;
+}
+async function attachSedanModel(v){
+ try{
+  const template=await loadSedanTemplate();
+  if(!vehicles.includes(v)||!v.g.parent)return;
+  const model=template.clone(true);
+  model.updateMatrixWorld(true);
+  const bounds=new THREE.Box3().setFromObject(model);
+  const size=bounds.getSize(new THREE.Vector3());
+  if(size.x<.01||size.y<.01||size.z<.01)throw new Error('Invalid sedan dimensions');
+  model.scale.setScalar(Math.min(1.9/size.x,1.65/size.y,3.9/size.z));
+  model.updateMatrixWorld(true);
+  bounds.setFromObject(model);
+  model.position.y-=bounds.min.y;
+  model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true}});
+  for(const child of v.g.children)child.visible=false;
+  for(const lamp of carLamps){if(v.g.getObjectById(lamp.mesh.id))lamp.mesh.visible=true}
+  v.g.add(model);
+  v.g.userData.importedVehicleVisual=true;
+ }catch(error){console.warn('Local sedan unavailable; procedural visual retained.',error)}
+}
 function car(color,x,z,rot=0){
  const g=new THREE.Group(),bodyMat=new THREE.MeshPhysicalMaterial({color,roughness:.25,metalness:.34,clearcoat:.62,clearcoatRoughness:.24}),trim=mat(0x20282c,.62,.1),tire=mat(0x14191d,.96),rim=mat(0x9ca8ab,.24,.78),rubberTrim=mat(0x303638,.78,.05);
  const body=new THREE.Mesh(sedanBodyGeometry,bodyMat);body.position.y=.42;body.castShadow=true;body.receiveShadow=true;g.add(body);
@@ -277,7 +311,7 @@ for(const side of [-1,1]){
 }
 const frontGrille=new THREE.Mesh(new THREE.BoxGeometry(.55,.14,.055),trim);frontGrille.position.set(0,.70,1.91);g.add(frontGrille);
  const plate=new THREE.Mesh(new THREE.BoxGeometry(.42,.12,.04),mat(0xe4e7df));plate.position.set(0,.65,-1.91);g.add(plate);
- g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);const v={g,speed:0,steer:0,health:100,trafficData:null,lastCollisionTime:-10};vehicles.push(v);return v
+ g.position.set(x,0,z);g.rotation.y=rot;scene.add(g);const v={g,speed:0,steer:0,health:100,trafficData:null,lastCollisionTime:-10};vehicles.push(v);attachSedanModel(v);return v
 }
 car(0xb9473e,5,17,.1);car(0x347f9d,-35,24,Math.PI/2);car(0xc3a64b,39,-23,-Math.PI/2);
 // Ambient traffic: lightweight lane-following cars on the existing road grid.

@@ -120,6 +120,12 @@ try {
   if (controls.interactLabelAfterApproach === 'ENTER VEHICLE') {
     await page.keyboard.press('e');
     await page.waitForTimeout(350);
+    controls.enterToastAfterKeyboard = (await page.locator('#toast').innerText()).trim();
+    if ((await page.locator('#interact').innerText()).trim() !== 'EXIT VEHICLE') {
+      await page.locator('#interact').evaluate(el => el.click());
+      await page.waitForTimeout(350);
+    }
+    controls.enterToastAfterFallbackClick = (await page.locator('#toast').innerText()).trim();
     controls.enteredVehicle = (await page.locator('#interact').innerText()).trim() === 'EXIT VEHICLE'
       && await page.locator('#drivepad').evaluate(el => el.classList.contains('visible'));
     await page.keyboard.down('w');

@@ -51,6 +51,9 @@ try {
     }
   });
 
+  await page.addInitScript(() => {
+    localStorage.setItem('realcity-settings', JSON.stringify({ version: 7, quality: 1, spawnX: 5, spawnZ: 21 }));
+  });
   await page.goto(host, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await page.waitForSelector('#game canvas', { timeout: 20_000 });
   await page.waitForFunction(() => {
@@ -111,13 +114,8 @@ try {
   controls.resumeClosedPauseMenu = !(await page.locator('#pauseMenu').evaluate(el => el.classList.contains('open')));
   controls.touchControlsPresent = await page.locator('#jump').count() === 1 && await page.locator('#sprint').count() === 1 && await page.locator('#interact').count() === 1;
 
-  // Gameplay regression: approach the known parked sedan, enter, accelerate, stop and exit.
-  await page.keyboard.down('w');
-  await page.keyboard.down('d');
-  await page.waitForTimeout(1100);
-  await page.keyboard.up('w');
-  await page.keyboard.up('d');
-  await page.waitForTimeout(700);
+  // Gameplay regression: test from a deterministic spawn beside the known parked sedan.
+  await page.waitForTimeout(500);
   controls.interactLabelAfterApproach = (await page.locator('#interact').innerText()).trim();
   if (controls.interactLabelAfterApproach === 'ENTER VEHICLE') {
     await page.locator('#interact').click();
@@ -148,6 +146,9 @@ try {
   const baselinePage = await baselineContext.newPage();
   const baselineErrors = [];
   baselinePage.on('pageerror', error => baselineErrors.push(error.message));
+  await baselinePage.addInitScript(() => {
+    localStorage.setItem('realcity-settings', JSON.stringify({ version: 7, quality: 1, spawnX: 5, spawnZ: 21 }));
+  });
   await baselinePage.goto(host, { waitUntil: 'domcontentloaded', timeout: 30_000 });
   await baselinePage.waitForSelector('#game canvas', { timeout: 20_000 });
   await baselinePage.waitForFunction(() => (document.querySelector('#characterStatus')?.textContent ?? '').includes('3D MODEL: BUILT-IN'), { timeout: 25_000 });

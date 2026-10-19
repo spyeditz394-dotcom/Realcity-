@@ -57,6 +57,9 @@ try {
       pedestrians: initial.pedestrians, pedestrianAssets: initial.pedestrianAssets,
       vehicles: initial.vehicles, sedanImported: initial.sedanImported
     });
+  assert(['sedan','suv','van'].every(style => initial.vehicleStyles?.includes(style)),
+    'City traffic contains distinct sedan, SUV and van silhouettes', initial.vehicleStyles);
+
   assert(initial.pedestrianWalking && initial.pedestrianActive === 'walk',
     'At least one imported pedestrian is actively walking', { pedestrianActive: initial.pedestrianActive });
 

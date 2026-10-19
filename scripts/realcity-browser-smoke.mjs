@@ -158,8 +158,23 @@ try {
     throw new Error('Vehicle remained too fast for a safe exit after braking: ' + carAfter.vehicleSpeed);
   }
 
+  const damagedHealth = await page.evaluate(() => window.__REALCITY_QA__().setParkedVehicleHealthForTest(41));
+  assert(damagedHealth === 41, 'QA setup records a damaged parked vehicle condition');
   await page.locator('#serviceBtn').click();
-  assert(await page.locator('#serviceBtn').isVisible(), 'Vehicle service control remains available after vehicle exit');
+  await page.waitForFunction(() => window.__REALCITY_QA__().vehicleStates.find(v => !v.traffic)?.health === 100, null, { timeout: 3000 });
+  assert(await page.locator('#serviceBtn').isVisible(), 'Service control restores vehicle condition to 100%');
+
+  // Save a known parked-car state, reload the actual page, and verify persistence.
+  await page.evaluate(() => { const q = window.__REALCITY_QA__(); q.prepareVehicle(); q.persistStateForTest(); });
+  const beforeReload = await page.evaluate(() => window.__REALCITY_QA__().vehicleStates.find(v => !v.traffic));
+  await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
+  await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().rigged === true && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().importedTrafficModels >= 4, null, { timeout: 15000 });
+  const afterReload = await page.evaluate(() => window.__REALCITY_QA__().vehicleStates.find(v => !v.traffic));
+  const restoredState = await page.evaluate(() => window.__REALCITY_QA__());
+  assert(beforeReload && afterReload && distance2d(beforeReload, afterReload) < 0.05 &&
+    afterReload.health === 100 && restoredState.inCar === false,
+    'Vehicle position, health and on-foot state survive a browser reload', { beforeReload, afterReload, inCar: restoredState.inCar });
 
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png', fullPage: true });

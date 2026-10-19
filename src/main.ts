@@ -416,6 +416,14 @@ function animateRiggedPlayer(gait,moving,time,dt){
    item.bone.quaternion.copy(item.rest).multiply(new THREE.Quaternion().setFromAxisAngle(item.axis,base+wiggle));
  }
 }
+function getBodyBoneSide(name){
+ const raw=String(name||'').toLowerCase(),n=raw.replace(/[^a-z0-9]/g,'');
+ const leftToken=n.includes('left')||/^l(?:thigh|upleg|upperleg|lowerleg|calf|shin|leg|arm|forearm|hand|shoulder|foot|toe)/.test(n)||/bip\\d*l(?:thigh|upleg|upperleg|lowerleg|calf|shin|leg|arm|forearm|hand|shoulder|foot|toe)/.test(n)||/mixamorigl(?:thigh|upleg|upperleg|lowerleg|calf|shin|leg|arm|forearm|hand|shoulder|foot|toe)/.test(n)||/(?:^|[._ -])l(?:$|[._ -])/.test(raw);
+ const rightToken=n.includes('right')||/^r(?:thigh|upleg|upperleg|lowerleg|calf|shin|leg|arm|forearm|hand|shoulder|foot|toe)/.test(n)||/bip\\d*r(?:thigh|upleg|upperleg|lowerleg|calf|shin|leg|arm|forearm|hand|shoulder|foot|toe)/.test(n)||/mixamorig r/.test(raw)||/mixamorig r/.test(n)||/mixamorig_r/.test(raw)||/(?:^|[._ -])r(?:$|[._ -])/.test(raw);
+ if(leftToken)return 'left';
+ if(rightToken)return 'right';
+ return null;
+}
 function installRiggedPlayer(gltf){
  const model=gltf.scene;model.updateMatrixWorld(true);
  // The previous upstream asset was a matte, untextured base mesh with no locomotion clips.
@@ -436,16 +444,15 @@ function installRiggedPlayer(gltf){
  }
  if(bones.length<20)throw new Error('Rig validation: only '+bones.length+' bones; keeping animated fallback');
  const bodyBones=[];
- for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,'');let kind=null;
-   if((n.includes('left')||n.startsWith('l'))&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
-   else if((n.includes('right')||n.startsWith('r'))&&/(upleg|thigh|upperleg)/.test(n))kind='rightLeg';
-   else if((n.includes('left')||n.startsWith('l'))&&/(lowerleg|calf|leglower|leftleg$)/.test(n))kind='leftKnee';
-   else if((n.includes('right')||n.startsWith('r'))&&/(lowerleg|calf|leglower|rightleg$)/.test(n))kind='rightKnee';
-   // Match forearms before the broad arm suffix: names like mixamorigLeftForeArm also end in "arm".
-   else if((n.includes('left')||n.startsWith('l'))&&/(forearm|lowerarm)/.test(n))kind='leftForearm';
-   else if((n.includes('right')||n.startsWith('r'))&&/(forearm|lowerarm)/.test(n))kind='rightForearm';
-   else if((n.includes('left')||n.startsWith('l'))&&/(upperarm|arm$|shoulder)/.test(n))kind='leftArm';
-   else if((n.includes('right')||n.startsWith('r'))&&/(upperarm|arm$|shoulder)/.test(n))kind='rightArm';
+ for(const bone of bones){const n=bone.name.toLowerCase().replace(/[^a-z0-9]/g,''),side=getBodyBoneSide(bone.name);let kind=null;
+   if(side==='left'&&/(upleg|thigh|upperleg)/.test(n))kind='leftLeg';
+   else if(side==='right'&&/(upleg|thigh|upperleg)/.test(n))kind='rightLeg';
+   else if(side==='left'&&/(lowerleg|calf|leglower|shin|knee|leftleg$)/.test(n))kind='leftKnee';
+   else if(side==='right'&&/(lowerleg|calf|leglower|shin|knee|rightleg$)/.test(n))kind='rightKnee';
+   else if(side==='left'&&/(forearm|lowerarm)/.test(n))kind='leftForearm';
+   else if(side==='right'&&/(forearm|lowerarm)/.test(n))kind='rightForearm';
+   else if(side==='left'&&/(upperarm|arm$|shoulder)/.test(n))kind='leftArm';
+   else if(side==='right'&&/(upperarm|arm$|shoulder)/.test(n))kind='rightArm';
    else if(/spine1|spine2|chest/.test(n))kind='spine';
    if(kind)bodyBones.push({bone,kind,rest:bone.quaternion.clone(),axis:new THREE.Vector3(1,0,0)});
  }

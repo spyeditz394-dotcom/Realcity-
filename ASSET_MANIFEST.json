@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "generatedFromCommit": "635666fee3fcd7862331dc8c505c0a11294c84f9",
+  "character": {
+    "file": "public/assets/vendor/quaternius/night-striker.glb",
+    "runtimeBundledLocally": false,
+    "runtimeSource": "https://cdn.jsdelivr.net/gh/Seyamalam/blood-league-kickoff@aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius/night-striker.glb",
+    "fallbackSource": "https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius/night-striker.glb",
+    "sourceProject": "https://github.com/Seyamalam/blood-league-kickoff",
+    "originalPack": "https://quaternius.com/packs/universalbasecharacters.html",
+    "license": "CC0 1.0 Universal (Quaternius pack; source project asset ledger)",
+    "validation": "PASS: pinned GLB structure and embedded image dependencies checked by GitHub Actions",
+    "verifiedProperties": {
+      "bytes": 6465208,
+      "meshes": 3,
+      "primitives": 3,
+      "vertices": 8483,
+      "skins": 1,
+      "joints": 65,
+      "materials": 3,
+      "images": 7,
+      "textures": 7,
+      "animationClips": 0,
+      "externalImageDependencies": 0
+    },
+    "runtimeAnimation": "Procedural bone animation; this GLB contains no animation clips.",
+    "visualQuality": "Textured stylized character, not photorealistic.",
+    "remainingWork": "Vendor a size-optimized local GLB and visually inspect gameplay poses and texture quality."
+  },
+  "vehicles": {
+    "importedModelBinariesPresent": false,
+    "runtimeRepresentation": "Procedural vehicle geometry in src/main.ts",
+    "verifiedAsImportedAsset": false,
+    "remainingWork": "Replace or supplement procedural bodies with locally bundled, licensed GLB vehicle models; validate scale, wheels, collision alignment, and night/day appearance."
+  }
+}

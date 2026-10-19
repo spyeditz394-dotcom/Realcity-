@@ -1,0 +1,19 @@
+name: REALCITY validation
+on:
+  push:
+    branches:
+      - feature/realcity-protagonist-animation-audit
+  pull_request:
+    branches:
+      - main
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - run: npm run check:types
+      - run: npm run build

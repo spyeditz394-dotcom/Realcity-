@@ -118,7 +118,7 @@ try {
   await page.waitForTimeout(500);
   controls.interactLabelAfterApproach = (await page.locator('#interact').innerText()).trim();
   if (controls.interactLabelAfterApproach === 'ENTER VEHICLE') {
-    await page.locator('#interact').click();
+    await page.keyboard.press('e');
     await page.waitForTimeout(350);
     controls.enteredVehicle = (await page.locator('#interact').innerText()).trim() === 'EXIT VEHICLE'
       && await page.locator('#drivepad').evaluate(el => el.classList.contains('visible'));
@@ -130,7 +130,7 @@ try {
     await page.waitForTimeout(1200);
     await page.keyboard.up('s');
     await page.waitForTimeout(1800);
-    await page.locator('#interact').click();
+    await page.keyboard.press('e');
     await page.waitForTimeout(350);
     controls.exitedVehicle = (await page.locator('#interact').innerText()).trim() !== 'EXIT VEHICLE'
       && !(await page.locator('#drivepad').evaluate(el => el.classList.contains('visible')));

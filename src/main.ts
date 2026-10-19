@@ -281,7 +281,36 @@ function installRiggedPlayer(gltf){
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');
 }
-function loadRiggedPlayer(){const loader=new GLTFLoader();loader.load('https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb',gltf=>{try{installRiggedPlayer(gltf)}catch(err){playerAssetStatus='Rig rejected · '+String(err?.message||err).slice(0,92);console.warn('REALCITY character rig integration:',err)}},undefined,err=>{playerAssetStatus='Rig unavailable · network/CORS/load error';console.warn('REALCITY character asset load failed; keeping fallback.',err)})}
+function loadRiggedPlayer(){
+ const loader=new GLTFLoader();
+ const candidates=[
+  '/models/realcity-protagonist.glb',
+  'https://raw.githubusercontent.com/programasweights/avatar/main/public/assets/character.glb'
+ ];
+ const tryCandidate=(index)=>{
+  if(index>=candidates.length){
+   playerAssetStatus='Rig unavailable · procedural animated fallback active';
+   console.warn('REALCITY character assets unavailable; keeping procedural fallback.');
+   return;
+  }
+  const url=candidates[index];
+  loader.load(url,gltf=>{
+   try{
+    installRiggedPlayer(gltf);
+    playerAssetStatus='Rigged human loaded · '+(url.startsWith('/')?'local REALCITY asset':'remote compatibility asset');
+    console.info('REALCITY character asset loaded:',url);
+   }catch(err){
+    playerAssetStatus='Rig rejected · procedural fallback active';
+    console.warn('REALCITY character rig rejected; trying next asset:',url,err);
+    tryCandidate(index+1);
+   }
+  },undefined,err=>{
+   console.warn('REALCITY character asset failed; trying next candidate:',url,err);
+   tryCandidate(index+1);
+  });
+ };
+ tryCandidate(0);
+}
 
 loadRiggedPlayer();
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}

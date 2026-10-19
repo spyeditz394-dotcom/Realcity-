@@ -302,7 +302,9 @@ function installRiggedPlayer(gltf){
  setPlayerFingerPose('relaxed');
 }
 
-let pedestrianAssetInstallStarted=false,sedanAssetLoadStarted=false;
+let pedestrianAssetInstallStarted=false,sedanAssetLoadStarted=false,trafficAssetLoadStarted=false;
+let importedTrafficModelCount=0;
+const importedTrafficModelNames:string[]=[];
 function installPedestrianAssets(gltf){
  if(pedestrianAssetInstallStarted)return;pedestrianAssetInstallStarted=true;
  const idle=gltf.animations.find(c=>/idle|stand|breath/i.test(c.name)),walk=gltf.animations.find(c=>/walk|walking/i.test(c.name));
@@ -336,6 +338,45 @@ function loadSedanAsset(){
  },undefined,error=>console.warn('REALCITY sedan asset unavailable; existing procedural vehicle retained.',error));
 }
 
+function loadTrafficVehicleAssets(){
+ if(trafficAssetLoadStarted)return;trafficAssetLoadStarted=true;
+ const fleet=[
+  {file:'/models/realcity-hatchback-sports.glb',name:'hatchback-sports',length:3.75,width:1.9},
+  {file:'/models/realcity-taxi.glb',name:'taxi',length:3.75,width:1.9},
+  {file:'/models/realcity-suv.glb',name:'suv',length:3.9,width:2.0},
+  {file:'/models/realcity-van.glb',name:'van',length:4.05,width:2.02},
+  {file:'/models/realcity-truck.glb',name:'truck',length:4.05,width:2.02}
+ ];
+ const targets=vehicles.filter(v=>v.traffic);
+ targets.forEach((vehicle,index)=>{
+  const asset=fleet[index%fleet.length];
+  new GLTFLoader().load(asset.file,gltf=>{
+   try{
+    if(vehicle.g.userData.importedTrafficModel)return;
+    const model=cloneSkeleton(gltf.scene);model.updateMatrixWorld(true);
+    const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
+    if(!Number.isFinite(size.x)||!Number.isFinite(size.y)||!Number.isFinite(size.z)||size.x<.1||size.y<.1||size.z<.1)throw new Error('Invalid model bounds '+size.toArray().join(','));
+    // Visuals are fitted inside the same pre-existing arcade collision envelope.
+    // No collision, movement, health, servicing or persistence data is replaced.
+    const scale=Math.min(asset.width/size.x,asset.length/size.z);
+    model.scale.setScalar(scale);
+    model.position.set(-(bounds.min.x+bounds.max.x)*.5*scale,-bounds.min.y*scale,-(bounds.min.z+bounds.max.z)*.5*scale);
+    const wheels:THREE.Object3D[]=[];
+    model.traverse(o=>{
+     if(!o.isMesh)return;
+     o.castShadow=true;o.receiveShadow=true;
+     if(/wheel|tire/i.test(o.name)){o.userData.steerable=/wheel[-_ ]?front/i.test(o.name);wheels.push(o)}
+    });
+    if(wheels.length<4)throw new Error('Expected at least four named wheel meshes; found '+wheels.length);
+    for(const child of [...vehicle.g.children])vehicle.g.remove(child);
+    vehicle.g.add(model);vehicle.g.userData.wheels=wheels;
+    vehicle.g.userData.importedTrafficModel=asset.name;
+    importedTrafficModelCount++;importedTrafficModelNames.push(asset.name);
+   }catch(error){console.warn('REALCITY traffic model rejected; keeping procedural fallback for this vehicle:',asset.name,error)}
+  },undefined,error=>console.warn('REALCITY traffic model failed to load; keeping procedural fallback:',asset.file,error));
+ });
+}
+
 function loadRiggedPlayer(){
  if(playerAssetLoadStarted)return;
  playerAssetLoadStarted=true;
@@ -361,7 +402,8 @@ function loadRiggedPlayer(){
 
 loadRiggedPlayer();
 loadSedanAsset();
-if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],jumpAnimation:player.userData.rig?.animationActions.jump?'asset':'procedural',jumpPeak,jumpFrames,pedestrians:pedestrians.length,pedestrianAssets:pedestrians.filter(p=>!!p.userData.importedPedestrian).length,pedestrianActive:pedestrians.find(p=>p.userData.importedPedestrian)?.userData.importedPedestrian?.activeActionName??null,pedestrianWalking:pedestrians.some(p=>p.userData.importedPedestrian?.activeActionName==='walk'),pedestrianPositions:pedestrians.map((p,i)=>({id:i,x:p.position.x,z:p.position.z,action:p.userData.importedPedestrian?.activeActionName??'procedural'})),vehicles:vehicles.length,vehicleStyles:[...new Set(vehicles.map(v=>v.g.userData.vehicleStyle).filter(Boolean))],vehicleStates:vehicles.map((v,i)=>({id:i,traffic:!!v.traffic,x:v.g.position.x,z:v.g.position.z,speed:v.speed,health:v.health,rotation:v.g.rotation.y})),sedanImported:!!vehicles.find(v=>!v.traffic)?.g.userData.importedModel,inCar:!!inCar,vehicleSpeed:inCar?.speed??0,vehiclePosition:inCar?{x:inCar.g.position.x,z:inCar.g.position.z}:null,rendererStats:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),quality}),prepareVehicle:()=>{const v=vehicles.find(v=>!v.traffic);if(v){inCar=null;v.g.position.set(0,0,0);v.g.rotation.y=0;v.speed=0;v.steer=0;player.visible=true;player.position.set(v.g.position.x,0,v.g.position.z+4.3)}},position:{x:player.position.x,y:player.position.y,z:player.position.z},collisionProbe:()=>{const b=solid.find(b=>!solid.some(o=>o!==b&&Math.abs((b.x+b.w/2+2.25)-o.x)<o.w/2+1.4&&Math.abs(b.z-o.z)<o.d/2+1.4))||solid[0];if(!b)return null;const px=b.x+b.w/2+.7,vx=b.x+b.w/2+2.25;return{buildingCount:solid.length,playerBlockedAtBuilding:blocked(b.x,b.z,.52,null),vehicleBlockedAtBuilding:vehicleBlocked(b.x,b.z,0,vehicles[0]),playerClearOutsideEdge:!blocked(px,b.z,.52,null),vehicleClearOutsideEdge:!vehicleBlocked(vx,b.z,0,vehicles[0]),playerBoundaryBlocked:blocked(b.x+b.w/2+.25,b.z,.52,null)}},canvas:!!renderer.domElement});}
+loadTrafficVehicleAssets();
+if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA__=()=>({asset:playerAssetStatus,rigged:!!player.userData.riggedAsset,active:player.userData.rig?.activeActionName??null,bones:player.userData.rig?.bones.length??0,clips:player.userData.rig?.clips.map(c=>c.name)??[],jumpAnimation:player.userData.rig?.animationActions.jump?'asset':'procedural',jumpPeak,jumpFrames,pedestrians:pedestrians.length,pedestrianAssets:pedestrians.filter(p=>!!p.userData.importedPedestrian).length,pedestrianActive:pedestrians.find(p=>p.userData.importedPedestrian)?.userData.importedPedestrian?.activeActionName??null,pedestrianWalking:pedestrians.some(p=>p.userData.importedPedestrian?.activeActionName==='walk'),pedestrianPositions:pedestrians.map((p,i)=>({id:i,x:p.position.x,z:p.position.z,action:p.userData.importedPedestrian?.activeActionName??'procedural'})),vehicles:vehicles.length,vehicleStyles:[...new Set(vehicles.map(v=>v.g.userData.vehicleStyle).filter(Boolean))],vehicleStates:vehicles.map((v,i)=>({id:i,traffic:!!v.traffic,x:v.g.position.x,z:v.g.position.z,speed:v.speed,health:v.health,rotation:v.g.rotation.y})),sedanImported:!!vehicles.find(v=>!v.traffic)?.g.userData.importedModel,importedTrafficModels:importedTrafficModelCount,trafficModelNames:[...importedTrafficModelNames],inCar:!!inCar,vehicleSpeed:inCar?.speed??0,vehiclePosition:inCar?{x:inCar.g.position.x,z:inCar.g.position.z}:null,rendererStats:()=>({calls:renderer.info.render.calls,triangles:renderer.info.render.triangles,geometries:renderer.info.memory.geometries,textures:renderer.info.memory.textures,pixelRatio:renderer.getPixelRatio(),quality}),prepareVehicle:()=>{const v=vehicles.find(v=>!v.traffic);if(v){inCar=null;v.g.position.set(0,0,0);v.g.rotation.y=0;v.speed=0;v.steer=0;player.visible=true;player.position.set(v.g.position.x,0,v.g.position.z+4.3)}},position:{x:player.position.x,y:player.position.y,z:player.position.z},collisionProbe:()=>{const b=solid.find(b=>!solid.some(o=>o!==b&&Math.abs((b.x+b.w/2+2.25)-o.x)<o.w/2+1.4&&Math.abs(b.z-o.z)<o.d/2+1.4))||solid[0];if(!b)return null;const px=b.x+b.w/2+.7,vx=b.x+b.w/2+2.25;return{buildingCount:solid.length,playerBlockedAtBuilding:blocked(b.x,b.z,.52,null),vehicleBlockedAtBuilding:vehicleBlocked(b.x,b.z,0,vehicles[0]),playerClearOutsideEdge:!blocked(px,b.z,.52,null),vehicleClearOutsideEdge:!vehicleBlocked(vx,b.z,0,vehicles[0]),playerBoundaryBlocked:blocked(b.x+b.w/2+.25,b.z,.52,null)}},canvas:!!renderer.domElement});}
 
 if(Array.isArray(saved.cars)){const parked=vehicles.filter(v=>!v.traffic);for(let i=0;i<Math.min(parked.length,saved.cars.length);i++){const s=saved.cars[i],v=parked[i];if(!s||typeof s!=='object')continue;const x=Number(s.x),z=Number(s.z),rot=Number(s.rotation);if(Number.isFinite(x)&&Number.isFinite(z)&&Math.abs(x)<=165&&Math.abs(z)<=165&&(!Number.isFinite(rot)||!vehicleBlocked(x,z,rot,v))){v.g.position.x=x;v.g.position.z=z;if(Number.isFinite(rot))v.g.rotation.y=rot}if(Number.isFinite(s.health))v.health=Math.max(0,Math.min(100,s.health))}}
 loadfill.style.width='82%';loadnote.textContent='Initializing controls and minimap…';

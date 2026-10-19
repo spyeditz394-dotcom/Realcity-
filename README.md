@@ -1,12 +1,12 @@
-# REALCITY — Part 13: Future City Visual Upgrade
+# REALCITY — Modern Open-World City Upgrade
 
 This branch continues the existing REALCITY project in `spyeditz394-dotcom/Realcity-` and keeps the established Three.js/Vite/Rapier foundation. It is a feature branch intended for preview review; it does not replace the production/main branch automatically.
 
 ## Included systems in this build
 
 - Procedurally generated city districts with road surfaces, curbs, road markings, façade variation, window instances, street furniture, trees, and rooftop details.
-- Futuristic art layer: a layered neon skyline landmark, metallic/glass surfaces, emissive cyan/blue trim, rooftop ventilation, instanced solar arrays, raised transit connector, holographic information pylons, and delivery-drone props.
-- Locally generated asphalt/concrete/facade detail maps plus PBR materials; future-city set dressing uses shared geometry and instancing to limit draw calls and avoids mandatory remote asset downloads.
+- Modern-city art pass: contemporary mid-rise architecture, window bays, muted concrete and glass, rooftop HVAC/water tanks, low-rise shopfronts, balconies, warm street lighting, road paint, planters and trees.
+- Locally generated asphalt/concrete/facade detail maps plus PBR materials; shared geometry and repeated objects limit asset memory and draw-call overhead.
 - Day/night switching, shadow and texture quality presets, FPS/render diagnostics, and world-object culling.
 - A procedural articulated human fallback with visible facial/clothing detail and animated arms/legs, plus a gated GLB rig loader that refuses skeleton-only assets.
 - State-based idle/walk/run/jump animation selection when the loaded character asset provides compatible named clips.
@@ -49,4 +49,4 @@ Use glTF/GLB with mesh compression where compatible, KTX2/Basis texture compress
 
 ## Asset status
 
-The new future-city layer is procedural Three.js geometry/materials committed in `src/future-assets.ts`; it is **not** a collection of newly imported photorealistic GLB files. Existing character GLB loading still depends on a compatible model being present at `public/models/realcity-protagonist.glb` or a valid remote source. No unverified third-party asset has been copied into the repository. Runtime visual QA and Android performance testing remain required.
+The modern-city layer is procedural Three.js geometry/materials committed in `src/future-assets.ts`; it is **not** a collection of newly imported photorealistic GLB files. Character loading now only checks the bundled path `public/models/realcity-protagonist.glb`; if that file is absent or fails rig validation, the animated procedural fallback remains active. The unverified third-party remote character URL has been removed. No unverified third-party asset has been copied into the repository. Runtime visual QA and Android performance testing remain required.

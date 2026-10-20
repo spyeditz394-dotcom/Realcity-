@@ -1,57 +1,71 @@
 # REALCITY implementation audit — 2026-10-20
 
-## Branch and deployment verification
+## Candidate and repository safety
 
 - Repository: `spyeditz394-dotcom/Realcity-`
 - Feature branch: `feature/realcity-protagonist-animation-audit`
-- Audited source commit: `febd0083e0de18e2caaf23573776cb8d847042e1`
-- Preview deployment: `https://realcity-ok3p9bn90-spyeditz394-4635s-projects.vercel.app/`
-- Vercel state: READY; deployment metadata identifies the exact feature-branch commit above.
-- PR #2 remains open and draft; base `main` SHA remains `3772a0279978d8a23f6f05593530431c485ced4a`. No merge was performed.
-- Vercel production build completed successfully. This is a build/deployment check, not proof that interactive gameplay works correctly.
+- Current candidate source commit: `891f68ec8095b5712dab0b0b7c7539b75b3a9071`
+- Preview: https://realcity-fbruapswz-spyeditz394-4635s-projects.vercel.app/
+- Vercel state: READY; deployment metadata maps the preview to candidate commit `891f68ec8095b5712dab0b0b7c7539b75b3a9071`.
+- PR #2: open, draft, unmerged. Base/main SHA: `3772a0279978d8a23f6f05593530431c485ced4a`.
+- No merge or production traffic change was performed.
+- A browser tool could not open the live preview URL directly in this session. CI browser gameplay tests run the built game through Vite preview locally; that is not the same as manually exercising the deployed URL.
 
-## Sevenfold city expansion
+## Fixes made during this verification pass
 
-The prior city generator iterated a 12 × 12 grid (144 cells) at 20 world units per cell. The current generator iterates 32 × 32 (1,024 cells), or 7.11 times as many generated grid cells. The generated grid spans approximately 640 × 640 world units; the ground plane is 680 × 680. This is a measured expansion of the procedural city grid, not a claim that every part of the larger world is unique handcrafted content.
+1. **Road network extent corrected.** The 32 × 32 cell generator previously had a road/curb/marking loop limited to k = -6…6 with 340-unit road segments. It now generates 33 road grid lines across the full 640-unit city extent, using 680-unit road/curb/marking spans.
+2. **Landmark cells reserved.** Random park substitution could skip the Market landmark sign. The seven named landmark cells are now excluded from park substitution; runtime QA exposes generated landmark labels and asserts all seven are present.
+3. **Collision limits aligned.** Player/vehicle collision boundaries and saved-position clamps now allow the outer road ring without letting actors leave the ground area.
+4. **Foliage instancing.** Repeated tree trunks, crowns, and flower heads are batched into instanced meshes per 80-unit spatial chunk and material. Chunk culling uses a padding radius so instances near chunk edges are not incorrectly hidden.
+5. **Tracked acceptance checklist.** See `docs/REALCITY_ACCEPTANCE_CHECKLIST_2026-10-20.md`.
 
-Implemented in source:
-- Expanded procedural block grid and ground plane.
-- Extended streetlight and road-marking generation to the larger grid.
-- Scaled street furniture and prop placement with the new extent.
-- Added district palette/layout categories: Downtown, Market, Residential, Civic, Industrial, Luxury, Parks, and Suburbs.
-- Added recognizable procedural sign treatments for police, hospital, fire, school, fuel, market, and villas landmarks.
-- Increased park-block frequency, added mixed flower beds, and reused a shared tree-crown geometry to reduce duplicate geometry allocation.
-- Kept distance-based static mesh visibility culling.
+## Procedural world evidence
 
-## Feature audit
+- Grid: 32 × 32 = 1,024 cells at 20 units per cell; approximate span 640 × 640.
+- Road grid: 33 lines per axis to connect the full cell grid.
+- Fixed-seed generator: deterministic LCG seeded with 17031.
+- District categories: Downtown, Market, Residential, Civic, Industrial, Luxury, Parks, Suburbs.
+- Required sign treatments: POLICE, HOSPITAL, FIRE, SCHOOL, FUEL, MARKET, VILLAS.
+- Browser QA now asserts grid metrics, district coverage, landmark presence, collision behavior, player movement/animation/jump, pedestrian motion, vehicle entry/driving/braking/exit, settings persistence, and browser/network errors.
 
-| System | Status | Evidence / limitation |
-|---|---|---|
-| Browser/Three.js startup and production build | Implemented; build verified | Vercel reports READY for audited commit |
-| Procedural city, roads, facades, windows | Implemented; expansion build verified | Grid now 32 × 32; runtime loading time not measured |
-| District variety and civic landmarks | Partially implemented | Procedural architecture/sign treatments, not bespoke high-quality building models or full services gameplay |
-| Trees and parks | Partially implemented | Procedural trees/flower patches; species are not yet distinct photogrammetry-quality assets |
-| Protagonist walking/running and third-person camera | Implemented in source; runtime status unverified on this commit | Requires current browser/device gameplay regression |
-| Pedestrian movement | Implemented in source; regression status unverified on this commit | Density and navigation realism not proven |
-| Vehicles and driving | Partially implemented | Existing custom movement/collision; realistic vehicle physics and handling not established |
-| Building interiors/interactions | Partially implemented | Limited interaction/interior content, not a complete enterable city |
-| Minimap, touch controls, settings persistence | Implemented in source; current regression status unverified | Must be exercised in browser and on phone |
-| Day/night and quality presets | Implemented in source | Visual quality and sustained performance need testing |
-| Streaming/LOD for the expanded world | Partial | Distance visibility culling exists; the full world is still generated up front rather than streamed by district |
-| Missions/story/progression | Not built | No agreed storyline or mission framework |
-| Combat | Not built | Explicitly deferred |
-| Police response, emergency service gameplay, shops/economy | Not built | Landmark facades/signs do not constitute gameplay systems |
-| Audio, save-game/progression system, accessibility pass | Not verified / largely not built | Settings persistence is not a full save-game system |
-| Matched mobile performance benchmark | Not verified | Existing measurements are headless SwiftShader, not a physical Android device |
-| OPPO A5 Pro acceptance test | Not run | Cannot be simulated by Vercel deployment status |
+## Automated verification
 
-## Completion estimate
+Latest candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071` observed results:
+- TypeScript check: passed in GitHub Actions.
+- Production build: passed in GitHub Actions.
+- Local bundled GLB asset validation: passed in GitHub Actions.
+- Browser gameplay smoke test: passed in GitHub Actions, including expanded-grid/district/landmark assertions.
+- Final-candidate emulated performance test: still in progress at the time of this audit update; do not treat it as passed until the run completes.
+- Vercel preview deployment: READY for the exact candidate SHA.
+- Live deployed-URL interactive gameplay: not directly verified because the browser access path was unavailable in this session.
+- Physical OPPO A5 Pro: not tested; the agent has no attached physical-device session.
 
-This remains a playable-prototype foundation, not a finished open-world game. A single exact percentage would be misleading because the full game scope, art-quality target, content volume, and release acceptance criteria are not yet implemented. For planning only, core prototype breadth is roughly 35–40% of a release-quality single-player open-world game; release readiness is substantially lower because visual quality, world streaming, content, regression coverage, and real-device performance are still open gates.
+## Performance evidence and limitations
 
-## Required verification gates
+The most recent completed emulated performance run before foliage instancing was on commit `b527208491b5b80767966bc0bb1ca4efc1601c2a`, using headless Chromium 156 with SwiftShader, touch/mobile viewport emulation, and 8-second sampling. Results:
+- Mobile-low emulation (360 × 800): 9.0 FPS; median frame 116.6 ms; p95 116.7 ms; approximate JS heap 103 MB.
+- Mobile-medium emulation (390 × 844): 8.4 FPS; median frame 116.7 ms; p95 133.4 ms; approximate JS heap 103 MB.
+- Desktop reference (1280 × 720): 3.3 FPS; median frame 299.9 ms; p95 366.7 ms; approximate JS heap 199 MB.
+- Browser errors and failed HTTP responses: zero in those emulated profiles.
 
-1. Run TypeScript, asset validation, browser gameplay tests, and matched performance tests on the latest commit (the current Vercel success alone does not prove these).
-2. Inspect the live preview for startup/runtime errors, district continuity, collisions, landmark placement, and excessive loading/memory use.
-3. Test the same build on the target OPPO A5 Pro and record repeatable frame-time/FPS results.
-4. Keep PR #2 unmerged and `main` unchanged until these gates pass.
+These are software-rendered CI measurements, not physical-device performance. They are well below the 30 FPS target and show that performance remains a serious open gate. The current candidate includes foliage instancing, but its matching performance report is still pending. No claim is made that the OPPO A5 Pro target is met.
+
+## Feature status
+
+| System | Status |
+|---|---|
+| Expanded 1,024-cell city and full-span road grid | Implemented; browser QA asserts grid metrics and full road-grid count |
+| Eight district categories and seven landmark signs | Implemented; browser QA asserts runtime coverage |
+| Player movement, animation, jump, camera and touch controls | Automated browser coverage passes on the candidate |
+| Pedestrian movement and imported character/vehicle/building assets | Automated browser coverage and asset validation pass on the candidate |
+| Collision/spawn checks | Automated collision probe passes on the candidate; physical exploration still needed |
+| Foliage batching | Implemented; final performance effect awaiting completed matching benchmark |
+| High-fidelity photorealistic art | Not achieved; assets and procedural materials remain stylized/low-to-mid fidelity |
+| World streaming | Not implemented; world is generated up front with static visibility culling |
+| Full police/fire/hospital gameplay, economy, missions/story, combat | Not implemented; landmarks are signs/structures, not complete service gameplay |
+| Physical OPPO A5 Pro performance and stability | Not tested |
+| Deployed-preview interactive session | Not directly verified in this environment |
+
+## Acceptance decision
+
+**Not complete.** Automated build/asset/browser checks pass on the current candidate, and its Vercel deployment is READY. The current-candidate performance run has not finished, emulated performance from the last completed benchmark is far below target, the live deployed URL was not directly exercised, visual before/after screenshot comparison is not complete, and the physical OPPO A5 Pro gate remains unresolved. Keep PR #2 open/draft/unmerged and keep `main` unchanged.

@@ -70,6 +70,12 @@ try {
 
   assert(initial.pedestrianWalking && initial.pedestrianActive === 'walk',
     'At least one imported pedestrian is actively walking', { pedestrianActive: initial.pedestrianActive });
+  assert(initial.rendererStats.visiblePedestrians >= 1,
+    'At least one pedestrian is rendered near the player spawn', {
+      visiblePedestrians: initial.rendererStats.visiblePedestrians,
+      pedestrians: initial.pedestrians,
+      player: initial.position
+    });
 
   const collision = await page.evaluate(() => window.__REALCITY_QA__().collisionProbe());
   assert(collision && collision.buildingCount >= 1 && collision.playerBlockedAtBuilding && collision.vehicleBlockedAtBuilding,

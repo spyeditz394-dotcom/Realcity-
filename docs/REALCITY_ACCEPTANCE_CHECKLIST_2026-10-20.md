@@ -5,7 +5,7 @@ This is a live engineering checklist. A box is checked only when the named evide
 ## Repository safety
 - [x] Feature branch is `feature/realcity-protagonist-animation-audit`; no `main` edits were made.
 - [x] PR #2 is open, draft, and unmerged; base/main SHA remains `3772a0279978d8a23f6f05593530431c485ced4a`.
-- [ ] Verify final PR and deployment state after the final documentation commit `d0c833974568a56b0273c19ddf812e539f050d86`.
+- [ ] Verify final PR and deployment state after the latest documentation commits.
 
 ## City and world
 - [x] Generator loops through 32 × 32 = 1,024 city cells.
@@ -33,12 +33,12 @@ This is a live engineering checklist. A box is checked only when the named evide
 - [ ] Physical OPPO A5 Pro verification remains unresolved; no real-device session is available to the agent.
 
 ## Performance evidence
-Last completed emulated run before foliage instancing (commit `b527208491b5b80767966bc0bb1ca4efc1601c2a`) used headless Chromium 156 + SwiftShader:
-- Mobile-low 360 × 800: 9.0 FPS, median 116.6 ms, p95 116.7 ms, approximate JS heap 103 MB.
-- Mobile-medium 390 × 844: 8.4 FPS, median 116.7 ms, p95 133.4 ms, approximate JS heap 103 MB.
-- Desktop 1280 × 720: 3.3 FPS, median 299.9 ms, p95 366.7 ms, approximate JS heap 199 MB.
-- Zero console/page errors and zero failed HTTP responses in those profiles.
-- These are software-rendered emulation results, not physical-device measurements; the 30 FPS target is not established.
+Completed emulated run on candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071` used headless Chromium 156 + SwiftShader:
+- Mobile-low 360 × 800: 13.3 FPS, median 66.8 ms, p95 83.4 ms, approximate JS heap 76.6 MB.
+- Mobile-medium 390 × 844: 12.5 FPS, median 83.3 ms, p95 83.4 ms, approximate JS heap 68.0 MB.
+- Desktop 1280 × 720: 5.8 FPS, median 166.7 ms, p95 200.0 ms, approximate JS heap 103 MB.
+- Tracked static meshes decreased from 11,578 to 9,233 (about 20.2%) after foliage instancing; no browser errors or failed HTTP responses in these profiles.
+- These are software-rendered emulation results, not physical-device measurements. Performance remains far below the 30 FPS target.
 
 ## Current decision
 **Not complete.** Automated gameplay tests pass on the source candidate, but the final-candidate performance run, latest documentation-commit CI, live deployed-URL interaction, screenshot comparison, and physical OPPO A5 Pro acceptance remain unresolved. Do not merge PR #2 or modify `main`.

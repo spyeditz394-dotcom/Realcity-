@@ -5,14 +5,15 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "npm run assets:environment && vite build",
+    "build": "vite build",
     "preview": "vite preview",
     "check:types": "tsc --noEmit",
     "test:browser": "node scripts/realcity-browser-smoke.mjs",
     "test:performance": "node scripts/realcity-mobile-performance.mjs",
     "validate:glb": "node scripts/validate-realcity-glb.mjs",
     "validate:assets": "node scripts/validate-realcity-assets.mjs",
-    "assets:environment": "node scripts/fetch-realcity-environment-assets.mjs"
+    "assets:environment": "node scripts/fetch-realcity-environment-assets.mjs",
+    "prebuild": "npm run assets:environment"
   },
   "dependencies": {
     "three": "0.160.0"

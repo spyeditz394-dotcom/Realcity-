@@ -12,10 +12,10 @@ import path from 'node:path';
 
 const [inputPath, role = 'protagonist'] = process.argv.slice(2);
 if (!inputPath) {
-  console.error('Usage: node scripts/validate-realcity-glb.mjs <model.glb> [protagonist|pedestrian|vehicle]');
+  console.error('Usage: node scripts/validate-realcity-glb.mjs <model.glb> [protagonist|pedestrian|vehicle|building]');
   process.exit(2);
 }
-if (!['protagonist', 'pedestrian', 'vehicle'].includes(role)) {
+if (!['protagonist', 'pedestrian', 'vehicle', 'building'].includes(role)) {
   console.error(`Unknown role "${role}". Use protagonist, pedestrian, or vehicle.`);
   process.exit(2);
 }

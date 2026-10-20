@@ -46,6 +46,14 @@ try {
   checks.push('three or more locally bundled CC0 building variants loaded into the city');
 
   const initial = await page.evaluate(() => window.__REALCITY_QA__());
+  assert(initial.cityGridCells === 1024 && initial.cityExtent === 640 && initial.roadGridLines === 33,
+    'Expanded city uses 1,024 cells and a full-span 33-line road grid', {
+      cityGridCells: initial.cityGridCells, cityExtent: initial.cityExtent, roadGridLines: initial.roadGridLines
+    });
+  assert(['Civic','Downtown','Industrial','Luxury','Market','Parks','Residential','Suburbs'].every(name => initial.districts?.includes(name)),
+    'All eight district categories are represented by generated cells', initial.districts);
+  assert(['POLICE','HOSPITAL','FIRE','SCHOOL','FUEL','MARKET','VILLAS'].every(name => initial.landmarks?.includes(name)),
+    'All seven required landmark sign treatments are generated', initial.landmarks);
   assert(initial.canvas, 'WebGL canvas is mounted');
   const canvas = await page.locator('#game canvas').boundingBox();
   const radar = await page.locator('#map').boundingBox();

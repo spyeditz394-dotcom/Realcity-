@@ -35,20 +35,21 @@ Latest candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071` observed results:
 - Production build: passed in GitHub Actions.
 - Local bundled GLB asset validation: passed in GitHub Actions.
 - Browser gameplay smoke test: passed in GitHub Actions, including expanded-grid/district/landmark assertions.
-- Final-candidate emulated performance test: still in progress at the time of this audit update; do not treat it as passed until the run completes.
+- Final-candidate emulated performance test: passed as a test execution; measured frame rate remains below acceptance target.
 - Vercel preview deployment: READY for the exact candidate SHA.
 - Live deployed-URL interactive gameplay: not directly verified because the browser access path was unavailable in this session.
 - Physical OPPO A5 Pro: not tested; the agent has no attached physical-device session.
 
 ## Performance evidence and limitations
 
-The most recent completed emulated performance run before foliage instancing was on commit `b527208491b5b80767966bc0bb1ca4efc1601c2a`, using headless Chromium 156 with SwiftShader, touch/mobile viewport emulation, and 8-second sampling. Results:
-- Mobile-low emulation (360 × 800): 9.0 FPS; median frame 116.6 ms; p95 116.7 ms; approximate JS heap 103 MB.
-- Mobile-medium emulation (390 × 844): 8.4 FPS; median frame 116.7 ms; p95 133.4 ms; approximate JS heap 103 MB.
-- Desktop reference (1280 × 720): 3.3 FPS; median frame 299.9 ms; p95 366.7 ms; approximate JS heap 199 MB.
-- Browser errors and failed HTTP responses: zero in those emulated profiles.
+The completed emulated performance run for candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071` used headless Chromium 156 with SwiftShader, touch/mobile viewport emulation, and 8-second sampling. Results:
+- Mobile-low emulation (360 × 800): 13.3 FPS; median frame 66.8 ms; p95 83.4 ms; approximate JS heap 76.6 MB.
+- Mobile-medium emulation (390 × 844): 12.5 FPS; median frame 83.3 ms; p95 83.4 ms; approximate JS heap 68.0 MB.
+- Desktop reference (1280 × 720): 5.8 FPS; median frame 166.7 ms; p95 200.0 ms; approximate JS heap 103 MB.
+- Static mesh count dropped from 11,578 on pre-instancing candidate `b527208491b5b80767966bc0bb1ca4efc1601c2a` to 9,233 after instancing (about 20.2% fewer tracked static meshes).
+- Browser errors and failed HTTP responses: zero in all three emulated profiles.
 
-These are software-rendered CI measurements, not physical-device performance. They are well below the 30 FPS target and show that performance remains a serious open gate. The current candidate includes foliage instancing, but its matching performance report is still pending. No claim is made that the OPPO A5 Pro target is met.
+Compared with the previous completed emulation, low/mobile FPS improved from 9.0 to 13.3, medium from 8.4 to 12.5, and desktop from 3.3 to 5.8. Approximate mobile JS heap also fell from 103 MB to 76.6/68.0 MB. These are software-rendered CI measurements, not physical-device performance. They remain well below the 30 FPS target; the performance gate is still open. No claim is made that the OPPO A5 Pro target is met.
 
 ## Feature status
 
@@ -68,4 +69,4 @@ These are software-rendered CI measurements, not physical-device performance. Th
 
 ## Acceptance decision
 
-**Not complete.** Automated build/asset/browser checks pass on the current candidate, and its Vercel deployment is READY. The current-candidate performance run has not finished, emulated performance from the last completed benchmark is far below target, the live deployed URL was not directly exercised, visual before/after screenshot comparison is not complete, and the physical OPPO A5 Pro gate remains unresolved. Keep PR #2 open/draft/unmerged and keep `main` unchanged.
+**Not complete.** Automated build/asset/browser checks pass on the current candidate, and its Vercel deployment is READY. The current-candidate emulated performance run completed but is far below target, the live deployed URL was not directly exercised, visual before/after screenshot comparison is not complete, and the physical OPPO A5 Pro gate remains unresolved. Keep PR #2 open/draft/unmerged and keep `main` unchanged.

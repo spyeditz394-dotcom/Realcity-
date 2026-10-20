@@ -15,10 +15,9 @@ jobs:
         with:
           node-version: 20
       - run: npm install
-      - run: npm run assets:environment
-      - run: npm run validate:assets
       - run: npm run check:types
       - run: npm run build
+      - run: npm run validate:assets
       - run: npx playwright install --with-deps chromium
       - run: npm run test:browser
       - run: npm run test:performance

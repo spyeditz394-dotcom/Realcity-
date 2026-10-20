@@ -151,7 +151,7 @@ try {
       };
     });
     assert(measurement.canvas && measurement.renderer && measurement.frameMs.samples >= 10, 'Renderer and frame-time sampling available (10+ samples; measured FPS remains reported separately)', measurement);
-    if (profile.mobile) assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats);
+    if (profile.mobile) { assert(measurement.rendererStats.mobileSafeDefault === true, 'Touch viewport selects the mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats); if (measurement.fps < 24) assert(measurement.rendererStats.adaptiveRenderScale < 0.99, 'Adaptive renderer lowers resolution when sustained emulated FPS is below 24', measurement.rendererStats); }
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);
     checks.push('WebGL renderer, frame pacing and browser network health measured');

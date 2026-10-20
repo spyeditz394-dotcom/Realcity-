@@ -1,36 +1,44 @@
 # REALCITY acceptance checklist — 2026-10-20
 
-This is a live engineering checklist, not a declaration of completion. A box is checked only when the named evidence exists for the candidate commit. "Not run" and "unavailable" are not passes.
+This is a live engineering checklist. A box is checked only when the named evidence was observed. "Not run", "pending", and "unavailable" are not passes.
 
 ## Repository safety
-- [x] Confirmed PR #2 is open, draft, and unmerged; base SHA `3772a0279978d8a23f6f05593530431c485ced4a`.
-- [x] Confirmed candidate branch is `feature/realcity-protagonist-animation-audit`; do not modify `main`, merge PR, or change production traffic.
-- [ ] Verify final candidate commit and PR state again after all fixes.
+- [x] Feature branch is `feature/realcity-protagonist-animation-audit`; no `main` edits were made.
+- [x] PR #2 is open, draft, and unmerged; base/main SHA remains `3772a0279978d8a23f6f05593530431c485ced4a`.
+- [ ] Verify final PR and deployment state after the final documentation commit `d0c833974568a56b0273c19ddf812e539f050d86`.
 
 ## City and world
-- [x] Source loops through a 32 × 32 (1,024-cell) block grid; seeded deterministic RNG currently uses fixed seed 17031.
-- [ ] Road surfaces, curbs, and markings span the full expanded world; regression CI must pass after the full-span road fix.
-- [ ] Verify all eight district categories and seven landmark placements through runtime/browser evidence.
-- [ ] Verify collision and spawn checks, including edge clearance and vehicle obstruction.
-- [ ] Verify city loading, memory, and startup stability under browser test.
-- [ ] Verify district/world traversal does not expose gaps or inaccessible blocks.
+- [x] Generator loops through 32 × 32 = 1,024 city cells.
+- [x] Road/curb/marking network extended across full 640-unit extent with 33 grid lines per axis.
+- [x] Seeded procedural RNG is deterministic with fixed seed 17031.
+- [x] Browser QA asserts all eight districts and all seven landmark sign labels are generated.
+- [x] Browser QA passed collision probe, movement, jump, pedestrian, vehicle and settings lifecycle on source candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071`.
+- [ ] Manual in-game exploration and live-deployed URL session remain unverified.
 
 ## Gameplay and assets
-- [ ] Browser regression: startup, protagonist movement/animation/jump, camera, touch controls, NPC motion, driving/braking/exit, settings, pause/recovery/reload.
-- [ ] Browser console and HTTP request checks pass.
-- [ ] All locally bundled GLB validation passes and provenance/licensing remains documented.
-- [ ] Compare current in-game screenshots against a baseline; no screenshot comparison yet qualifies as completed.
-- [ ] Confirm asset fallbacks work when an optional character asset is missing/invalid.
+- [x] TypeScript check, production build, and local bundled GLB asset validation passed in GitHub Actions for candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071`.
+- [x] Browser smoke test passed on that candidate: protagonist movement/animation/jump, touch controls, pedestrian motion, vehicle entry/driving/braking/exit, settings persistence, collision probe, browser console and HTTP error checks.
+- [x] Tree trunks, crowns and flower heads are instanced by 80-unit spatial chunk on candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071`.
+- [ ] Visual before/after screenshot comparison not complete; CI screenshots exist but no verified baseline comparison has been completed.
+- [ ] High-fidelity photorealistic art is not achieved; current models/materials remain stylized/low-to-mid fidelity.
+- [ ] Full emergency service gameplay, missions, story/progression and combat are not implemented in this phase.
+- [ ] World is still generated up front; district streaming is not implemented.
 
 ## Build, deployment, performance
-- [ ] Dependency install and lockfile consistency.
-- [ ] TypeScript check and asset validation.
-- [ ] Production build.
-- [ ] Browser smoke test and emulated performance test pass against the final commit.
-- [ ] Latest Vercel preview maps to the final candidate SHA, is READY, and is browser-tested.
-- [ ] OPPO A5 Pro physical-device gate: not yet available to this agent; requires a real-device session and cannot be inferred from emulation.
+- [x] Vercel preview READY for source candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071`: https://realcity-fbruapswz-spyeditz394-4635s-projects.vercel.app/
+- [x] GitHub Actions TypeScript, production build, asset validation and browser smoke test passed on candidate `891f68ec8095b5712dab0b0b7c7539b75b3a9071`.
+- [ ] Final-candidate performance test was still running when the audit was updated; it must be checked for completion.
+- [ ] Latest documentation commit must receive its own final build/browser/performance checks and matching READY preview.
+- [ ] Live deployed URL gameplay could not be exercised directly because the browser access path was unavailable in this session.
+- [ ] Physical OPPO A5 Pro verification remains unresolved; no real-device session is available to the agent.
 
-## Known defect found during this pass
-- The source had a 32 × 32 block generator but the main road/curb/marking loop still covered only k = -6…6 and road segments of 340 units. This contradicted the expanded city extent. Fixed on the feature branch by extending the network to CITY_HALF and CITY_EXTENT + 40; CI must confirm no regressions.
-- Candidate SHA after this fix: `fe88ac6160247a595eacef117d2444b30aa3d8ba`.
-- CI at last inspection: validation workflow in progress. The prior candidate's browser test failed the collision-clearance assertion; that failure is not waived and needs diagnosis/retest.
+## Performance evidence
+Last completed emulated run before foliage instancing (commit `b527208491b5b80767966bc0bb1ca4efc1601c2a`) used headless Chromium 156 + SwiftShader:
+- Mobile-low 360 × 800: 9.0 FPS, median 116.6 ms, p95 116.7 ms, approximate JS heap 103 MB.
+- Mobile-medium 390 × 844: 8.4 FPS, median 116.7 ms, p95 133.4 ms, approximate JS heap 103 MB.
+- Desktop 1280 × 720: 3.3 FPS, median 299.9 ms, p95 366.7 ms, approximate JS heap 199 MB.
+- Zero console/page errors and zero failed HTTP responses in those profiles.
+- These are software-rendered emulation results, not physical-device measurements; the 30 FPS target is not established.
+
+## Current decision
+**Not complete.** Automated gameplay tests pass on the source candidate, but the final-candidate performance run, latest documentation-commit CI, live deployed-URL interaction, screenshot comparison, and physical OPPO A5 Pro acceptance remain unresolved. Do not merge PR #2 or modify `main`.

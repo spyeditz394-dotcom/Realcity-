@@ -42,6 +42,8 @@ try {
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
   await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.pedestrianModelNames?.length >= 3 && q.importedTrafficModels >= 4; }, null, { timeout: 20000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().importedBuildingCount >= 3, null, { timeout: 20000 });
+  checks.push('three or more locally bundled CC0 building variants loaded into the city');
 
   const initial = await page.evaluate(() => window.__REALCITY_QA__());
   assert(initial.canvas, 'WebGL canvas is mounted');

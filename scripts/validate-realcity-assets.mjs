@@ -17,6 +17,9 @@ const assets = [
   ['public/models/realcity-suv.glb', 'vehicle'],
   ['public/models/realcity-van.glb', 'vehicle'],
   ['public/models/realcity-truck.glb', 'vehicle'],
+  ['public/models/realcity-building-d.glb', 'building'],
+  ['public/models/realcity-building-e.glb', 'building'],
+  ['public/models/realcity-building-n.glb', 'building'],
 ];
 const validator = path.resolve('scripts/validate-realcity-glb.mjs');
 let failed = 0;

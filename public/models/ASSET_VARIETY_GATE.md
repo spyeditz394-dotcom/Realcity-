@@ -1,37 +1,39 @@
-# REALCITY asset variety gate
+# REALCITY asset integration and verification gate
 
-This catalog is an integration contract, not a claim that the listed files already exist.
+This document reflects the asset files and loader paths currently present on the feature branch. Structural validation does not certify photorealism, deformation quality, or physical-device performance.
 
-## Current verified source state
+## Locally bundled character assets
 
-- `realcity-protagonist.glb`: loaded by the character pipeline when present; runtime rig/clip acceptance is exercised by the browser smoke test.
-- `realcity-sedan.glb`: the only imported vehicle currently referenced by `src/main.ts`; the sedan must expose at least four named wheel meshes.
-- Pedestrian population currently clones the protagonist GLB and tints materials. Tinting does **not** count as distinct character models.
-- SUV and van are procedural vehicle silhouettes. They do **not** count as imported vehicle models.
+- `public/models/realcity-protagonist.glb` — CC0 Quaternius-derived humanoid, documented as a 41-joint skinned mesh with eight clips. Loaded by the protagonist pipeline; runtime rig and animation checks are in the browser smoke test.
+- `public/models/realcity-pedestrian-casual.glb` — distinct locally bundled pedestrian model, loaded by `installPedestrianAssets`.
+- `public/models/realcity-pedestrian-worker.glb` — distinct locally bundled pedestrian model, loaded by `installPedestrianAssets`.
+- Pedestrian variation must be counted by distinct source model names, not material tint alone. The browser smoke test requires at least three distinct pedestrian model sources, including the protagonist-derived source, before passing.
 
-## Required licensed model set
+## Locally bundled vehicle assets
 
-Add model binaries to `public/models/` only after checking the original source page and the license file. Keep a copy of the license/attribution in this directory. Do not rely on a filename or a search snippet as proof of licensing.
+- `realcity-sedan.glb` — loaded for a player-drivable vehicle while retaining the existing vehicle root and collision envelope.
+- `realcity-hatchback-sports.glb`, `realcity-taxi.glb`, `realcity-suv.glb`, `realcity-van.glb`, and `realcity-truck.glb` — loaded into traffic slots through the existing traffic-asset loader.
+- Vehicle integration validates finite bounds and at least four named wheel meshes before replacing the procedural visual. Existing driving, collision, service, and save/exit logic remains on the vehicle root.
+- The browser smoke test waits for at least four imported traffic models and checks that the sedan model is installed.
 
-| File | Role | Required runtime checks |
-|---|---|---|
-| `realcity-protagonist.glb` | playable protagonist | skinned mesh, >=20 bones, idle/walk/run clips |
-| `realcity-pedestrian-casual.glb` | casual pedestrian | skinned mesh, idle + walk clips |
-| `realcity-pedestrian-worker.glb` | worker pedestrian | skinned mesh, idle + walk clips |
-| `realcity-pedestrian-formal.glb` | formal pedestrian | skinned mesh, idle + walk clips |
-| `realcity-sedan.glb` | sedan | >=4 wheel meshes; collision footprint preserved |
-| `realcity-hatchback.glb` | hatchback | valid bounds + >=4 wheel meshes |
-| `realcity-pickup.glb` | pickup | valid bounds + >=4 wheel meshes |
-| `realcity-taxi.glb` | taxi | valid bounds + >=4 wheel meshes |
+## Source and licensing records
 
-## Acceptance gates
+- Protagonist and pedestrian source/license notes: `README.md`, `CC0-1.0.txt`, and `QUATERNIUS_PEDESTRIAN_ASSETS.md`.
+- Vehicle source/license notes: `README.md`, `KENNEY-CC0-1.0.txt`, and `KENNEY_CAR_KIT_ASSETS.md`.
+- These are existing provenance records; do not infer that every visual is photorealistic from licensing or file presence.
 
-1. Character variety means at least three **different model files**, not differently tinted clones. Every character must retain a valid skeleton and idle/walk action; protagonist idle/walk/run/jump checks remain mandatory.
-2. Vehicle variety means at least three **different imported vehicle files**, each with validated bounds and four wheel meshes. Keep the existing procedural sedan/SUV/van fallback if an asset fails.
-3. Imported vehicle visual dimensions must be normalized to a known footprint and use the existing vehicle root, movement, collision, service, save, and enter/exit code. Never replace the physics root with a raw GLTF scene.
-4. Re-run `npm run check:types`, `npm run build`, `npm run test:browser`, and `npm run test:performance` after integration. Compare before/after frame time, draw calls, triangles, geometry and texture counts under identical emulated profiles.
-5. Report Playwright/SwiftShader values as **emulated only**. A real OPPO A5 Pro browser run, including sustained driving and touch input, is a separate outstanding acceptance test.
+## Automated acceptance gates
 
-## Current status
+1. `npm run validate:assets` parses every required local GLB and checks structural metadata, bounds, skinning/animation where relevant, and named vehicle wheels.
+2. `npm run check:types` and `npm run build` must pass.
+3. `npm run test:browser` checks protagonist animation states, three pedestrian source variants, visible pedestrian rendering near spawn, imported traffic variety, and existing gameplay controls.
+4. `npm run test:performance` records frame-time, renderer statistics, and emulated performance. SwiftShader numbers are **not** physical Android benchmarks.
+5. A real OPPO A5 Pro session remains a separate acceptance gate.
 
-The requested variety is **not yet complete**: the repository state inspected for this change contains a single imported sedan reference and one shared character GLB for pedestrian clones. Do not mark this task complete until the missing licensed binaries are actually committed and the acceptance gates pass.
+## Environment art status
+
+The city currently uses procedural Three.js geometry/materials for buildings, roads, windows, street furniture, and vegetation. This is locally generated and does not depend on remote assets, but it is **not yet a verified imported environment-asset library** and does not establish photorealistic quality. Building/prop GLBs and PBR texture sets should only be added after their exact source/license, binary integrity, texture dimensions, triangle counts, and visual fit are recorded.
+
+## Performance status
+
+The latest recorded SwiftShader profiles were below the 15 FPS warning threshold. Treat these as a performance investigation signal only. Do not report the game as optimized or smooth until matched browser tests and a sustained real-device run support that conclusion.

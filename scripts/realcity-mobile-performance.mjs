@@ -38,13 +38,13 @@ try {
     const startupQuality = await page.locator('#qualityText').textContent();
     if (profile.mobile) assert(startupQuality === 'BALANCED', 'Mobile-safe BALANCED startup preset', startupQuality);
     checks.push('startup and bundled character asset ready');
-    await page.evaluate(q => {
-      const key = 'realcity-settings'; let saved = {};
-      try { saved = JSON.parse(localStorage.getItem(key) || '{}'); } catch {}
-      localStorage.setItem(key, JSON.stringify({ ...saved, quality: q, version: 4 }));
-    }, profile.quality);
+    const selectedQuality = await page.evaluate(q => window.__REALCITY_QA__().setQualityForTest(q), profile.quality);
+    assert(selectedQuality === profile.quality, 'Requested graphics preset actually applied to renderer', { requested: profile.quality, selectedQuality });
     await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().canvas && window.__REALCITY_QA__().rigged, null, { timeout: 25000 });
+    const appliedQuality = await page.evaluate(() => window.__REALCITY_QA__().rendererStats().quality);
+    assert(appliedQuality === profile.quality, 'Graphics preset persists across reload and matches the selected profile', { requested: profile.quality, appliedQuality });
+    checks.push('requested graphics preset applied and persisted across reload');
 
     const layout = await page.evaluate(() => {
       const rect = el => { const r = el.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom }; };
@@ -153,6 +153,13 @@ try {
     assert(measurement.canvas && measurement.renderer && measurement.frameMs.samples >= 10, 'Renderer and frame-time sampling available (10+ samples; measured FPS remains reported separately)', measurement);
     const staticBatching = measurement.rendererStats?.staticBatching;
     assert(staticBatching && staticBatching.batchedSourceMeshes >= 300 && staticBatching.batchesCreated > 0 && staticBatching.estimatedDrawCallsSaved >= 200, 'Hundreds of compatible static city boxes are batched while gameplay objects remain separate', staticBatching);
+    const spatialIndex = measurement.rendererStats?.spatialIndex;
+    assert(spatialIndex?.ready === true && spatialIndex.solidCount >= 500 && spatialIndex.collisionCells > 50 && spatialIndex.cameraBlockerCells > 50, 'Static collision and camera blockers have usable spatial indexes', spatialIndex);
+    assert(spatialIndex.collisionQueryCount > 100 && spatialIndex.meanCollisionCandidates < 30, 'Static collision checks examine local candidates rather than scanning the whole city', spatialIndex);
+    assert(spatialIndex.cameraRayQueryCount > 20 && spatialIndex.meanCameraRayCandidates < 30, 'Camera occlusion queries inspect a bounded local candidate set', spatialIndex);
+    assert(measurement.rendererStats.calls < 180, 'Visible renderer draw-call count stays below Phase 10 budget', measurement.rendererStats);
+    const cpuProfile = measurement.rendererStats?.cpuProfile;
+    assert(cpuProfile && Number.isFinite(cpuProfile.updateAvgMs) && Number.isFinite(cpuProfile.renderCallAvgMs), 'Update and synchronous renderer-call CPU timing are recorded separately', cpuProfile);
     if (profile.mobile) { assert(measurement.rendererStats.mobileSafeDefault === true, 'Touch viewport selects the mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats); if (measurement.fps < 24) assert(measurement.rendererStats.adaptiveRenderScale < 0.99, 'Adaptive renderer lowers resolution when sustained emulated FPS is below 24', measurement.rendererStats); }
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);
@@ -162,7 +169,7 @@ try {
       await mkdir('test-results', {recursive:true});
       await page.screenshot({path:'test-results/realcity-mobile-'+profile.name+'.png',fullPage:true});
     }
-    results.push({profile,startupQuality,layout,movedPedestrians:movedPeds,checks, ...measurement,browserErrors:errors,failedResponses});
+    results.push({profile,startupQuality,appliedQuality,layout,movedPedestrians:movedPeds,checks, ...measurement,browserErrors:errors,failedResponses});
     await context.close();
   }
   await mkdir('test-results', {recursive:true});

@@ -228,8 +228,106 @@ try {
     results.push({profile,startupQuality,appliedQuality,layout,movedPedestrians:movedPeds,checks, ...measurement,browserErrors:errors,failedRequests,failedResponses});
     await context.close();
   }
+  // Reproducible population matrix: same real Three.js scene/simulation, viewport, DPR,
+  // scripted camera movement, warm-up and timed samples for each population and repeat.
+  const benchmarkRuns = [];
+  const benchmarkViewport = { width: 390, height: 844 };
+  const benchmarkDpr = 1;
+  const benchmarkSeed = 20261021;
+  const percentile = (sorted, p) => sorted.length ? sorted[Math.min(sorted.length - 1, Math.floor((sorted.length - 1) * p))] : null;
+  for (const npcCount of [5, 10, 20, 40]) {
+    for (let repeat = 1; repeat <= 3; repeat++) {
+      const context = await browser.newContext({ viewport: benchmarkViewport, deviceScaleFactor: benchmarkDpr, isMobile: true, hasTouch: true });
+      const page = await context.newPage();
+      const errors = [];
+      page.on('pageerror', e => errors.push(e.stack || e.message));
+      page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
+      await page.addInitScript(({ seed }) => {
+        // The production game has deterministic seeded generation; preserve the seed in evidence
+        // and seed Math.random before app module evaluation for any remaining random consumers.
+        let state = seed >>> 0;
+        Math.random = () => { state = (1664525 * state + 1013904223) >>> 0; return state / 4294967296; };
+      }, { seed: benchmarkSeed });
+      const startedAt = new Date().toISOString();
+      await page.goto(origin + '/?qa=1&npcCount=' + npcCount, { waitUntil: 'networkidle', timeout: 30000 });
+      await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().rigged, null, { timeout: 25000 });
+      const initial = await page.evaluate(() => window.__REALCITY_QA__());
+      assert(initial.pedestrians === npcCount, 'Benchmark scenario starts with requested production NPC population', { requested:npcCount, actual:initial.pedestrians });
+      const glInfo = await page.evaluate(() => {
+        const canvas = document.querySelector('#game canvas');
+        const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
+        return { renderer:gl ? gl.getParameter(gl.RENDERER) : null, vendor:gl ? gl.getParameter(gl.VENDOR) : null, context:gl ? (gl instanceof WebGL2RenderingContext ? 'webgl2' : 'webgl') : null };
+      });
+      await wait(3000); // warm-up is excluded from the measured window
+      const measured = await page.evaluate(async () => {
+        const q = window.__REALCITY_QA__();
+        const canvas = document.querySelector('#game canvas');
+        const gl = canvas?.getContext('webgl2') || canvas?.getContext('webgl');
+        const frames = [];
+        const start = performance.now();
+        let previous = 0, pathStep = 0;
+        await new Promise(resolve => {
+          const tick = now => {
+            if (previous) frames.push(now - previous);
+            previous = now;
+            if (now - start >= 10000) { resolve(); return; }
+            // Repeatable camera yaw/pitch path, while leaving the actual game simulation running.
+            if (now - start >= pathStep * 1250) {
+              q.setCameraForTest((pathStep % 8) * Math.PI / 4, .18 + (pathStep % 3) * .08);
+              pathStep++;
+            }
+            requestAnimationFrame(tick);
+          };
+          requestAnimationFrame(tick);
+        });
+        const sorted = [...frames].sort((a,b) => a-b);
+        const p = n => sorted.length ? sorted[Math.min(sorted.length-1,Math.floor((sorted.length-1)*n))] : null;
+        return {
+          durationMs:performance.now()-start,
+          rawFrameTimesMs:frames,
+          p50Ms:p(.50),p95Ms:p(.95),p99Ms:p(.99),maxMs:sorted.length?sorted[sorted.length-1]:null,
+          averageFps:frames.length ? 1000/(frames.reduce((a,b)=>a+b,0)/frames.length) : null,
+          framesOver33_3Ms:frames.filter(v=>v>33.3).length,
+          framesOver50Ms:frames.filter(v=>v>50).length,
+          frameCount:frames.length,
+          finalNpcCount:q.pedestrians,
+          buildSha:window.__BUILD_SHA__ || 'unavailable',
+          viewport:{width:innerWidth,height:innerHeight},
+          dpr:devicePixelRatio
+        };
+      });
+      benchmarkRuns.push({
+        label:'CI environment',commitSha:initial.buildSha || (await page.evaluate(()=>window.__BUILD_SHA__||'unavailable')),
+        npcCount,seed:benchmarkSeed,repeat,startedAt,warmupMs:3000,measurementTargetMs:10000,
+        browserVersion:browser.version(),webgl:glInfo, ...measured, errors
+      });
+      await context.close();
+    }
+  }
+  const benchmarkSummary = [5,10,20,40].map(npcCount => {
+    const runs = benchmarkRuns.filter(r => r.npcCount === npcCount);
+    const fps = runs.map(r => r.averageFps).filter(Number.isFinite);
+    const p95 = runs.map(r => r.p95Ms).filter(Number.isFinite);
+    return {
+      label:'CI environment',npcCount,runCount:runs.length,
+      averageFpsMean:fps.length?fps.reduce((a,b)=>a+b,0)/fps.length:null,
+      averageFpsSpread:fps.length?Math.max(...fps)-Math.min(...fps):null,
+      p95MsMean:p95.length?p95.reduce((a,b)=>a+b,0)/p95.length:null,
+      p95MsSpread:p95.length?Math.max(...p95)-Math.min(...p95):null,
+      errors:runs.reduce((n,r)=>n+r.errors.length,0)
+    };
+  });
+  const benchmarkReport = {
+    generatedAt:new Date().toISOString(),label:'CI environment',
+    note:'Headless Chromium with SwiftShader and mobile viewport emulation; not OPPO A5 Pro/device performance. Thresholds are not changed or added by this benchmark.',
+    browserVersion:browser.version(),viewport:benchmarkViewport,dpr:benchmarkDpr,seed:benchmarkSeed,
+    warmupMs:3000,measurementTargetMs:10000,summary:benchmarkSummary,runs:benchmarkRuns
+  };
   await mkdir('test-results', {recursive:true});
-  const report = {generatedAt:new Date().toISOString(),note:'Chromium desktop with mobile viewport/touch emulation only. Not a physical Android/OPPO A5 Pro measurement; no device thermals or total/GPU memory are available.',emulatedPerformanceWarnings:results.filter(r=>r.fps<15).map(r=>({profile:r.profile.name,fps:r.fps,message:'Below 15 FPS in SwiftShader emulation. This is a software-renderer warning, not a physical-device benchmark; real-device validation is still required.'})),results};
+  await writeFile('test-results/realcity-npc-benchmarks.json',JSON.stringify(benchmarkReport,null,2));
+  assert(benchmarkRuns.length === 12 && benchmarkSummary.every(s => s.runCount === 3), '5/10/20/40 NPC benchmark matrix has three real runs per population', benchmarkSummary);
+  assert(benchmarkRuns.every(r => r.rawFrameTimesMs.length >= 30 && r.errors.length === 0), 'Every NPC benchmark run has meaningful raw samples and zero browser errors', benchmarkRuns.map(r=>({npcCount:r.npcCount,repeat:r.repeat,frames:r.frameCount,errors:r.errors.length})));
+  const report = {generatedAt:new Date().toISOString(),note:'Chromium desktop with mobile viewport/touch emulation only. Not a physical Android/OPPO A5 Pro measurement; no device thermals or total/GPU memory are available.',npcBenchmarks:benchmarkReport,emulatedPerformanceWarnings:results.filter(r=>r.fps<15).map(r=>({profile:r.profile.name,fps:r.fps,message:'Below 15 FPS in SwiftShader emulation. This is a software-renderer warning, not a physical-device benchmark; real-device validation is still required.'})),results};
   await writeFile('test-results/realcity-mobile-performance.json',JSON.stringify(report,null,2));
   console.log(JSON.stringify(report,null,2));
 } finally {

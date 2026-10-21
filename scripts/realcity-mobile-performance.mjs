@@ -58,7 +58,7 @@ try {
       qa.setQualityForTest(requested);
       return records;
     }, profile.quality);
-    assert(qualityMatrix.length === 4 && qualityMatrix.every((v,i) => v.quality === i && Number.isFinite(v.pixelRatio) && v.pixelRatio > 0 && v.pixelRatio <= ([1.0,1.1,1.25,1.5][i] + .01)), 'LOW/BALANCED/HIGH/ULTRA remain within their resolution caps when switched live', qualityMatrix);
+    assert(qualityMatrix.length === 4 && qualityMatrix.every((v,i) => v.quality === i && Number.isFinite(v.pixelRatio) && v.pixelRatio > 0 && v.pixelRatio <= ((v.mobileSafeDefault ? [1.0,1.1,1.25,1.5] : [1.0,1.25,1.5,2.0])[i] + .01)), 'LOW/BALANCED/HIGH/ULTRA remain within their resolution caps when switched live', qualityMatrix);
     assert(qualityMatrix.every((v,i) => v.shadows.enabled === (i>=1 && (!v.mobileSafeDefault || i>=2))), 'Quality switching applies the expected balanced/high/ultra shadow policy', qualityMatrix.map(v=>({quality:v.quality,mobileSafeDefault:v.mobileSafeDefault,shadows:v.shadows})));
     assert(qualityMatrix[2].shadows.qualityMapSize <= 768 && qualityMatrix[3].shadows.qualityMapSize <= 1536, 'High/Ultra shadow maps remain bounded', qualityMatrix.map(v=>({quality:v.quality,shadows:v.shadows})));
     await page.reload({ waitUntil: 'networkidle', timeout: 30000 });

@@ -152,7 +152,8 @@ try {
     await page.mouse.move(10,10); // Leave the touch brake control so pointer-leave cannot keep its input latched.
     await wait(200); // Ensure the simulation observes a fully released input and clears the brake latch.
     await page.keyboard.up('s'); // Explicitly release any stale keyboard brake state before the reverse trial.
-    await page.evaluate(() => window.focus());
+    await page.bringToFront();
+    await page.locator('#game canvas').click({position:{x:20,y:20}}); // Re-establish a real browser input target after pointer controls and focus transitions.
     await wait(200); // Let the simulation observe a released brake before testing intentional reverse.
     await page.keyboard.down('s');
     await page.waitForFunction(()=>window.__REALCITY_QA__().vehicleSpeed < -0.2,null,{timeout:5000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Deliberate reverse from rest did not move backward: '+JSON.stringify({state,cause:error.message}));});

@@ -1,39 +1,50 @@
-# REALCITY Phase 10 — Performance Audit
+# REALCITY Phase 10 — Continuation Audit
 
 Date: 2026-10-21
+Branch: `feature/realcity-protagonist-animation-audit`
+Remote baseline: `82296c1ae1ac6df084fe9a876dd2ace1c7f80ca1`
 
-## Changes
+## Findings and changes
 
-- Disabled multisample antialiasing on the mobile-safe renderer path while retaining it for non-mobile-safe profiles. Existing adaptive resolution, mobile shadow policy, static batching, spatial collision/camera indexes, and distance-based visibility are preserved.
-- Fixed the standalone GLB validation command so `npm run validate:glb` validates the bundled protagonist by default; explicit path and role arguments still work.
-- The existing prebuild asset fetcher verifies and downloads the three CC0 building variants when needed. The build and browser smoke test confirmed all 12 expected local model assets were present after prebuild.
+- Confirmed remote branch head `82296c1`, successful GitHub Actions run #257, and READY Vercel preview for that commit.
+- Added an npm-generated `package-lock.json` from the actual project manifest. `npm ci --no-audit --no-fund` passed. The lockfile is npm v1 format; npm reports an old-lockfile metadata refresh, so a modern lockfile refresh should be committed with a newer npm environment.
+- Changed CI installation from `npm install` to `npm ci --no-audit --no-fund`.
+- Added idempotent build-time GLB alignment repair for five vehicle assets. It adds only required padding bytes and updates chunk/total lengths; geometry, materials, and embedded data are otherwise preserved. GLB validation now fails on unaligned chunk lengths instead of merely warning.
+- Stabilized the performance harness with a per-run preview port, failed-request URL telemetry, event-based vehicle movement observation, brake-to-low-speed before exit, and a 12-second frame sample window. These fix reproduced harness flakiness under throttled SwiftShader RAF; they do not fake FPS.
 
-## Comparable software-rendered benchmark
+## Comparable software-rendered measurements
 
-The repository performance harness ran before and after disabling MSAA with the same Chromium + SwiftShader setup, viewports, quality presets, and 8-second RAF sampling windows. These are emulated software-renderer results, not physical Android hardware measurements.
+Latest retained successful GitHub Actions artifact from run #257 (commit `82296c1`):
+- Mobile-low emulation: 10.6 FPS; median 99.9 ms; p95 100.1 ms.
+- Mobile-medium emulation: 9.4 FPS; median 100.1 ms; p95 116.7 ms.
+- Desktop reference: 1.5 FPS; median 666.6 ms; p95 716.6 ms.
 
-| Profile | Before FPS | After FPS | After median frame time | After p95 frame time | After draw calls | After triangles |
-| --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| Mobile-low emulation (360×800) | 6.9 | 9.3 | 100.0 ms | 116.8 ms | 65 | 89,828 |
-| Mobile-medium emulation (390×844) | 6.0 | 7.9 | 133.3 ms | 150.0 ms | 82 | 103,736 |
-| Desktop reference (1280×720) | 2.5 | 3.9 | 250.0 ms | 283.3 ms | 163 | 106,687 |
+Continuation run under the same viewport/quality profiles:
+- Mobile-low emulation: 8.6 FPS; median 116.7 ms; p95 116.8 ms; 71 draw calls; 94,304 triangles; pixel ratio 0.85.
+- Mobile-medium emulation: 7.5 FPS; median 133.3 ms; p95 133.4 ms; 84 draw calls; 108,786 triangles; pixel ratio 0.85.
+- Desktop reference: 1.4 FPS; median 700 ms; p95 783.3 ms; 161 draw calls; 107,307 triangles; pixel ratio 1.0.
 
-Emulated FPS increased by about 35% on mobile-low, 32% on mobile-medium, and 56% on the desktop reference. SwiftShader remains far below 30 FPS; this does not establish the expected performance on a physical phone.
+This continuation run is slower than the prior artifact; no FPS improvement is claimed. The game rendering/simulation source was not changed in this continuation. SwiftShader host variability means these results do not establish a physical-device regression or improvement. Synchronous renderer-call CPU timings (about 2.64–5.60 ms average) are not GPU execution timings. JS update averages were about 0.54–0.70 ms. Software rendering dominates these emulated frame intervals; actual Android GPU behavior remains unknown.
 
-## Verification
+## Verification in the sandbox
 
+- `npm ci --no-audit --no-fund`: PASS.
 - `npm run check:types`: PASS.
-- `npm run validate:glb`: PASS, 25 structural checks; 3 optional-clip warnings.
-- `npm run validate:assets`: PASS, 12/12 assets; package size 3.95 MiB. Existing warnings remain for optional animation clips and GLB chunk alignment in some vehicle models; runtime smoke loaded the vehicle models.
-- `npm run build`: PASS. Vite still warns that the Three.js chunk is 587.37 kB minified (150.91 kB gzip).
-- `npm run test:browser`: PASS, 31 checks, zero browser console/page errors and zero HTTP error responses. Covered city/district/landmark generation, protagonist idle/walk/run/jump, pedestrian movement, collisions, keyboard/touch movement, settings persistence, pause/resume, vehicle entry/throttle/braking/exit, servicing, and vehicle persistence.
-- `npm run test:performance`: PASS as a test run; all three profiles emitted measurements and the expected low-FPS emulation warnings.
-- `npm ci --no-audit --no-fund`: PASS in the sandbox after generating a lockfile locally; the lockfile addition is not yet present on the GitHub branch.
-- `git diff --check`: PASS before the local commit.
+- `npm run validate:glb`: PASS, 25 structural checks; three optional protagonist clips remain warnings.
+- `npm run validate:assets`: PASS, all 12 local assets validated with zero GLB alignment warnings/failures after repair.
+- `npm run build`: PASS; Vite still warns about a chunk over 500 kB minified. Three.js is already isolated as a vendor chunk; no further split was made because it is statically required at startup and no startup-time benefit was demonstrated.
+- `npm run test:browser`: PASS; 31 checks, zero browser/page console errors and zero failed HTTP responses.
+- `npm run test:performance`: PASS after harness stabilization. All three profiles produced measurements and expected low-FPS SwiftShader warnings; zero browser errors and zero failed HTTP responses.
+- `git diff --check`: PASS before local commit.
+
+## Asset warning disposition
+
+The protagonist includes compatible idle, walk, run, and jump clips. Optional `land`, `turnleft`, and `turnright` clips are absent; runtime fallback remains in place and browser checks exercise idle/walk/run/jump. Both pedestrian GLBs lack embedded clips and use the tested procedural bone-animation fallback; browser tests verify pedestrians move over time. Warnings remain visible rather than suppressed.
 
 ## Unverified / remaining
 
-- No physical OPPO A5 Pro was attached; actual-device FPS, thermals, GPU memory, and sustained-play stability remain unverified.
-- The 30 FPS target is not demonstrated.
-- A before/after screenshot pair from identical camera poses was not retained.
-- The Three.js chunk warning remains; splitting core Three.js imports should be measured before attempting it.
+- Physical OPPO A5 Pro FPS, thermals, GPU memory, and sustained-play stability are UNVERIFIED; no physical phone was attached.
+- The approximately 30 FPS target is not demonstrated.
+- Vite's large-chunk warning remains; no unmeasured bundle-splitting change was made.
+- The new branch deployment must be observed after CI; free deployment quota may block a fresh preview.
+- PR #2 must remain open/draft/unmerged; `main` remains unchanged.

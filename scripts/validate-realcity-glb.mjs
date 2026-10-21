@@ -55,7 +55,7 @@ if (bytes.length >= 20) {
     const chunkLength = bytes.readUInt32LE(offset);
     const chunkType = bytes.readUInt32LE(offset + 4);
     offset += 8;
-    if (chunkLength % 4 !== 0) warn(`GLB chunk length ${chunkLength} is not 4-byte aligned; browser GLTFLoader acceptance must be confirmed by runtime smoke test`);
+    if (chunkLength % 4 !== 0) failures.push(`GLB chunk length ${chunkLength} is not 4-byte aligned (glTF 2.0 binary container requirement)`);
     if (offset + chunkLength > bytes.length) {
       failures.push('GLB chunk extends beyond end of file');
       break;

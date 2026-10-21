@@ -1,9 +1,15 @@
 import { chromium } from 'playwright';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
+import { createServer } from 'node:net';
 
-const origin = 'http://127.0.0.1:4174';
-const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4174', '--strictPort'], { stdio: 'ignore' });
+// Allocate a per-run port so an orphaned preview cannot satisfy readiness checks.
+const port = await new Promise((resolve, reject) => {
+  const probe = createServer(); probe.once('error', reject);
+  probe.listen(0, '127.0.0.1', () => { const address = probe.address(); if (!address || typeof address === 'string') return reject(new Error('Could not allocate a local preview port')); probe.close(error => error ? reject(error) : resolve(address.port)); });
+});
+const origin = `http://127.0.0.1:${port}`;
+const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], { stdio: 'ignore' });
 let browser;
 const assert = (ok, message, details) => {
   if (!ok) throw new Error(message + (details === undefined ? '' : ': ' + JSON.stringify(details)));
@@ -35,9 +41,11 @@ try {
       Object.defineProperty(navigator, 'deviceMemory', { configurable: true, get: () => mobile ? 4 : 8 });
     }, { mobile: profile.mobile });
     const errors = [];
+    const failedRequests = [];
     const failedResponses = [];
     const checks = [];
     page.on('pageerror', e => errors.push(e.stack || e.message));
+    page.on('requestfailed', request => failedRequests.push({ url: request.url(), error: request.failure()?.errorText ?? 'unknown' }));
     page.on('console', m => { if (m.type() === 'error') errors.push(m.text()); });
     page.on('response', r => { if (r.status() >= 400) failedResponses.push({ status: r.status(), url: r.url() }); });
     await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
@@ -126,18 +134,19 @@ try {
     assert(gasBox, 'Vehicle accelerator is available after entering car');
     await page.mouse.move(gasBox.x + gasBox.width/2, gasBox.y + gasBox.height/2);
     await page.mouse.down();
-    await wait(3200);
+    // Wait for observed movement, not a fixed wall-clock delay under SwiftShader RAF.
+    await page.waitForFunction(({x,z}) => { const q=window.__REALCITY_QA__(); return q.vehiclePosition && Math.hypot(q.vehiclePosition.x-x,q.vehiclePosition.z-z)>0.2 && Number.isFinite(q.vehicleSpeed) && q.vehicleSpeed>1; }, {x:carStart.x,z:carStart.z}, {timeout:15000}).catch(async error => { const state=await page.evaluate(()=>window.__REALCITY_QA__()); throw new Error('Vehicle failed to move under sustained throttle: '+JSON.stringify({carStart,state,cause:error.message})); });
     const sustained = await page.evaluate(() => window.__REALCITY_QA__());
     await page.mouse.up();
     const brake = page.locator('#brakeBtn');
     const brakeBox = await brake.boundingBox();
     assert(brakeBox, 'Vehicle brake control is available during sustained driving');
     await page.mouse.move(brakeBox.x + brakeBox.width/2, brakeBox.y + brakeBox.height/2);
-    await page.mouse.down();
-    await wait(3000);
-    await page.mouse.up();
-    await wait(500);
-    const braked = await page.evaluate(() => window.__REALCITY_QA__());
+    await page.mouse.down(); await wait(3000);
+    const brakeStartSpeed=await page.evaluate(()=>window.__REALCITY_QA__().vehicleSpeed);
+    await page.waitForFunction(()=>Math.abs(window.__REALCITY_QA__().vehicleSpeed)<=1.0,null,{timeout:15000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Vehicle failed to settle under sustained brake input: '+JSON.stringify({brakeStartSpeed,state,cause:error.message}));});
+    await page.mouse.up(); const braked=await page.evaluate(()=>window.__REALCITY_QA__());
+    assert(Number.isFinite(braked.vehicleSpeed)&&Math.abs(braked.vehicleSpeed)<=1.0,'Held brake brings vehicle to a safe exit speed (<= 1 unit/s)',{brakeStartSpeed,speed:braked.vehicleSpeed});
     const sustainedDistance = sustained.vehiclePosition ? distance(carStart, sustained.vehiclePosition) : 0;
     assert(sustained.inCar && sustained.vehiclePosition && Number.isFinite(sustainedDistance) && sustainedDistance > 0.2 && Number.isFinite(sustained.vehicleSpeed) && sustained.vehicleSpeed > 1,
       'Sustained throttle moves vehicle over several seconds', {inCar:sustained.inCar,carStart,carEnd:sustained.vehiclePosition,displacement:sustainedDistance,speed:sustained.vehicleSpeed});
@@ -159,7 +168,7 @@ try {
           if (!start) start = now;
           if (last) samples.push(now - last);
           last = now;
-          if (now - start < 8000) requestAnimationFrame(tick); else resolve();
+          if (now - start < 12000) requestAnimationFrame(tick); else resolve();
         };
         requestAnimationFrame(tick);
       });
@@ -195,6 +204,7 @@ try {
     if (profile.mobile) { assert(measurement.rendererStats.mobileSafeDefault === true, 'Touch viewport selects the mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats); if (measurement.fps < 24) assert(measurement.rendererStats.adaptiveRenderScale < 0.99, 'Adaptive renderer lowers resolution when sustained emulated FPS is below 24', measurement.rendererStats); }
     else { assert(measurement.rendererStats.mobileSafeDefault === false, 'Desktop reference does not accidentally select mobile-safe renderer path', measurement.rendererStats); assert(Math.abs(measurement.rendererStats.pixelRatio - Math.min(profile.deviceScaleFactor, [1.0,1.25,1.5,2.0][profile.quality])) < .02, 'Desktop renderer pixel ratio follows the actual device-pixel ratio under the selected quality cap', measurement.rendererStats); }
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
+    assert(failedRequests.length === 0, 'No failed browser requests in profile', failedRequests);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);
     checks.push('WebGL renderer, frame pacing and browser network health measured');
     checks.push('static road, curb and prop boxes report spatially grouped instancing statistics');
@@ -202,7 +212,7 @@ try {
       await mkdir('test-results', {recursive:true});
       await page.screenshot({path:'test-results/realcity-mobile-'+profile.name+'.png',fullPage:true});
     }
-    results.push({profile,startupQuality,appliedQuality,layout,movedPedestrians:movedPeds,checks, ...measurement,browserErrors:errors,failedResponses});
+    results.push({profile,startupQuality,appliedQuality,layout,movedPedestrians:movedPeds,checks, ...measurement,browserErrors:errors,failedRequests,failedResponses});
     await context.close();
   }
   await mkdir('test-results', {recursive:true});

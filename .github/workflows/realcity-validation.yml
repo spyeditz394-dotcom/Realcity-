@@ -25,5 +25,5 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: realcity-browser-smoke
+          name: realcity-phase10-evidence
           path: test-results/

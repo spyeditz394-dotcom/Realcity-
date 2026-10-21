@@ -614,7 +614,7 @@ if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA
   const v=traffic[0],td=v.trafficData;v.g.position.set(100,0,-100);v.g.rotation.y=0;td.axis='z';td.lane=100;td.dir=1;td.speed=4;
   pedestrians.forEach((p,i)=>{p.position.set(100,0,-96.8+i*.2);if(p.userData.brain){p.userData.brain.state='idle';p.userData.brain.idleUntil=elapsed+1000;p.userData.brain.lastX=p.position.x;p.userData.brain.lastZ=p.position.z}});
   const startZ=v.g.position.z;
-  for(let i=0;i<24;i++)update(.05);
+  for(let i=0;i<30;i++)update(.05);
   const stoppedZ=v.g.position.z,minPedGap=Math.min(...pedestrians.slice(0,3).map(p=>Math.hypot(p.position.x-v.g.position.x,p.position.z-v.g.position.z)));
   pedestrians.forEach((p,i)=>p.position.set(150+i*3,0,150));
   for(let i=0;i<4;i++)update(.05);

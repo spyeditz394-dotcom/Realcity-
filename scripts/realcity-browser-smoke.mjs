@@ -211,6 +211,13 @@ try {
   assert(await page.locator('#interact').innerText() !== 'TALK TO PEDESTRIAN',
     'Pedestrian prompt hides after leaving interaction range');
 
+  const navigationRegression = await page.evaluate(() => window.__REALCITY_QA__().runPedestrianBrainRegressionForTest());
+  assert(navigationRegression.fallback.moves > 0 && navigationRegression.fallback.collisions === 0 &&
+    navigationRegression.fallback.goal.x < -3 && navigationRegression.fallback.position.x < -3,
+    'Pedestrian brain selects a reachable local fallback around an obstructed route', navigationRegression.fallback);
+  assert(navigationRegression.impossible.state === 'recover' && navigationRegression.impossible.finite &&
+    navigationRegression.impossible.warnings === 1,
+    'Fully blocked pedestrian route remains safe and emits only one diagnostic', navigationRegression.impossible);
   const buildIdentity = await page.evaluate(() => ({ globalSha:window.__BUILD_SHA__ || null, qaSha:window.__REALCITY_QA__().buildSha || null }));
   const versionResponse = await fetch(origin + '/version.json');
   const versionJson = versionResponse.ok ? await versionResponse.json() : null;

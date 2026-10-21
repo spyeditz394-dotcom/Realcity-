@@ -145,8 +145,15 @@ try {
     await page.mouse.down(); await wait(3000);
     const brakeStartSpeed=await page.evaluate(()=>window.__REALCITY_QA__().vehicleSpeed);
     await page.waitForFunction(()=>Math.abs(window.__REALCITY_QA__().vehicleSpeed)<=1.0,null,{timeout:15000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Vehicle failed to settle under sustained brake input: '+JSON.stringify({brakeStartSpeed,state,cause:error.message}));});
+    const brakeHeldState=await page.evaluate(()=>window.__REALCITY_QA__());
+    assert(Number.isFinite(brakeHeldState.vehicleSpeed)&&brakeHeldState.vehicleSpeed>=-0.05,'Sustained brake does not transition into reverse',{brakeStartSpeed,speed:brakeHeldState.vehicleSpeed});
     await page.mouse.up(); const braked=await page.evaluate(()=>window.__REALCITY_QA__());
     assert(Number.isFinite(braked.vehicleSpeed)&&Math.abs(braked.vehicleSpeed)<=1.0,'Held brake brings vehicle to a safe exit speed (<= 1 unit/s)',{brakeStartSpeed,speed:braked.vehicleSpeed});
+    await page.keyboard.down('s');
+    await page.waitForFunction(()=>window.__REALCITY_QA__().vehicleSpeed < -0.2,null,{timeout:5000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Deliberate reverse from rest did not move backward: '+JSON.stringify({state,cause:error.message}));});
+    const reverseState=await page.evaluate(()=>window.__REALCITY_QA__());
+    assert(Number.isFinite(reverseState.vehicleSpeed)&&reverseState.vehicleSpeed>=-5.5,'Deliberate reverse remains bounded',{speed:reverseState.vehicleSpeed});
+    await page.keyboard.up('s');
     const sustainedDistance = sustained.vehiclePosition ? distance(carStart, sustained.vehiclePosition) : 0;
     assert(sustained.inCar && sustained.vehiclePosition && Number.isFinite(sustainedDistance) && sustainedDistance > 0.2 && Number.isFinite(sustained.vehicleSpeed) && sustained.vehicleSpeed > 1,
       'Sustained throttle moves vehicle over several seconds', {inCar:sustained.inCar,carStart,carEnd:sustained.vehiclePosition,displacement:sustainedDistance,speed:sustained.vehicleSpeed});

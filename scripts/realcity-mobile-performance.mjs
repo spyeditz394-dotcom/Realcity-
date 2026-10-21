@@ -151,6 +151,9 @@ try {
     assert(Number.isFinite(braked.vehicleSpeed)&&Math.abs(braked.vehicleSpeed)<=1.0,'Held brake brings vehicle to a safe exit speed (<= 1 unit/s)',{brakeStartSpeed,speed:braked.vehicleSpeed});
     await page.mouse.move(10,10); // Leave the touch brake control so pointer-leave cannot keep its input latched.
     await wait(200); // Ensure the simulation observes a fully released input and clears the brake latch.
+    await page.keyboard.up('s'); // Explicitly release any stale keyboard brake state before the reverse trial.
+    await page.evaluate(() => window.focus());
+    await wait(200); // Let the simulation observe a released brake before testing intentional reverse.
     await page.keyboard.down('s');
     await page.waitForFunction(()=>window.__REALCITY_QA__().vehicleSpeed < -0.2,null,{timeout:5000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Deliberate reverse from rest did not move backward: '+JSON.stringify({state,cause:error.message}));});
     const reverseState=await page.evaluate(()=>window.__REALCITY_QA__());

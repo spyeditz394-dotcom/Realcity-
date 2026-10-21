@@ -46,10 +46,6 @@ export function stepPedestrian(agent:Agent,ctx:StepContext):StepResult{
   else {const reached=assignReachableGoal(b,p,ctx,b.personality==='explorer'?170:120);b.previousState=b.state;b.state=reached?'walk':'recover';b.history++;b.decisionAt=ctx.now+(reached?(b.personality==='commuter'?4:2.5)+rng(b.seed+b.history)()*4:.15)}
  }
  if(b.state==='idle')return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};
- if(!routeClear(p.x,p.z,b.goalX,b.goalZ,b.viaX,ctx.blocked)){
-  b.state='recover';b.decisionAt=ctx.now+.05;
-  return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};
- }
  const cornerDistance=Math.hypot(b.cornerX-p.x,b.cornerZ-p.z);
  const targetX=cornerDistance>1.1?b.cornerX:b.goalX,targetZ=cornerDistance>1.1?b.cornerZ:b.goalZ;
  const desired=Math.atan2(targetX-p.x,targetZ-p.z),turn=angleDelta(desired-agent.rotation.y),speed=b.speed*(Math.abs(turn)>1.05?.5:1);

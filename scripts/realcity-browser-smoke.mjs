@@ -1,10 +1,10 @@
 import { chromium } from 'playwright';
-import { mkdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { spawn } from 'node:child_process';
 
 const origin = 'http://127.0.0.1:4173';
 const server = spawn(process.execPath, ['node_modules/vite/bin/vite.js', 'preview', '--host', '127.0.0.1', '--port', '4173', '--strictPort'], { stdio: 'ignore' });
-let browser;
+let browser, failurePage=null, traceContext=null, traceStopped=false;
 const errors = [];
 const failedResponses = [];
 const checks = [];
@@ -28,6 +28,7 @@ try {
   browser = await chromium.launch({ headless: true, args: ['--use-gl=swiftshader', '--enable-webgl', '--ignore-gpu-blocklist'] });
   const page = await browser.newPage({ viewport: { width: 1280, height: 720 } });
   await page.context().tracing.start({ screenshots: true, snapshots: true, sources: true });
+  failurePage=page;traceContext=page.context();
   page.on('pageerror', error => errors.push('pageerror: ' + (error.stack || error.message)));
   page.on('console', message => {
     if (message.type() === 'error') errors.push('console: ' + message.text());
@@ -252,7 +253,7 @@ try {
 
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png', fullPage: true });
-  await page.context().tracing.stop({ path: 'test-results/realcity-browser-smoke-trace.zip' });
+  await page.context().tracing.stop({ path: 'test-results/realcity-browser-smoke-trace.zip' });traceStopped=true;
   assert(errors.length === 0, 'No browser JavaScript or console errors', errors);
   assert(failedResponses.length === 0, 'No HTTP requests returned an error status', failedResponses);
 
@@ -268,7 +269,18 @@ try {
     browserErrors: errors.length,
     failedResponses
   }, null, 2));
+} catch (error) {
+  await mkdir('test-results', { recursive: true });
+  if (failurePage) await failurePage.screenshot({ path: 'test-results/realcity-browser-smoke-failure.png', fullPage: true }).catch(() => {});
+  await writeFile('test-results/realcity-browser-smoke-failure.json', JSON.stringify({
+    failure: String(error), stack: error?.stack ?? null, checks, browserErrors: errors, failedResponses
+  }, null, 2));
+  throw error;
 } finally {
+  if (traceContext && !traceStopped) {
+    await mkdir('test-results', { recursive: true });
+    await traceContext.tracing.stop({ path: 'test-results/realcity-browser-smoke-trace.zip' }).catch(() => {});
+  }
   if (browser) await browser.close();
   server.kill('SIGTERM');
 }

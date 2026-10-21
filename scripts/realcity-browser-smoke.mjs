@@ -194,6 +194,23 @@ try {
     afterReload.health === 100 && restoredState.inCar === false,
     'Vehicle position, health and on-foot state survive a browser reload', { beforeReload, afterReload, inCar: restoredState.inCar });
 
+  // Exercise the existing nearby-NPC prompt and interaction feedback without adding a dialogue feature.
+  const npcPromptSetup = await page.evaluate(() => window.__REALCITY_QA__().placePlayerAtPedestrianForTest());
+  assert(npcPromptSetup && npcPromptSetup.target === 'pedestrian' && npcPromptSetup.distance < 2.6,
+    'QA can select a pedestrian in interaction range', npcPromptSetup);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'TALK TO PEDESTRIAN', null, { timeout: 3000 });
+  assert(await page.locator('#interact').innerText() === 'TALK TO PEDESTRIAN',
+    'Nearby pedestrian displays the correct interaction prompt');
+  await page.locator('#interact').click();
+  await page.waitForFunction(() => { const el=document.getElementById('toast'); return !!el?.textContent?.trim() && Number.parseFloat(getComputedStyle(el).opacity)>0; }, null, { timeout: 3000 });
+  const npcFeedback = await page.locator('#toast').innerText();
+  assert(npcFeedback.length > 0 && !npcFeedback.includes('No interaction nearby'),
+    'Pedestrian interaction produces existing in-game feedback', npcFeedback);
+  await page.evaluate(() => window.__REALCITY_QA__().movePlayerForTest(300,300));
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent !== 'TALK TO PEDESTRIAN', null, { timeout: 3000 });
+  assert(await page.locator('#interact').innerText() !== 'TALK TO PEDESTRIAN',
+    'Pedestrian prompt hides after leaving interaction range');
+
   const buildIdentity = await page.evaluate(() => ({ globalSha:window.__BUILD_SHA__ || null, qaSha:window.__REALCITY_QA__().buildSha || null }));
   const versionResponse = await fetch(origin + '/version.json');
   const versionJson = versionResponse.ok ? await versionResponse.json() : null;

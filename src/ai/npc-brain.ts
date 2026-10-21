@@ -24,7 +24,6 @@ export function stepPedestrian(agent:Agent,ctx:StepContext):StepResult{
  }
  if(b.state==='recover'||(b.state==='walk'&&gd<1.2)||ctx.now>=b.decisionAt){
   if(b.state==='walk'&&gd<1.2&&rng(b.seed+b.history+Math.floor(ctx.now*10))()<.16){b.previousState=b.state;b.state='idle';b.idleUntil=ctx.now+.8+rng(b.seed+b.history+1)()*1.8}
-  else if(b.state==='idle'&&ctx.now<b.idleUntil)return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};
   else {const goal=ctx.chooseGoal(b.personality==='explorer'?170:120);b.goalX=goal.x;b.goalZ=goal.z;b.previousState=b.state;b.state='walk';b.history++;b.decisionAt=ctx.now+(b.personality==='commuter'?4:2.5)+rng(b.seed+b.history)()*4}
  }
  if(b.state==='idle')return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};

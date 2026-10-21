@@ -27,6 +27,13 @@ try {
   ]) {
     const context = await browser.newContext({ viewport: profile.viewport, deviceScaleFactor: profile.deviceScaleFactor, isMobile: profile.mobile, hasTouch: profile.mobile });
     const page = await context.newPage();
+    // The CI Chromium host can expose only 2–4 logical CPUs. Override capability hints
+    // before app startup so the desktop reference actually exercises the desktop path;
+    // mobile profiles deliberately emulate a constrained Android-class device.
+    await page.addInitScript(({ mobile }) => {
+      Object.defineProperty(navigator, 'hardwareConcurrency', { configurable: true, get: () => mobile ? 4 : 8 });
+      Object.defineProperty(navigator, 'deviceMemory', { configurable: true, get: () => mobile ? 4 : 8 });
+    }, { mobile: profile.mobile });
     const errors = [];
     const failedResponses = [];
     const checks = [];
@@ -161,6 +168,7 @@ try {
     const cpuProfile = measurement.rendererStats?.cpuProfile;
     assert(cpuProfile && Number.isFinite(cpuProfile.updateAvgMs) && Number.isFinite(cpuProfile.renderCallAvgMs), 'Update and synchronous renderer-call CPU timing are recorded separately', cpuProfile);
     if (profile.mobile) { assert(measurement.rendererStats.mobileSafeDefault === true, 'Touch viewport selects the mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats); if (measurement.fps < 24) assert(measurement.rendererStats.adaptiveRenderScale < 0.99, 'Adaptive renderer lowers resolution when sustained emulated FPS is below 24', measurement.rendererStats); }
+    else { assert(measurement.rendererStats.mobileSafeDefault === false, 'Desktop reference does not accidentally select mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio >= 1.49, 'Desktop reference actually tests the selected high-quality resolution scale', measurement.rendererStats); }
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);
     checks.push('WebGL renderer, frame pacing and browser network health measured');

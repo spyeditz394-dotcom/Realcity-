@@ -193,6 +193,23 @@ try {
     afterReload.health === 100 && restoredState.inCar === false,
     'Vehicle position, health and on-foot state survive a browser reload', { beforeReload, afterReload, inCar: restoredState.inCar });
 
+  const buildIdentity = await page.evaluate(() => ({ globalSha:window.__BUILD_SHA__ || null, qaSha:window.__REALCITY_QA__().buildSha || null }));
+  const versionResponse = await fetch(origin + '/version.json');
+  const versionJson = versionResponse.ok ? await versionResponse.json() : null;
+  assert(typeof buildIdentity.globalSha === 'string' && buildIdentity.globalSha.length > 7 &&
+    buildIdentity.globalSha === buildIdentity.qaSha && versionJson?.buildSha === buildIdentity.globalSha,
+    'Build SHA is exposed consistently by runtime, QA diagnostics, and version.json',
+    {buildIdentity,versionStatus:versionResponse.status,versionJson});
+  const debugPage = await browser.newPage({ viewport: { width: 390, height: 844 } });
+  await debugPage.goto(origin + '/?qa=1&debug=perf', { waitUntil: 'networkidle', timeout: 30000 });
+  await debugPage.waitForFunction(() => !!document.getElementById('realcity-debug-perf') &&
+    document.getElementById('realcity-debug-perf').textContent.includes('Build:'), null, { timeout: 10000 });
+  const debugText = await debugPage.locator('#realcity-debug-perf').innerText();
+  assert(debugText.includes('p95 frame:') && debugText.includes('NPCs:') && debugText.includes(buildIdentity.globalSha),
+    'Measurement-only debug overlay shows FPS, p95 frame time, NPC count, and build SHA', debugText);
+  await debugPage.screenshot({ path: 'test-results/realcity-debug-perf.png', fullPage: true });
+  await debugPage.close();
+
   await mkdir('test-results', { recursive: true });
   await page.screenshot({ path: 'test-results/realcity-browser-smoke.png', fullPage: true });
   assert(errors.length === 0, 'No browser JavaScript or console errors', errors);

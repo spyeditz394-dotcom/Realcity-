@@ -17,6 +17,11 @@ export function stepPedestrian(agent:Agent,ctx:StepContext):StepResult{
  b.lastX=p.x;b.lastZ=p.z;
  if(b.stuckFor>1){b.state='recover';b.stuckFor=0;b.history++}
  let gd=Math.hypot(b.goalX-p.x,b.goalZ-p.z);
+ // Idle is timed, never terminal: explicitly resume navigation when its timer expires.
+ if(b.state==='idle'){
+  if(ctx.now<b.idleUntil)return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};
+  b.state='walk';b.previousState='idle';b.decisionAt=ctx.now;
+ }
  if(b.state==='recover'||(b.state==='walk'&&gd<1.2)||ctx.now>=b.decisionAt){
   if(b.state==='walk'&&gd<1.2&&rng(b.seed+b.history+Math.floor(ctx.now*10))()<.16){b.previousState=b.state;b.state='idle';b.idleUntil=ctx.now+.8+rng(b.seed+b.history+1)()*1.8}
   else if(b.state==='idle'&&ctx.now<b.idleUntil)return {gd,nearPed:false,nx:p.x,nz:p.z,dir:agent.rotation.y,moving:false};

@@ -6,6 +6,9 @@ on:
   pull_request:
     branches:
       - main
+concurrency:
+  group: realcity-phase10-${{ github.event.pull_request.head.ref || github.ref }}
+  cancel-in-progress: true
 jobs:
   validate:
     runs-on: ubuntu-latest

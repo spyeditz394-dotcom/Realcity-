@@ -151,10 +151,13 @@ try {
       };
     });
     assert(measurement.canvas && measurement.renderer && measurement.frameMs.samples >= 10, 'Renderer and frame-time sampling available (10+ samples; measured FPS remains reported separately)', measurement);
+    const staticBatching = measurement.rendererStats?.staticBatching;
+    assert(staticBatching && staticBatching.batchedSourceMeshes >= 300 && staticBatching.batchesCreated > 0 && staticBatching.estimatedDrawCallsSaved >= 200, 'Hundreds of compatible static city boxes are batched while gameplay objects remain separate', staticBatching);
     if (profile.mobile) { assert(measurement.rendererStats.mobileSafeDefault === true, 'Touch viewport selects the mobile-safe renderer path', measurement.rendererStats); assert(measurement.rendererStats.pixelRatio <= 1.001, 'Mobile-safe rendering caps drawing resolution at native viewport scale', measurement.rendererStats); if (measurement.fps < 24) assert(measurement.rendererStats.adaptiveRenderScale < 0.99, 'Adaptive renderer lowers resolution when sustained emulated FPS is below 24', measurement.rendererStats); }
     assert(errors.length === 0, 'No JavaScript/console errors in profile', errors);
     assert(failedResponses.length === 0, 'No HTTP error responses in profile', failedResponses);
     checks.push('WebGL renderer, frame pacing and browser network health measured');
+    checks.push('static road, curb and prop boxes report spatially grouped instancing statistics');
     if (profile.mobile) {
       await mkdir('test-results', {recursive:true});
       await page.screenshot({path:'test-results/realcity-mobile-'+profile.name+'.png',fullPage:true});

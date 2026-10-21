@@ -10,11 +10,10 @@
 import { readFile, stat } from 'node:fs/promises';
 import path from 'node:path';
 
-const [inputPath, role = 'protagonist'] = process.argv.slice(2);
-if (!inputPath) {
-  console.error('Usage: node scripts/validate-realcity-glb.mjs <model.glb> [protagonist|pedestrian|vehicle|building]');
-  process.exit(2);
-}
+const [providedPath, providedRole = 'protagonist'] = process.argv.slice(2);
+const inputPath = providedPath || 'public/models/realcity-protagonist.glb';
+const role = providedRole;
+if (!providedPath) console.info(`No model path supplied; validating the default protagonist asset: ${inputPath}`);
 if (!['protagonist', 'pedestrian', 'vehicle', 'building'].includes(role)) {
   console.error(`Unknown role "${role}". Use protagonist, pedestrian, or vehicle.`);
   process.exit(2);

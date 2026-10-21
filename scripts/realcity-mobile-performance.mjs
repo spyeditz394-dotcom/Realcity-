@@ -47,11 +47,26 @@ try {
     checks.push('startup and bundled character asset ready');
     const selectedQuality = await page.evaluate(q => window.__REALCITY_QA__().setQualityForTest(q), profile.quality);
     assert(selectedQuality === profile.quality, 'Requested graphics preset actually applied to renderer', { requested: profile.quality, selectedQuality });
+    const qualityMatrix = await page.evaluate(requested => {
+      const qa = window.__REALCITY_QA__();
+      const records = [];
+      for (const quality of [0,1,2,3]) {
+        qa.setQualityForTest(quality);
+        const stats = qa.rendererStats();
+        records.push({quality:stats.quality,pixelRatio:stats.pixelRatio,mobileSafeDefault:stats.mobileSafeDefault,shadows:stats.shadows});
+      }
+      qa.setQualityForTest(requested);
+      return records;
+    }, profile.quality);
+    assert(qualityMatrix.length === 4 && qualityMatrix.every((v,i) => v.quality === i && Number.isFinite(v.pixelRatio) && v.pixelRatio > 0 && v.pixelRatio <= ([1.0,1.1,1.25,1.5][i] + .01)), 'LOW/BALANCED/HIGH/ULTRA remain within their resolution caps when switched live', qualityMatrix);
+    assert(qualityMatrix.every((v,i) => v.shadows.enabled === (i>=1 && (!v.mobileSafeDefault || i>=2))), 'Quality switching applies the expected balanced/high/ultra shadow policy', qualityMatrix.map(v=>({quality:v.quality,mobileSafeDefault:v.mobileSafeDefault,shadows:v.shadows})));
+    assert(qualityMatrix[2].shadows.qualityMapSize <= 768 && qualityMatrix[3].shadows.qualityMapSize <= 1536, 'High/Ultra shadow maps remain bounded', qualityMatrix.map(v=>({quality:v.quality,shadows:v.shadows})));
     await page.reload({ waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().canvas && window.__REALCITY_QA__().rigged, null, { timeout: 25000 });
     const appliedQuality = await page.evaluate(() => window.__REALCITY_QA__().rendererStats().quality);
     assert(appliedQuality === profile.quality, 'Graphics preset persists across reload and matches the selected profile', { requested: profile.quality, appliedQuality });
     checks.push('requested graphics preset applied and persisted across reload');
+    checks.push('all four quality presets, pixel-ratio caps and selective shadow modes verified');
 
     const layout = await page.evaluate(() => {
       const rect = el => { const r = el.getBoundingClientRect(); return { x:r.x,y:r.y,width:r.width,height:r.height,right:r.right,bottom:r.bottom }; };
@@ -64,12 +79,21 @@ try {
     });
     assert(!layout.overflow, 'No page overflow at emulated device viewport', layout);
     assert(layout.missing.length === 0, 'Core HUD/touch controls visible at viewport', layout.missing);
+    if (profile.mobile) {
+      await page.setViewportSize({width:profile.viewport.height,height:profile.viewport.width});
+      await wait(180);
+      const rotated = await page.evaluate(() => { const c=document.querySelector('#game canvas');const r=c?.getBoundingClientRect();return {width:innerWidth,height:innerHeight,canvasWidth:r?.width,canvasHeight:r?.height,quality:window.__REALCITY_QA__().rendererStats().quality,overflow:document.documentElement.scrollWidth>innerWidth||document.documentElement.scrollHeight>innerHeight}; });
+      assert(rotated.width===profile.viewport.height&&rotated.height===profile.viewport.width&&rotated.canvasWidth===rotated.width&&rotated.canvasHeight===rotated.height&&!rotated.overflow&&rotated.quality===profile.quality,'Portrait/landscape resize preserves canvas fit, quality and HUD viewport',rotated);
+      await page.setViewportSize(profile.viewport);
+      await wait(180);
+    }
     for (const [id, box] of Object.entries(layout.controls)) {
       if (!box || (id === 'gasBtn' || id === 'brakeBtn')) continue;
       assert(box.x >= -1 && box.y >= -1 && box.right <= profile.viewport.width + 1 && box.bottom <= profile.viewport.height + 1,
         'Control remains within viewport: ' + id, box);
     }
     checks.push('mobile HUD fits viewport with controls inside safe screen bounds');
+    if (profile.mobile) checks.push('orientation/viewport rotation keeps canvas aspect and graphics profile stable');
 
     const beforePeds = await page.evaluate(() => window.__REALCITY_QA__().pedestrianPositions);
     await wait(2400);
@@ -164,6 +188,7 @@ try {
     assert(spatialIndex?.ready === true && spatialIndex.solidCount >= 500 && spatialIndex.collisionCells > 50 && spatialIndex.cameraBlockerCells > 50, 'Static collision and camera blockers have usable spatial indexes', spatialIndex);
     assert(spatialIndex.collisionQueryCount > 100 && spatialIndex.meanCollisionCandidates < 30, 'Static collision checks examine local candidates rather than scanning the whole city', spatialIndex);
     assert(spatialIndex.cameraRayQueryCount > 20 && spatialIndex.meanCameraRayCandidates < 30, 'Camera occlusion queries inspect a bounded local candidate set', spatialIndex);
+    assert(measurement.rendererStats.shadows && typeof measurement.rendererStats.shadows.enabled === 'boolean' && measurement.rendererStats.shadows.qualityMapSize>=256, 'Runtime shadow configuration is present and bounded', measurement.rendererStats.shadows);
     assert(measurement.rendererStats.calls < 180, 'Visible renderer draw-call count stays below Phase 10 budget', measurement.rendererStats);
     const cpuProfile = measurement.rendererStats?.cpuProfile;
     assert(cpuProfile && Number.isFinite(cpuProfile.updateAvgMs) && Number.isFinite(cpuProfile.renderCallAvgMs), 'Update and synchronous renderer-call CPU timing are recorded separately', cpuProfile);

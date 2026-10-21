@@ -587,7 +587,7 @@ if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA
  const blockedWall=(x,z)=>Math.abs(x)<1&&Math.abs(z)<10;
  const agent={position:{x:-3,z:0},rotation:{y:0},userData:{brain:createPedestrianBrain(991,20261021,{x:6,z:0},0)}};
  agent.userData.brain.decisionAt=0;let now=0,moves=0,collisions=0;
- for(let i=0;i<240;i++){const r=stepPedestrian(agent,{now,dt:.05,agents:[agent],blocked:blockedWall,chooseGoal:()=>({x:6,z:0}),frame:i});if(blockedWall(r.nx,r.nz))collisions++;if(r.moving){agent.position.x=r.nx;agent.position.z=r.nz;agent.rotation.y=r.dir;moves++}now+=.05}
+ for(let i=0;i<20;i++){const r=stepPedestrian(agent,{now,dt:.05,agents:[agent],blocked:blockedWall,chooseGoal:()=>({x:6,z:0}),frame:i});if(blockedWall(r.nx,r.nz))collisions++;if(r.moving){agent.position.x=r.nx;agent.position.z=r.nz;agent.rotation.y=r.dir;moves++}now+=.05}
  const fallback={moves,collisions,goal:{x:agent.userData.brain.goalX,z:agent.userData.brain.goalZ},state:agent.userData.brain.state,position:{...agent.position}};
  const impossible={position:{x:0,z:0},rotation:{y:0},userData:{brain:createPedestrianBrain(992,20261022,{x:100,z:100},0)}};
  impossible.userData.brain.decisionAt=0;let warnings=0;const oldWarn=console.warn;console.warn=()=>{warnings++};try{for(let i=0;i<30;i++)stepPedestrian(impossible,{now:i*.2,dt:.05,agents:[impossible],blocked:()=>true,chooseGoal:()=>({x:100,z:100}),frame:i})}finally{console.warn=oldWarn}

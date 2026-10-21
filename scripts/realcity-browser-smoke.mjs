@@ -218,6 +218,16 @@ try {
   assert(navigationRegression.impossible.state === 'recover' && navigationRegression.impossible.finite &&
     navigationRegression.impossible.warnings === 1,
     'Fully blocked pedestrian route remains safe and emits only one diagnostic', navigationRegression.impossible);
+  const vehicleDynamicsRegression = await page.evaluate(() => window.__REALCITY_QA__().runVehicleDynamicsRegressionForTest());
+  assert(vehicleDynamicsRegression.deltaSpeed <= vehicleDynamicsRegression.tolerance &&
+    vehicleDynamicsRegression.fixed.steps > 100 && vehicleDynamicsRegression.variable.steps > 100,
+    'Vehicle speed integrator agrees between fixed 16.7 ms and jittered 8–50 ms steps within tolerance',
+    {fixed:vehicleDynamicsRegression.fixed,variable:vehicleDynamicsRegression.variable,delta:vehicleDynamicsRegression.deltaSpeed,tolerance:vehicleDynamicsRegression.tolerance});
+  assert(vehicleDynamicsRegression.repeatedTransitions === 100 && vehicleDynamicsRegression.invalidStates === 0 &&
+    vehicleDynamicsRegression.negativeReverseObserved && !vehicleDynamicsRegression.brakeLatched &&
+    Math.abs(vehicleDynamicsRegression.transitionFinalSpeed) <= 5.5,
+    '100 forward/brake/reverse/release transitions remain finite, bounded, and clear the brake latch',
+    vehicleDynamicsRegression);
   const buildIdentity = await page.evaluate(() => ({ globalSha:window.__BUILD_SHA__ || null, qaSha:window.__REALCITY_QA__().buildSha || null }));
   const versionResponse = await fetch(origin + '/version.json');
   const versionJson = versionResponse.ok ? await versionResponse.json() : null;

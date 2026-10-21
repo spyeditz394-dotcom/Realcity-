@@ -7,7 +7,7 @@ on:
     branches:
       - main
 concurrency:
-  group: realcity-phase10-${{ github.event.pull_request.head.ref || github.ref }}
+  group: realcity-phase10-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   validate:

@@ -285,7 +285,7 @@ function pedestrianWaypoint(maxDistance=150){
  // Safe fallback is bounded and retried by the normal obstruction recovery.
  return{x:Math.max(-150,Math.min(150,5.55)),z:0};
 }
-const pedestrianCount=mobileSafeDefault?12:22;for(let i=0;i<pedestrianCount;i++){
+const requestedNpcCount=Number(new URLSearchParams(location.search).get('npcCount'));const allowedNpcCounts=[5,10,20,40];const pedestrianCount=new URLSearchParams(location.search).has('qa')&&allowedNpcCounts.includes(requestedNpcCount)?requestedNpcCount:(mobileSafeDefault?12:22);for(let i=0;i<pedestrianCount;i++){
  const p=person([0x278d82,0xb86d43,0x4e659a,0x925d7c,0x547b53,0xb8a052,0x687e8b][i%7]);
  const spawn=pedestrianWaypoint(i<4?24:150),goal=pedestrianWaypoint(150);
  p.position.set(spawn.x,0,spawn.z);p.userData.goalX=goal.x;p.userData.goalZ=goal.z;p.userData.pause=rand()*2;

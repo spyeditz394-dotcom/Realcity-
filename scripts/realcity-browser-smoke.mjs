@@ -228,6 +228,11 @@ try {
     Math.abs(vehicleDynamicsRegression.transitionFinalSpeed) <= 5.5,
     '100 forward/brake/reverse/release transitions remain finite, bounded, and clear the brake latch',
     vehicleDynamicsRegression);
+  const trafficSafety = await page.evaluate(() => window.__REALCITY_QA__().runTrafficSafetyForTest());
+  assert(trafficSafety.stopped && trafficSafety.minPedGap >= 2.39,
+    'Traffic stops before overlapping multiple pedestrians in its lane', trafficSafety);
+  assert(trafficSafety.resumed,
+    'Traffic automatically resumes after the pedestrian obstruction clears', trafficSafety);
   const buildIdentity = await page.evaluate(() => ({ globalSha:window.__BUILD_SHA__ || null, qaSha:window.__REALCITY_QA__().buildSha || null }));
   const versionResponse = await fetch(origin + '/version.json');
   const versionJson = versionResponse.ok ? await versionResponse.json() : null;

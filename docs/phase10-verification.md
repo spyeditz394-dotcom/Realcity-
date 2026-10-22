@@ -9,7 +9,7 @@ This report distinguishes observed CI results from work that is not yet implemen
 - Repository: `spyeditz394-dotcom/Realcity-`
 - Branch: `feature/realcity-protagonist-animation-audit`
 - Starting point supplied: `0afef24bff3e1182edf1e47415df60ce0b778512`
-- Latest completed diagnostic run reviewed: [GitHub Actions run 39574338255](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39574338255)
+- Latest reviewed run before the current correction: [GitHub Actions run 39740528321](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39740528321) on `b46a7a2d930fe04724c6a2aab8035cb0b49f3b8e` (FAILED browser smoke). Earlier baseline: [run 39574338255](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39574338255).
 - Exact run artifact: [realcity-browser-smoke.zip](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39574338255/artifacts/12334240656)
 - PR: [#2](https://github.com/spyeditz394-dotcom/Realcity-/pull/2), must remain open, draft, and unmerged.
 - Vercel preview list has previously shown a READY deployment for `0afef24bff3e1182edf1e47415df60ce0b778512`; READY alone is not gameplay verification.
@@ -27,6 +27,12 @@ Run 39574338255 completed with **failure**. The job steps and downloaded logs sh
 - Artifact upload: PASS; uploaded browser smoke artifact SHA-256 digest `c3c9003c3f89a52b6cfc77ef64678f79b649c66ab2dcce25f95742cd8b004bfe`.
 
 The existing CI run exercises vehicle entry, throttle, sustained braking, and a reverse assertion, but does not yet cover the requested 100-transition test, keyboard/touch parity matrix, fixed-vs-jittered timestep comparison, 5/10/20/40 NPC benchmark matrix, complete NPC navigation suite, interaction lifecycle suite, or traffic obstruction suite.
+
+## Latest traffic regression diagnosis
+
+Run [39740528321](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39740528321) on `b46a7a2d930fe04724c6a2aab8035cb0b49f3b8e` failed in `scripts/realcity-browser-smoke.mjs:233`. The reported state was `startZ=-100`, `stoppedZ=-99.22541951465952`, `minPedGap=2.4254195146595237`, `pedestrianCount=3`, `resumed=true`, but `stopped=false`. Inspection of `src/main.ts` shows the vehicle had moved a short distance while decelerating and was then maintaining safe separation. The test incorrectly defined “stopped” as no displacement from the *initial* position, which rejects a valid braking approach.
+
+Correction committed after that run: the regression now measures stability across four additional 50 ms updates while the pedestrians remain in place, checks the existing minimum pedestrian gap, then checks automatic resume after clearing the obstruction. The safety assertion and 2.39-unit gap threshold are retained. This is a test-probe correction, not proof of a production pass. A workflow run for the correction SHA is still required.
 
 ## Items 1–9
 

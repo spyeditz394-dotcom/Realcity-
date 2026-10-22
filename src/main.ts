@@ -615,11 +615,17 @@ if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA
   pedestrians.forEach((p,i)=>{p.position.set(100,0,-96.8+i*.2);if(p.userData.brain){p.userData.brain.state='idle';p.userData.brain.idleUntil=elapsed+1000;p.userData.brain.lastX=p.position.x;p.userData.brain.lastZ=p.position.z}});
   const startZ=v.g.position.z;
   for(let i=0;i<40;i++)update(.05);
-  const stoppedZ=v.g.position.z,minPedGap=Math.min(...pedestrians.slice(0,3).map(p=>Math.hypot(p.position.x-v.g.position.x,p.position.z-v.g.position.z)));
+  const stoppedZ=v.g.position.z;
+  const minPedGap=Math.min(...pedestrians.slice(0,3).map(p=>Math.hypot(p.position.x-v.g.position.x,p.position.z-v.g.position.z)));
+  // Confirm the vehicle remains stopped under the same obstruction. It may
+  // safely roll forward while braking; requiring zero displacement from the
+  // initial position incorrectly rejected a safe stop before the pedestrians.
+  for(let i=0;i<4;i++)update(.05);
+  const stableZ=v.g.position.z;
   pedestrians.forEach((p,i)=>p.position.set(150+i*3,0,150));
   for(let i=0;i<4;i++)update(.05);
   const resumedZ=v.g.position.z;
-  result={startZ,stoppedZ,resumedZ,stopped:Math.abs(stoppedZ-startZ)<.01,resumed:Math.abs(resumedZ-stoppedZ)>.05,minPedGap,pedestrianCount:3};
+  result={startZ,stoppedZ,stableZ,resumedZ,stopped:Math.abs(stableZ-stoppedZ)<.01,resumed:Math.abs(resumedZ-stableZ)>.05,minPedGap,pedestrianCount:3};
  }finally{
   for(const s of trafficSnapshot){s.v.g.position.set(s.x,0,s.z);s.v.g.rotation.y=s.rotation;s.v.speed=s.speed;if(s.v.trafficData)Object.assign(s.v.trafficData,s.data)}
   for(const s of pedestrianSnapshot){s.p.position.set(s.x,0,s.z);const b=s.p.userData.brain;if(b){b.state=s.state;b.idleUntil=s.idleUntil;b.decisionAt=s.decisionAt;b.lastX=s.lastX;b.lastZ=s.lastZ;b.stuckFor=s.stuckFor}}

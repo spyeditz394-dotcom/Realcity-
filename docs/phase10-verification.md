@@ -71,3 +71,13 @@ Correction committed after that run: the regression now measures stability acros
 8. Real OPPO A5 Pro test remains UNVERIFIED until actual device evidence is submitted.
 
 Do not change this status to COMPLETE unless the acceptance criteria are evidenced on the final SHA.
+
+## Preview identity check — 2026-10-23
+
+A live Vercel deployment lookup confirmed a **READY** preview built from correction commit `1ac57680e751eae463529800083b4d5f535b90d7` (deployment ID `dpl_5HA84WNtQ1XcCRqQmUBKYRgjEjko`). The deployment metadata reports the expected repository, feature branch, and commit message. This confirms deployment source identity and build readiness only; it does **not** establish that the browser smoke suite, performance suite, or gameplay acceptance checks pass.
+
+- Preview: https://realcity-git-feature-realcity-67200a-spyeditz394-4635s-projects.vercel.app
+- Deployment details: https://vercel.com/spyeditz394-4635s-projects/realcity/5HA84WNtQ1XcCRqQmUBKYRgjEjko
+- CI status for `1ac57680e751eae463529800083b4d5f535b90d7`: no associated workflow run was returned by the available GitHub Actions lookup.
+- The subsequent branch tip `37a9fbcaf9ca25bfc06e4b95a924dbe4d40806a4` has no reported status checks. The PR metadata lookup still does not expose the same head SHA, so the PR/branch synchronization issue remains unresolved.
+

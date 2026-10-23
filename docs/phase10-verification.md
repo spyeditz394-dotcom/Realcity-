@@ -81,3 +81,18 @@ A live Vercel deployment lookup confirmed a **READY** preview built from correct
 - CI status for `1ac57680e751eae463529800083b4d5f535b90d7`: no associated workflow run was returned by the available GitHub Actions lookup.
 - The subsequent branch tip `37a9fbcaf9ca25bfc06e4b95a924dbe4d40806a4` has no reported status checks. The PR metadata lookup still does not expose the same head SHA, so the PR/branch synchronization issue remains unresolved.
 
+## Latest CI run — 2026-10-23
+
+A new GitHub Actions validation run is now available: [run 39920315378](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39920315378). It checked out PR merge commit `3b09c9685c7d8eae1914b2fcc8ea7ef72c0f745a`, which merges the documentation commit `a9a69e01695cedf014014c6a0fa2932f4e7c8d90` into base commit `3772a0279978d8a23f6f05593530431c485ced4a`.
+
+Observed results from the job log:
+- `npm ci --no-audit --no-fund`: PASS
+- `npm run check:types`: PASS
+- `npm run build`: PASS
+- `npm run validate:assets`: PASS (asset-validator summaries report zero failures)
+- `npm run validate:glb`: PASS (GLB-validator summaries report zero failures)
+- `npm run test:browser`: PASS; step completed successfully and reported no failed HTTP responses.
+- `npm run test:performance`: FAIL at the on-screen forward movement check. Exact error: `On-screen forward control moves player: {"start":{"x":0,"y":0,"z":23},"moved":{"x":0,"y":0,"z":23.172}}`.
+
+This is new actionable evidence: the corrected traffic browser regression passed in this run, but the performance harness still fails on its on-screen forward-control movement assertion. The failing assertion must be investigated and fixed without weakening the movement requirement. The run is a PR merge-ref test, not physical OPPO device evidence. Phase 10 remains **INCOMPLETE**.
+

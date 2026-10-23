@@ -1,19 +1,27 @@
 {
   "name": "realcity",
   "private": true,
-  "version": "0.4.5",
+  "version": "0.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "check:types": "tsc --noEmit",
+    "test:browser": "node scripts/realcity-browser-smoke.mjs",
+    "test:performance": "node scripts/realcity-mobile-performance.mjs",
+    "validate:glb": "node scripts/validate-realcity-glb.mjs",
+    "validate:assets": "node scripts/validate-realcity-assets.mjs",
+    "assets:environment": "node scripts/fetch-realcity-environment-assets.mjs",
+    "assets:repair": "node scripts/repair-realcity-glb-padding.mjs",
+    "prebuild": "npm run assets:environment && npm run assets:repair"
   },
   "dependencies": {
-    "@dimforge/rapier3d-compat": "0.17.3",
     "three": "0.160.0"
   },
   "devDependencies": {
     "vite": "6.4.4",
-    "typescript": "5.8.3"
+    "typescript": "5.8.3",
+    "playwright": "^1.56.1"
   }
 }

@@ -96,3 +96,11 @@ Observed results from the job log:
 
 This is new actionable evidence: the corrected traffic browser regression passed in this run, but the performance harness still fails on its on-screen forward-control movement assertion. The failing assertion must be investigated and fixed without weakening the movement requirement. The run is a PR merge-ref test, not physical OPPO device evidence. Phase 10 remains **INCOMPLETE**.
 
+## Follow-up on the forward-control failure
+
+Two test-only changes were committed after run 39920315378:
+- `3ad6399795ced8ccff50de3072fdbe100ff61eef` adds a QA-only helper that searches for a collision-free forward corridor before testing touch movement.
+- `370c6c4b304f594985a869e55b6dfbfe41557dab` makes the performance test use that helper before measuring the on-screen forward control.
+
+The movement assertion remains `distance(start,moved) > 0.25`; it has not been weakened. These commits are a targeted attempt to avoid measuring input against a nearby obstacle, not a verified fix. At the time of this note, no GitHub Actions run was returned for `370c6c4b304f594985a869e55b6dfbfe41557dab`; Vercel had reported a pending status for its preview. The next gate is to inspect the fresh run and logs, then fix any remaining production or harness defect based on evidence.
+

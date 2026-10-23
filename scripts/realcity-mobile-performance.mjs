@@ -111,6 +111,7 @@ try {
     checks.push('pedestrians move across a timed observation window');
 
     // Hold the real on-screen movement pad, then release it and ensure movement stops.
+    await page.evaluate(() => window.__REALCITY_QA__().preparePlayerMovementForTest());
     const start = await page.evaluate(() => window.__REALCITY_QA__().position);
     const up = page.locator('[data-key="w"]');
     const upBox = await up.boundingBox();

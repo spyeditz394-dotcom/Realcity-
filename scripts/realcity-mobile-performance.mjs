@@ -148,6 +148,12 @@ try {
     await page.waitForFunction(()=>Math.abs(window.__REALCITY_QA__().vehicleSpeed)<=1.0,null,{timeout:15000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Vehicle failed to settle under sustained brake input: '+JSON.stringify({brakeStartSpeed,state,cause:error.message}));});
     const brakeHeldState=await page.evaluate(()=>window.__REALCITY_QA__());
     assert(Number.isFinite(brakeHeldState.vehicleSpeed)&&brakeHeldState.vehicleSpeed>=-0.05,'Sustained brake does not transition into reverse',{brakeStartSpeed,speed:brakeHeldState.vehicleSpeed});
+    // Establish a genuine rest state before testing reverse-from-rest. The previous test
+    // released the brake as soon as speed fell below 1 unit/s; a residual forward speed
+    // correctly causes the next S press to brake again rather than reverse.
+    await page.waitForFunction(()=>Math.abs(window.__REALCITY_QA__().vehicleSpeed)<=0.05,null,{timeout:15000}).catch(async error=>{const state=await page.evaluate(()=>window.__REALCITY_QA__());throw new Error('Vehicle did not reach rest while brake remained held: '+JSON.stringify({state,cause:error.message}));});
+    const fullyStopped=await page.evaluate(()=>window.__REALCITY_QA__());
+    assert(Number.isFinite(fullyStopped.vehicleSpeed)&&Math.abs(fullyStopped.vehicleSpeed)<=0.05,'Vehicle is fully stopped before reverse-from-rest trial',{speed:fullyStopped.vehicleSpeed});
     await page.mouse.up(); const braked=await page.evaluate(()=>window.__REALCITY_QA__());
     assert(Number.isFinite(braked.vehicleSpeed)&&Math.abs(braked.vehicleSpeed)<=1.0,'Held brake brings vehicle to a safe exit speed (<= 1 unit/s)',{brakeStartSpeed,speed:braked.vehicleSpeed});
     await page.mouse.move(10,10); // Leave the touch brake control so pointer-leave cannot keep its input latched.

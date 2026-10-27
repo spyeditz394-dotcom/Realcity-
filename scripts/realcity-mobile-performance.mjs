@@ -321,8 +321,12 @@ try {
     const runs = benchmarkRuns.filter(r => r.npcCount === npcCount);
     const fps = runs.map(r => r.averageFps).filter(Number.isFinite);
     const p95 = runs.map(r => r.p95Ms).filter(Number.isFinite);
+    const frameSamples = runs.flatMap(r => r.rawFrameTimesMs).filter(Number.isFinite).sort((a,b)=>a-b);
     return {
       label:'CI environment',npcCount,runCount:runs.length,
+      frameSampleCount:frameSamples.length,
+      medianFrameTimeMs:percentile(frameSamples,.50),
+      p95FrameTimeMs:percentile(frameSamples,.95),
       averageFpsMean:fps.length?fps.reduce((a,b)=>a+b,0)/fps.length:null,
       averageFpsSpread:fps.length?Math.max(...fps)-Math.min(...fps):null,
       p95MsMean:p95.length?p95.reduce((a,b)=>a+b,0)/p95.length:null,

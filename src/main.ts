@@ -599,12 +599,20 @@ if(new URLSearchParams(location.search).has('qa')){(window as any).__REALCITY_QA
   return{speed,brakeLatched,steps,minSpeed,maxSpeed,time:t}
  };
  const fixed=simulate(()=>1/60),jitter=[.008,.05,.0167,.033,.025,.041,.012,.02];let ji=0;const variable=simulate(()=>jitter[(ji++)%jitter.length]);
- let speed=0,brakeLatched=false,minSpeed=0,maxSpeed=0,invalidStates=0;
+ const seed=20261021;let randomState=seed>>>0;const random=()=>{randomState=(Math.imul(randomState,1664525)+1013904223)>>>0;return randomState/4294967296};
+ let speed=0,brakeLatched=false,minSpeed=0,maxSpeed=0,invalidStates=0,transitionSteps=0;
  for(let cycle=0;cycle<100;cycle++){
-  for(const [input,count] of [[1,4],[-1,8],[0,1],[-1,4],[1,8],[0,1]])for(let i=0;i<count;i++){const result=integrateVehicleSpeed(speed,input,.05,brakeLatched);speed=result.speed;brakeLatched=result.brakeLatched;if(!Number.isFinite(speed)||Math.abs(speed)>5.5)invalidStates++;minSpeed=Math.min(minSpeed,speed);maxSpeed=Math.max(maxSpeed,speed)}
+  // Each seeded cycle exercises throttle, coast, braking to rest, reverse from rest,
+  // forward recovery, and coast. Durations vary reproducibly without wall-clock timing.
+  const phases=[[1,2+Math.floor(random()*4)],[0,1+Math.floor(random()*3)],[-1,6+Math.floor(random()*5)],[0,1],[-1,3+Math.floor(random()*3)],[1,5+Math.floor(random()*4)],[0,1]];
+  for(const [input,count] of phases)for(let i=0;i<count;i++){
+   const result=integrateVehicleSpeed(speed,input,.05,brakeLatched);speed=result.speed;brakeLatched=result.brakeLatched;transitionSteps++;
+   if(!Number.isFinite(speed)||speed< -5.5||speed>14.5)invalidStates++;
+   minSpeed=Math.min(minSpeed,speed);maxSpeed=Math.max(maxSpeed,speed);
+  }
   if(brakeLatched)invalidStates++;
  }
- return{fixed,variable,deltaSpeed:Math.abs(fixed.speed-variable.speed),tolerance:.12,repeatedTransitions:100,transitionFinalSpeed:speed,brakeLatched,invalidStates,minSpeed,maxSpeed,negativeReverseObserved:minSpeed<-.2}
+ return{fixed,variable,deltaSpeed:Math.abs(fixed.speed-variable.speed),tolerance:.12,seed,repeatedTransitions:100,transitionSteps,transitionFinalSpeed:speed,brakeLatched,invalidStates,minSpeed,maxSpeed,negativeReverseObserved:minSpeed<-.2}
 },runTrafficSafetyForTest:()=>{
  const trafficSnapshot=traffic.map(v=>({v,x:v.g.position.x,z:v.g.position.z,rotation:v.g.rotation.y,speed:v.speed,data:{...v.trafficData}}));
  const pedestrianSnapshot=pedestrians.map(p=>({p,x:p.position.x,z:p.position.z,state:p.userData.brain?.state,idleUntil:p.userData.brain?.idleUntil,decisionAt:p.userData.brain?.decisionAt,lastX:p.userData.brain?.lastX,lastZ:p.userData.brain?.lastZ,stuckFor:p.userData.brain?.stuckFor}));

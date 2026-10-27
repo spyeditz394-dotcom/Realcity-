@@ -7,7 +7,9 @@ on:
     branches:
       - main
 concurrency:
-  group: realcity-phase10-${{ github.head_ref || github.ref_name }}
+  # Keep push and PR validation independent; both events fire for feature-branch pushes.
+  # A shared group caused each event to cancel the other before validation completed.
+  group: realcity-phase10-${{ github.event_name }}-${{ github.head_ref || github.ref_name }}
   cancel-in-progress: true
 jobs:
   validate:

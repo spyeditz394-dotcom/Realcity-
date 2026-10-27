@@ -50,6 +50,12 @@ try {
     page.on('response', r => { if (r.status() >= 400) failedResponses.push({ status: r.status(), url: r.url() }); });
     await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
     await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function' && window.__REALCITY_QA__().canvas && window.__REALCITY_QA__().rigged, null, { timeout: 25000 });
+    const dynamics = await page.evaluate(() => window.__REALCITY_QA__().runVehicleDynamicsRegressionForTest());
+    const dynamicsRepeat = await page.evaluate(() => window.__REALCITY_QA__().runVehicleDynamicsRegressionForTest());
+    assert(JSON.stringify(dynamics) === JSON.stringify(dynamicsRepeat), 'Seeded vehicle dynamics regression is deterministic across repeated invocations', {dynamics,dynamicsRepeat});
+    assert(dynamics.fixed.negativeReverseObserved === undefined ? dynamics.fixed.minSpeed < -0.2 : dynamics.fixed.negativeReverseObserved, 'Fixed-step vehicle dynamics can reverse from rest', dynamics.fixed);
+    assert(dynamics.variable.minSpeed < -0.2 && dynamics.deltaSpeed <= dynamics.tolerance, 'Injected timestep variants retain reverse behavior within the existing tolerance', {deltaSpeed:dynamics.deltaSpeed,tolerance:dynamics.tolerance,fixed:dynamics.fixed,variable:dynamics.variable});
+    assert(dynamics.repeatedTransitions === 100 && dynamics.invalidStates === 0 && dynamics.minSpeed >= -5.5 && dynamics.maxSpeed <= 14.5 && dynamics.minSpeed < -0.2 && dynamics.maxSpeed > 0.2, '100 seeded vehicle state transitions preserve finite bounded forward/reverse invariants', dynamics);
     const startupQuality = await page.locator('#qualityText').textContent();
     if (profile.mobile) assert(startupQuality === 'BALANCED', 'Mobile-safe BALANCED startup preset', startupQuality);
     checks.push('startup and bundled character asset ready');

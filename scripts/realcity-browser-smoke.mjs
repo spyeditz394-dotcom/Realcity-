@@ -154,6 +154,16 @@ try {
   await page.keyboard.press('e');
   await page.waitForFunction(() => window.__REALCITY_QA__().inCar === true, null, { timeout: 5000 });
   const carBefore = await page.evaluate(() => window.__REALCITY_QA__());
+  // Capture repeatable CI screenshots of the imported sedan for later visual review.
+  // These establish that the screenshot artifact exists; they do not replace live-device review.
+  await mkdir('test-results', { recursive: true });
+  await page.evaluate(() => window.__REALCITY_QA__().setCameraForTest(0, .24));
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/realcity-sedan-rear-three-quarter.png' });
+  await page.evaluate(() => window.__REALCITY_QA__().setCameraForTest(Math.PI / 2, .24));
+  await page.waitForTimeout(300);
+  await page.screenshot({ path: 'test-results/realcity-sedan-side-three-quarter.png' });
+  await page.evaluate(() => window.__REALCITY_QA__().setCameraForTest(0, .22));
   await page.keyboard.down('w');
   await page.waitForFunction(() => window.__REALCITY_QA__().vehicleSpeed > 0.5, null, { timeout: 5000 });
   await new Promise(resolve => setTimeout(resolve, 800));

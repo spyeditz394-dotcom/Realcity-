@@ -42,15 +42,21 @@
 - `npm run test:browser`: PASS in CI; 31 checks reported in the linked PR evidence, zero console/page errors and no HTTP error responses.
 - `npm run test:performance`: FAIL — `Deliberate reverse from rest did not move backward`; negative-speed assertion remains enabled.
 - Additional CI gates `npm run validate:assets` and `npm run validate:glb`: PASS.
-- These are CI results, not a physical-device or live-production test. The performance script stops before its later benchmark matrix because the reverse regression fails.
+- These are CI results, not a physical-device or live-production test. The performance script stopped before its later benchmark matrix because the reverse regression failed; the test now waits for a true stopped state before the separate reverse-from-rest trial. The new test commit has not yet been validated.
+
+## Change history
+
+- `6d0de7704bb82fdb3f5cfce8991fe58580de021f` — created this release ledger on the required feature branch.
+- `75f62bf98cb8e40ca62517b66610da06670baa5d` — made the reverse regression wait for an actual stopped state before pressing reverse again. The previous test released the brake at speed below 1 unit/s, so a residual forward speed caused the next S press to correctly continue braking instead of reversing.
+- `b9e23a1d1c873512c7496eef258e08992a32b907` — added repeatability, fixed-vs-injected-timestep, and 100-transition invariant assertions using the existing production dynamics regression helper. CI is pending; these are not yet marked DONE.
 
 ## Item ledger
 
 | Item | Status | Commit SHA | Evidence | Notes |
 |---:|---|---|---|---|
 | 1 | DONE | c64b64cc44f66af5f91182267c3b01c043aaaba5 | [CI run 39921342010](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39921342010); build size above | Baseline captured before edits; performance script failed. |
-| 2 | NEEDS REVIEW | c64b64cc44f66af5f91182267c3b01c043aaaba5 | `scripts/realcity-mobile-performance.mjs`; baseline CI failure | Full deterministic matrix and repeated-run evidence still required. |
-| 3 | NEEDS REVIEW | c64b64cc44f66af5f91182267c3b01c043aaaba5 | `scripts/realcity-mobile-performance.mjs` | 100-transition seeded invariant test not yet verified. |
+| 2 | NEEDS REVIEW | b9e23a1d1c873512c7496eef258e08992a32b907 | `scripts/realcity-mobile-performance.mjs`; CI pending | Added repeatability and injected-timestep comparisons; CI must pass repeatedly before DONE. |
+| 3 | NEEDS REVIEW | b9e23a1d1c873512c7496eef258e08992a32b907 | `scripts/realcity-mobile-performance.mjs`; CI pending | Existing fixed-seed 100-transition helper now has explicit finite/range/reverse assertions; CI must verify it. |
 | 4 | NEEDS REVIEW | c64b64cc44f66af5f91182267c3b01c043aaaba5 | [CI run 39921342010](https://github.com/spyeditz394-dotcom/Realcity-/actions/runs/39921342010) | Baseline commands ran; final pipeline must pass on final SHA. |
 | 5 | NEEDS REVIEW | c64b64cc44f66af5f91182267c3b01c043aaaba5 | `scripts/realcity-mobile-performance.mjs`; intended artifact `test-results/realcity-npc-benchmarks.json` | Harness contains 5/10/20/40 × 3-run matrix, but failure prevents reaching/saving it. |
 | 6 | NEEDS REVIEW | c64b64cc44f66af5f91182267c3b01c043aaaba5 | Build log in CI run 39921342010 | Baseline Three.js chunk 587.37 kB minified / 150.91 kB gzip; optimize and measure after. |

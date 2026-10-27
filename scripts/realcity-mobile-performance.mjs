@@ -343,6 +343,7 @@ try {
   await mkdir('test-results', {recursive:true});
   await writeFile('test-results/realcity-npc-benchmarks.json',JSON.stringify(benchmarkReport,null,2));
   assert(benchmarkRuns.length === 12 && benchmarkSummary.every(s => s.runCount === 3), '5/10/20/40 NPC benchmark matrix has three real runs per population', benchmarkSummary);
+  assert(benchmarkSummary.every(s => Number.isFinite(s.medianFrameTimeMs) && Number.isFinite(s.p95FrameTimeMs) && s.frameSampleCount >= 90), 'Every NPC population reports pooled median and p95 frame time from raw samples', benchmarkSummary);
   assert(benchmarkRuns.every(r => r.rawFrameTimesMs.length >= 30 && r.errors.length === 0), 'Every NPC benchmark run has meaningful raw samples and zero browser errors', benchmarkRuns.map(r=>({npcCount:r.npcCount,repeat:r.repeat,frames:r.frameCount,errors:r.errors.length})));
   const report = {generatedAt:new Date().toISOString(),note:'Chromium desktop with mobile viewport/touch emulation only. Not a physical Android/OPPO A5 Pro measurement; no device thermals or total/GPU memory are available.',npcBenchmarks:benchmarkReport,emulatedPerformanceWarnings:results.filter(r=>r.fps<15).map(r=>({profile:r.profile.name,fps:r.fps,message:'Below 15 FPS in SwiftShader emulation. This is a software-renderer warning, not a physical-device benchmark; real-device validation is still required.'})),results};
   await writeFile('test-results/realcity-mobile-performance.json',JSON.stringify(report,null,2));

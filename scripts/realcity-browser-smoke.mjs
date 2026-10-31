@@ -40,6 +40,10 @@ try {
   await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function', null, { timeout: 10000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 15000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().environment?.hdriReady === true, null, { timeout: 20000 });
+  const environmentState = await page.evaluate(() => window.__REALCITY_QA__().environment);
+  assert(environmentState?.hdriLoaded === true && environmentState?.dayBackground === 'photographic-hdri',
+    'Photographic urban HDRI loads and is used as the daytime sky and image-based lighting', environmentState);
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
   await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.pedestrianModelNames?.length >= 3 && q.importedTrafficModels >= 4; }, null, { timeout: 20000 });

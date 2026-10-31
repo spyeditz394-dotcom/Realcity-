@@ -120,7 +120,7 @@ try {
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), gearPoint);
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN GEAR SHOP', null, { timeout: 5000 });
   await page.locator('#interact').click();
-  await page.waitForFunction(() => document.querySelector('#rc-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
+  await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
   await page.locator('[data-service-action="buy:prop"]').click();
   await page.waitForFunction(() => window.__REALCITY_QA__().cityCash === 2105 && window.__REALCITY_QA__().cityInventory.includes('prop'), null, { timeout: 3000 });
   assert(true, 'Gear shop adds a non-functional fictional display collectible to inventory');
@@ -130,7 +130,7 @@ try {
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), dealerPoint);
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN AUTO DEALER', null, { timeout: 5000 });
   await page.locator('#interact').click();
-  await page.waitForFunction(() => document.querySelector('#rc-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
+  await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
   await page.locator('[data-service-action="buy:sedan"]').click();
   await page.waitForFunction(before => window.__REALCITY_QA__().vehicles === before + 1 && window.__REALCITY_QA__().cityCash === 505, vehiclesBeforePurchase, { timeout: 3000 });
   assert(true, 'Auto dealership purchase spawns a new drivable sedan and deducts its price');

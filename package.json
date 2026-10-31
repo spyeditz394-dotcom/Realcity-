@@ -14,7 +14,7 @@
     "validate:assets": "node scripts/validate-realcity-assets.mjs",
     "assets:environment": "node scripts/fetch-realcity-environment-assets.mjs",
     "assets:repair": "node scripts/repair-realcity-glb-padding.mjs",
-    "prebuild": "npm run assets:environment && npm run assets:repair"
+    "prebuild": "npm run assets:environment && npm run assets:repair && npm run validate:assets"
   },
   "dependencies": {
     "three": "0.160.0"

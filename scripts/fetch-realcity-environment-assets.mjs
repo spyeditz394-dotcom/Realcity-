@@ -31,6 +31,42 @@ const assets = [
     bytes: 352236,
     variant: 'commercial facade N',
   },
+  {
+    name: 'realcity-building-a.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_a/building_a.glb',
+    gitBlobSha1: '8a03830f1ab4eed5fc0d052b52f1a5c55c7496e8',
+    variant: 'commercial facade A',
+  },
+  {
+    name: 'realcity-building-b.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_b/building_b.glb',
+    gitBlobSha1: '96ec68671ebb61950a17d23dcd284cba38432bbe',
+    variant: 'commercial facade B',
+  },
+  {
+    name: 'realcity-building-c.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_c/building_c.glb',
+    gitBlobSha1: 'af4f90b02df21108f0f80834c41401e25ba8628e',
+    variant: 'commercial facade C',
+  },
+  {
+    name: 'realcity-building-f.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_f/building_f.glb',
+    gitBlobSha1: '66c9eb4dfa201062002657414ab54b2b399d2884',
+    variant: 'commercial facade F',
+  },
+  {
+    name: 'realcity-building-g.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_g/building_g.glb',
+    gitBlobSha1: '861fda665576628cc90b0dbfa05c32c5f287fa6d',
+    variant: 'commercial facade G',
+  },
+  {
+    name: 'realcity-building-h.glb',
+    source: 'https://raw.githubusercontent.com/Papyszoo/CC0-Public-Domain-Models/main/packs/kenney-city-kit-commercial/models/building_h/building_h.glb',
+    gitBlobSha1: '691bc722a57819750ff852a7a4689506e9bb7624',
+    variant: 'commercial facade H',
+  },
 ];
 const outputDir = path.resolve('public/models');
 await mkdir(outputDir, { recursive: true });
@@ -39,7 +75,7 @@ for (const asset of assets) {
   if (!response.ok) throw new Error(`Environment asset download failed (${response.status}): ${asset.name}`);
   const bytes = Buffer.from(await response.arrayBuffer());
   const gitBlobHash = createHash('sha1').update(Buffer.from(`blob ${bytes.length}\0`)).update(bytes).digest('hex');
-  if (bytes.length !== asset.bytes) throw new Error(`Unexpected byte length for ${asset.name}: ${bytes.length}`);
+  if (Number.isInteger(asset.bytes) && bytes.length !== asset.bytes) throw new Error(`Unexpected byte length for ${asset.name}: ${bytes.length}`);
   if (gitBlobHash !== asset.gitBlobSha1) throw new Error(`Git blob checksum mismatch for ${asset.name}: ${gitBlobHash}`);
   if (bytes.toString('ascii', 0, 4) !== 'glTF' || bytes.readUInt32LE(4) !== 2 || bytes.readUInt32LE(8) !== bytes.length) {
     throw new Error(`Invalid GLB header: ${asset.name}`);

@@ -39,10 +39,14 @@ try {
 
   await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function', null, { timeout: 10000 });
-  await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 15000 });
-  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 15000 });
-  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 15000 });
-  await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.pedestrianModelNames?.length >= 3 && q.importedTrafficModels >= 4; }, null, { timeout: 20000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 60000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().environment?.hdriReady === true, null, { timeout: 30000 });
+  const environmentState = await page.evaluate(() => window.__REALCITY_QA__().environment);
+  assert(environmentState?.hdriLoaded === true && environmentState?.dayBackground === 'photographic-hdri',
+    'Photographic urban HDRI loads and is used as the daytime sky and image-based lighting', environmentState);
+  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianAssets > 0 && window.__REALCITY_QA__().sedanImported === true, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().pedestrianWalking === true, null, { timeout: 30000 });
+  await page.waitForFunction(() => { const q = window.__REALCITY_QA__(); return q.pedestrianModelNames?.length >= 3 && q.importedTrafficModels >= 4; }, null, { timeout: 30000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().active === 'idle', null, { timeout: 5000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().importedBuildingCount >= 3, null, { timeout: 20000 });
   checks.push('three or more locally bundled CC0 building variants loaded into the city');
@@ -99,6 +103,7 @@ try {
   const spawnBeforeServices = serviceState.position;
   const hospitalPoint = servicePoints.find(p => p.name === 'HOSPITAL');
   await page.evaluate(point => { const q=window.__REALCITY_QA__(); q.movePlayerForTest(point.x,point.z); q.setPlayerConditionForTest(42); }, hospitalPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, 'HOSPITAL', { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
@@ -109,6 +114,7 @@ try {
   await page.locator('[data-service-action="close"]').click();
   const marketPoint = servicePoints.find(p => p.name === 'MARKET');
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), marketPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, 'MARKET', { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#rc-service-title')?.textContent === 'MARKET & CONVENIENCE', null, { timeout: 3000 });
@@ -118,6 +124,7 @@ try {
   await page.locator('[data-service-action="close"]').click();
   const gearPoint = servicePoints.find(p => p.type === 'gearStore');
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), gearPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, gearPoint.name || gearPoint.type, { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN GEAR SHOP', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
@@ -128,6 +135,7 @@ try {
   const dealerPoint = servicePoints.find(p => p.type === 'dealership');
   const vehiclesBeforePurchase = (await page.evaluate(() => window.__REALCITY_QA__())).vehicles;
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), dealerPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, dealerPoint.name || dealerPoint.type, { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN AUTO DEALER', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });

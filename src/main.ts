@@ -592,24 +592,30 @@ function loadTrafficVehicleAssets(){
 function loadRiggedPlayer(){
  if(playerAssetLoadStarted)return;
  playerAssetLoadStarted=true;
- // Only load a model shipped with REALCITY. Do not silently depend on an
- // unverified third-party URL or an asset with unknown licensing.
- const url='/models/realcity-protagonist.glb';
+ // Prefer the upgraded bundled character, retaining the validated original as
+ // a runtime fallback. Both candidates use the same rig and animation gate.
+ const candidates=['/models/realcity-protagonist-upgraded.glb','/models/realcity-protagonist.glb'];
  const loader=new GLTFLoader();
- loader.load(url,gltf=>{
-  try{
-   installRiggedPlayer(gltf);
-   installPedestrianAssets(gltf);
-   playerAssetStatus='Rigged human · '+gltf.animations.map(c=>c.name.split('|').pop()).join(', ');
-   console.info('REALCITY character asset loaded:',url,{bytes:'bundled GLB',bones:player.userData.rig.bones.length,skinnedMeshes:gltf.scene.children.length,clips:gltf.animations.map(c=>c.name)});
-  }catch(err){
-   playerAssetStatus='Local rig rejected · procedural animated fallback active';
-   console.warn('REALCITY local character rig rejected; keeping animated fallback:',err);
-  }
- },undefined,err=>{
-  playerAssetStatus='Local model missing · procedural animated fallback active';
-  console.info('No bundled REALCITY protagonist GLB; procedural animated fallback remains active.',err);
- });
+ const attempt=(index:number)=>{
+  const url=candidates[index];
+  loader.load(url,gltf=>{
+   try{
+    installRiggedPlayer(gltf);
+    installPedestrianAssets(gltf);
+    playerAssetStatus='Rigged human · '+gltf.animations.map(c=>c.name.split('|').pop()).join(', ');
+    console.info('REALCITY character asset loaded:',url,{bytes:'bundled GLB',bones:player.userData.rig.bones.length,skinnedMeshes:gltf.scene.children.length,clips:gltf.animations.map(c=>c.name)});
+   }catch(err){
+    console.warn('REALCITY character candidate rejected:',url,err);
+    if(index+1<candidates.length){attempt(index+1);return}
+    playerAssetStatus='Local rigs rejected · animated fallback active';
+   }
+  },undefined,err=>{
+   console.warn('REALCITY character candidate unavailable:',url,err);
+   if(index+1<candidates.length){attempt(index+1);return}
+   playerAssetStatus='Local models missing · animated fallback active';
+  });
+ };
+ attempt(0);
 }
 
 loadRiggedPlayer();

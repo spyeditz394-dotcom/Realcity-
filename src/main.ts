@@ -76,6 +76,24 @@ const concrete=mat(0x929890,.92),asphalt=mat(0x30383c,.98),asphaltAlt=mat(0x353b
 if(asphaltDetail){asphalt.map=asphaltDetail;asphaltAlt.map=asphaltDetail;asphalt.needsUpdate=asphaltAlt.needsUpdate=true}
 if(concreteDetail){concrete.map=concreteDetail;curbMat.map=concreteDetail;concrete.needsUpdate=curbMat.needsUpdate=true}
 applySurfacePbr(asphalt,asphaltPbr,.12);applySurfacePbr(asphaltAlt,asphaltPbr,.12);applySurfacePbr(concrete,concretePbr,.16);applySurfacePbr(curbMat,concretePbr,.12);
+const asphaltX=asphalt.clone(),asphaltZ=asphalt.clone(),asphaltAltX=asphaltAlt.clone(),asphaltAltZ=asphaltAlt.clone();
+const concreteX=concrete.clone(),concreteZ=concrete.clone();
+function installPhotographicAlbedo(url:string,targets:{material:THREE.MeshStandardMaterial;repeatX:number;repeatY:number}[]){
+ new THREE.TextureLoader().load(url,texture=>{
+  texture.colorSpace=THREE.SRGBColorSpace;texture.wrapS=texture.wrapT=THREE.RepeatWrapping;
+  texture.generateMipmaps=true;texture.minFilter=THREE.LinearMipmapLinearFilter;texture.magFilter=THREE.LinearFilter;
+  texture.anisotropy=Math.min(renderer.capabilities.getMaxAnisotropy(),mobileSafeDefault?2:8);
+  for(const target of targets){const map=texture.clone();map.repeat.set(target.repeatX,target.repeatY);map.needsUpdate=true;target.material.map=map;target.material.needsUpdate=true}
+  console.info('REALCITY photographic surface albedo ready:',url);
+ },undefined,error=>console.warn('REALCITY surface texture fallback active:',url,error));
+}
+installPhotographicAlbedo('/textures/asphalt021_color.jpg',[
+ {material:asphaltX,repeatX:210,repeatY:3},{material:asphaltAltX,repeatX:210,repeatY:3},
+ {material:asphaltZ,repeatX:3,repeatY:210},{material:asphaltAltZ,repeatX:3,repeatY:210}
+]);
+installPhotographicAlbedo('/textures/concrete012_color.jpg',[
+ {material:concreteX,repeatX:1.5,repeatY:210},{material:concreteZ,repeatX:210,repeatY:1.5}
+]);
 const windowBuckets=new Map(),windowGeometry=new THREE.BoxGeometry(.56,.88,.055),windowDummy=new THREE.Object3D(),WINDOW_CHUNK_SIZE=60;
 function queueWindow(index,x,y,z,rotation=0){const cx=Math.floor(x/WINDOW_CHUNK_SIZE),cz=Math.floor(z/WINDOW_CHUNK_SIZE),key=index+':'+cx+':'+cz;let bucket=windowBuckets.get(key);if(!bucket){bucket={material:windowMats[index],matrices:[],cullX:(cx+.5)*WINDOW_CHUNK_SIZE,cullZ:(cz+.5)*WINDOW_CHUNK_SIZE};windowBuckets.set(key,bucket)}windowDummy.position.set(x,y,z);windowDummy.rotation.set(0,rotation,0);windowDummy.scale.set(1,1,1);windowDummy.updateMatrix();bucket.matrices.push(windowDummy.matrix.clone())}
 const roadMarkMaterial=mat(0xb8b7a7),roadMarkGeometry=new THREE.BoxGeometry(.12,.14,2.5),roadMarkMatrices=[],roadMarkDummy=new THREE.Object3D();
@@ -120,7 +138,7 @@ async function loadImportedBuildingAssets(){
  console.info('REALCITY imported CC0 building assets:',importedBuildingCount);
 }
 loadfill.style.width='10%';loadnote.textContent='Building road network…';
-for(let k=-CITY_HALF;k<=CITY_HALF;k++){let p=k*20,roadMat=(k%2===0?asphalt:asphaltAlt),roadSpan=CITY_EXTENT+40;box(9,.12,roadSpan,roadMat,p,-.015,0);box(roadSpan,.12,9,roadMat,0,-.015,p);for(const side of [-1,1]){box(.48,.13,roadSpan,concrete,p+side*4.76,.01,0);box(roadSpan,.13,.48,concrete,0,.01,p+side*4.76);box(.10,.17,roadSpan,curbMat,p+side*4.98,.025,0);box(roadSpan,.17,.10,curbMat,0,.025,p+side*4.98)}box(.12,.14,roadSpan,paint,p-3.1,.02,0);box(roadSpan,.14,.12,paint,0,.02,p-3.1);
+for(let k=-CITY_HALF;k<=CITY_HALF;k++){let p=k*20,roadMatX=(k%2===0?asphaltX:asphaltAltX),roadMatZ=(k%2===0?asphaltZ:asphaltAltZ),roadSpan=CITY_EXTENT+40;box(9,.12,roadSpan,roadMatZ,p,-.015,0);box(roadSpan,.12,9,roadMatX,0,-.015,p);for(const side of [-1,1]){box(.48,.13,roadSpan,concreteZ,p+side*4.76,.01,0);box(roadSpan,.13,.48,concreteX,0,.01,p+side*4.76);box(.10,.17,roadSpan,curbMat,p+side*4.98,.025,0);box(roadSpan,.17,.10,curbMat,0,.025,p+side*4.98)}box(.12,.14,roadSpan,paint,p-3.1,.02,0);box(roadSpan,.14,.12,paint,0,.02,p-3.1);
 for(let t=-CITY_EXTENT/2;t<CITY_EXTENT/2;t+=8){queueRoadMark(p,.02,t,0);queueRoadMark(t,.02,p,Math.PI/2)}if(k%2===0)await yieldFrame()}
 const roadMarks=new THREE.InstancedMesh(roadMarkGeometry,roadMarkMaterial,roadMarkMatrices.length);for(let i=0;i<roadMarkMatrices.length;i++)roadMarks.setMatrixAt(i,roadMarkMatrices[i]);roadMarks.instanceMatrix.needsUpdate=true;roadMarks.userData.cityStatic=true;roadMarks.userData.alwaysVisible=true;scene.add(roadMarks);cityStaticMeshes.push(roadMarks);
 loadfill.style.width='25%';loadnote.textContent='Creating city blocks and buildings…';
@@ -875,6 +893,7 @@ function applyQuality(q){
  applyRendererResolution();
  const maxAniso=renderer.capabilities.getMaxAnisotropy();
  for(const tex of [asphaltDetail,concreteDetail,facadeDetail])if(tex)tex.anisotropy=Math.min(maxAniso,quality>=3?8:quality>=2?4:quality>=1?2:1);
+ for(const material of [asphaltX,asphaltZ,asphaltAltX,asphaltAltZ,concreteX,concreteZ])if(material.map)material.map.anisotropy=Math.min(maxAniso,quality>=3?8:quality>=2?4:quality>=1?2:1);
  for(const tex of [asphaltPbr.normalMap,asphaltPbr.roughnessMap,concretePbr.normalMap,concretePbr.roughnessMap,facadePbr.normalMap,facadePbr.roughnessMap])tex.anisotropy=Math.min(maxAniso,quality>=3?8:quality>=2?4:quality>=1?2:1);
  // Balanced mobile skips the shadow map; High/Ultra restore controlled-quality shadows.
  renderer.shadowMap.enabled=quality>=1&&(!mobileSafeDefault||quality>=2);

@@ -9,7 +9,7 @@ const buildSha=typeof __REALCITY_BUILD_SHA__==='string'?__REALCITY_BUILD_SHA__:'
 const deviceMemoryGB=(navigator as Navigator & {deviceMemory?:number}).deviceMemory;const touchMobileViewport=innerWidth<=600&&(navigator.maxTouchPoints>0||new URLSearchParams(location.search).has('qa'));const mobileSafeDefault=matchMedia('(pointer: coarse)').matches||touchMobileViewport||(typeof deviceMemoryGB==='number'&&deviceMemoryGB<=4)||navigator.hardwareConcurrency<=4;let quality=1,paused=false,fpsFrames=0,fpsElapsed=0,shownFps=0,mobileRenderScale=1,adaptiveScaleElapsed=0,adaptiveLowElapsed=0,adaptiveHighElapsed=0;const saved=(()=>{try{const raw=localStorage.getItem('realcity-settings');const data=raw?JSON.parse(raw):{};return data&&typeof data==='object'&&!Array.isArray(data)?data:{}}catch{return {}}})();quality=Number.isInteger(saved.quality)&&saved.version>=4?Math.max(0,Math.min(3,saved.quality)):(mobileSafeDefault?1:2);const scene=new THREE.Scene();
 function makeSkyEnvironment(night:boolean){
  const canvas=document.createElement('canvas');canvas.width=512;canvas.height=256;
- const ctx=canvas.getContext('2d');if(!ctx)return new THREE.Color(night?0x101c30:0x9bc4d1);
+ const ctx=canvas.getContext('2d');if(!ctx){const fallback=new THREE.CanvasTexture(canvas);fallback.mapping=THREE.EquirectangularReflectionMapping;return fallback;}
  const gradient=ctx.createLinearGradient(0,0,0,256);
  if(night){gradient.addColorStop(0,'#07101f');gradient.addColorStop(.42,'#172b45');gradient.addColorStop(.52,'#536174');gradient.addColorStop(.62,'#283543');gradient.addColorStop(1,'#101820')}
  else{gradient.addColorStop(0,'#477b9b');gradient.addColorStop(.34,'#78a9c0');gradient.addColorStop(.49,'#d8d8c7');gradient.addColorStop(.56,'#b5b39d');gradient.addColorStop(1,'#394b3d')}

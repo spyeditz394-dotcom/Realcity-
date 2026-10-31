@@ -557,14 +557,16 @@ function installPedestrianAssets(gltf){
  ];
  let remaining=2;
  const finish=()=>{
-  if(remaining>0)return;
+  // Install the known-good protagonist rig immediately; never block all city
+  // pedestrians while optional variant files are still downloading.
   const usable=variants.filter(v=>!!v.scene);
   if(usable.length<3)console.warn('REALCITY pedestrian variety degraded; loaded variants:',usable.map(v=>v.name));
   const palette=[0xffffff,0xe8f0f4,0xffeee0,0xdce8db,0xe8dff0,0xf1e6cc,0xd8e9ed];
   let installed=0;
   for(let i=0;i<pedestrians.length;i++){
-   const p=pedestrians[i];if(p.userData.importedPedestrian)continue;
-   const source=usable[i%usable.length];if(!source)continue;
+   const p=pedestrians[i];
+   const source=usable[i%usable.length];if(!source||p.userData.importedPedestrian?.modelName===source.name)continue;
+   if(p.userData.importedPedestrian?.mixer)p.userData.importedPedestrian.mixer.stopAllAction();
    const model=cloneSkeleton(source.scene);model.updateMatrixWorld(true);
    const bounds=new THREE.Box3().setFromObject(model),size=bounds.getSize(new THREE.Vector3());
    if(!Number.isFinite(size.y)||size.y<.25)continue;
@@ -592,6 +594,7 @@ function installPedestrianAssets(gltf){
   }
   console.info('REALCITY distinct animated pedestrians installed:',{installed,variants:usable.map(v=>v.name)});
  };
+ finish();
  const loader=new GLTFLoader();
  loader.load('/models/realcity-pedestrian-casual.glb',asset=>{variants[1].scene=asset.scene;remaining--;finish()},undefined,error=>{console.warn('REALCITY casual pedestrian model failed; fallback appearances remain:',error);remaining--;finish()});
  loader.load('/models/realcity-pedestrian-worker.glb',asset=>{variants[2].scene=asset.scene;remaining--;finish()},undefined,error=>{console.warn('REALCITY worker pedestrian model failed; fallback appearances remain:',error);remaining--;finish()});

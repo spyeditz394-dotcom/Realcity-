@@ -20,6 +20,12 @@ const assets = [
   ['public/models/realcity-building-d.glb', 'building'],
   ['public/models/realcity-building-e.glb', 'building'],
   ['public/models/realcity-building-n.glb', 'building'],
+  ['public/models/realcity-building-a.glb', 'building'],
+  ['public/models/realcity-building-b.glb', 'building'],
+  ['public/models/realcity-building-c.glb', 'building'],
+  ['public/models/realcity-building-f.glb', 'building'],
+  ['public/models/realcity-building-g.glb', 'building'],
+  ['public/models/realcity-building-h.glb', 'building'],
 ];
 const validator = path.resolve('scripts/validate-realcity-glb.mjs');
 let failed = 0;

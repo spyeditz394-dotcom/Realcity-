@@ -2,10 +2,10 @@
 
 ## Imported building variants
 
-The Vite build runs `npm run assets:environment` before bundling. The script downloads nine CC0 building GLBs into `public/models/`, verifies their exact Git blob SHA-1, byte length, GLB v2 header and declared file length, and fails closed on a mismatch. The deployed application then loads the files from same-origin `/models/` URLs; the browser does not fetch these assets from the upstream repository.
+The Vite build runs `npm run assets:environment` before bundling. The script downloads nine CC0 building GLBs into `public/models/`, verifies their exact Git blob SHA-1, GLB v2 header and declared file length (the original three assets also retain explicit expected byte lengths), and fails closed on a mismatch. The deployed application then loads the files from same-origin `/models/` URLs; the browser does not fetch these assets from the upstream repository.
 
 | Local build output | Source asset | Upstream Git blob SHA-1 | License |
-|---|---|---|---:|---|
+|---|---|---|---|
 | `realcity-building-d.glb` | [Kenney City Kit Commercial — building D](https://github.com/Papyszoo/CC0-Public-Domain-Models/blob/main/packs/kenney-city-kit-commercial/models/building_d/building_d.glb) | `cf0c89e6083f4c8811510e007d9c8ba3a7a227c1` | CC0 1.0 |
 | `realcity-building-e.glb` | [Kenney City Kit Commercial — building E](https://github.com/Papyszoo/CC0-Public-Domain-Models/blob/main/packs/kenney-city-kit-commercial/models/building_e/building_e.glb) | `7ff4a5d74a1d93f0354126ad65fedef045b05c4a` | CC0 1.0 |
 | `realcity-building-n.glb` | [Kenney City Kit Commercial — building N](https://github.com/Papyszoo/CC0-Public-Domain-Models/blob/main/packs/kenney-city-kit-commercial/models/building_n/building_n.glb) | `250ba859deb96c957e678aaf833b69cdb375e40e` | CC0 1.0 |

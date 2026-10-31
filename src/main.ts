@@ -58,7 +58,7 @@ function randFactory(){let s=17031;return ()=>{s=(s*1664525+1013904223)>>>0;retu
 async function loadImportedBuildingAssets(){
  if(!importedBuildingCandidates.length)return;
  const loader=new GLTFLoader();
- const urls=['/models/realcity-building-d.glb','/models/realcity-building-e.glb','/models/realcity-building-n.glb'];
+ const urls=['/models/realcity-building-d.glb','/models/realcity-building-e.glb','/models/realcity-building-n.glb','/models/realcity-building-a.glb','/models/realcity-building-b.glb','/models/realcity-building-c.glb','/models/realcity-building-f.glb','/models/realcity-building-g.glb','/models/realcity-building-h.glb'];
  const loadModel=(url)=>new Promise<THREE.Group>((resolve,reject)=>loader.load(url,gltf=>resolve(gltf.scene),undefined,reject));
  const templates=await Promise.all(urls.map(loadModel));
  for(let i=0;i<importedBuildingCandidates.length;i++){
@@ -101,7 +101,7 @@ if(!landmarkSpec&&rand()<(district==='Parks' ? .72 : .19)){box(10,.18,10,grass,c
 const w=district==='Luxury'?8+rand()*2:district==='Parks'?4+rand()*2:5.5+rand()*3.2,d=district==='Luxury'?8+rand()*2:district==='Parks'?4+rand()*2:5.5+rand()*3.2,h=district==='Downtown'?20+rand()*27:district==='Industrial'?6+rand()*10:district==='Residential'?5+rand()*10:district==='Market'?9+rand()*15:district==='Luxury'?4+rand()*4:district==='Parks'?3+rand()*5:district==='Suburbs'?5+rand()*8:11+rand()*18,useImportedBuilding=((gx+CITY_HALF)*CITY_BLOCKS+(gz+CITY_HALF))%9===0&&h<=15,x=cx+(rand()-.5)*2.6,z=cz+(rand()-.5)*2.6;
 const palette=districtPalettes[district],wall=mat(palette[Math.floor(rand()*palette.length)],.9);if(facadeDetail)wall.map=facadeDetail;const b=box(w,h,d,wall,x,h/2,z,true);b.receiveShadow=true;cameraBlockers.push(b);buildings.push({x,z,w,d,h});addSolid(x,z,w,d,h);
 const landmark=landmarkSpec;if(landmark){landmarkLabels.push(landmark[2]);const sign=box(w*.72,.8,.12,mat(landmark[3],.72),x,h*.58,z+d/2+.13,true);box(w*.78,.09,.15,mat(0xf2f2e9),x,h*.58+.46,z+d/2+.14,true);if(landmark[2]==='HOSPITAL'){box(.18,1.05,.16,mat(0xf4f5ef),x,h*.58,z+d/2+.23,true);box(.72,.18,.16,mat(0xf4f5ef),x,h*.58,z+d/2+.23,true)}worldObjects.push({type:'landmark',name:landmark[2],x,z:z+d/2+2.5,buildingX:x,buildingZ:z,mesh:sign})}
-if(useImportedBuilding){importedBuildingCandidates.push({mesh:b,x,z,w,d,h,variant:((gx+CITY_HALF)+(gz+CITY_HALF))%3})}else{box(w+.15,.22,d+.15,mat(0x40494a,.86),x,h+.08,z,true);
+if(useImportedBuilding){importedBuildingCandidates.push({mesh:b,x,z,w,d,h,variant:((gx+CITY_HALF)+(gz+CITY_HALF))%9})}else{box(w+.15,.22,d+.15,mat(0x40494a,.86),x,h+.08,z,true);
 if(h>13&&rand()<.62){const unitMat=mat(0x697477,.82,.18);box(w*.22,.72,d*.24,unitMat,x-w*.18,h+.48,z-d*.12,true);box(w*.12,.42,d*.15,unitMat,x+w*.22,h+.33,z+d*.16,true)}
 const floors=Math.max(2,Math.floor((h-1.8)/2.6));
 for(let f=0;f<floors;f++){let yy=2+f*2.55;for(let xx=-w/2+.8;xx<w/2-.25;xx+=1.35){queueWindow(Math.floor(rand()*windowMats.length),x+xx,yy,z+d/2+.035,0)}

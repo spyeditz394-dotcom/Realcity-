@@ -132,9 +132,29 @@ try {
     await wait(250);
 
     // Long enough to expose a stuck throttle, frozen vehicle, or unstable motion.
-    await page.evaluate(() => window.__REALCITY_QA__().prepareVehicle());
+    const vehicleFixture = await page.evaluate(() => window.__REALCITY_QA__().prepareVehicle());
+    const interactionBeforeEntry = await page.evaluate(() => ({
+      target: window.__REALCITY_QA__().interactionTargetForTest(),
+      candidates: window.__REALCITY_QA__().interactionCandidatesForTest()
+    }));
+    assert(interactionBeforeEntry.target?.type === 'car',
+      'Parked test vehicle is the nearest eligible interaction before keyboard input',
+      { vehicleFixture, ...interactionBeforeEntry });
+    assert(interactionBeforeEntry.target.distance < 5.2,
+      'Parked test vehicle remains inside the real interaction radius',
+      { vehicleFixture, ...interactionBeforeEntry });
     await page.keyboard.press('e');
-    await page.waitForFunction(() => window.__REALCITY_QA__().inCar, null, { timeout:5000 });
+    await page.waitForFunction(() => window.__REALCITY_QA__().inCar, null, { timeout:5000 }).catch(async error => {
+      const state = await page.evaluate(() => ({
+        inCar: window.__REALCITY_QA__().inCar,
+        target: window.__REALCITY_QA__().interactionTargetForTest(),
+        candidates: window.__REALCITY_QA__().interactionCandidatesForTest(),
+        vehiclePosition: window.__REALCITY_QA__().vehiclePosition,
+        playerPosition: window.__REALCITY_QA__().position
+      }));
+      throw new Error('Real keyboard E interaction did not enter the verified parked car: '+JSON.stringify({vehicleFixture,interactionBeforeEntry,state,cause:error.message}));
+    });
+    checks.push('nearest eligible interaction is the parked car and real keyboard E enters it');
     const carStart = await page.evaluate(() => window.__REALCITY_QA__().vehiclePosition);
     const gas = page.locator('#gasBtn');
     const gasBox = await gas.boundingBox();

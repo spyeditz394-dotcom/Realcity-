@@ -137,6 +137,43 @@ try {
   await page.locator('[data-service-action="close"]').click();
   await page.evaluate(position => window.__REALCITY_QA__().movePlayerForTest(position.x,position.z), spawnBeforeServices);
 
+  const doors = (await page.evaluate(() => window.__REALCITY_QA__())).doors || [];
+  const hospitalDoor = doors.find(d => d.theme === 'hospital');
+  assert(!!hospitalDoor, 'Hospital entrance resolves to a hospital interior theme', doors.filter(d=>d.theme==='hospital'));
+  await page.evaluate(d => { const q=window.__REALCITY_QA__(); q.movePlayerForTest(d.x,d.z); q.enterInteriorForTest(d.index); }, hospitalDoor);
+  await page.waitForFunction(() => window.__REALCITY_QA__().interiorMode && window.__REALCITY_QA__().activeInteriorTheme === 'hospital', null, { timeout: 3000 });
+  assert(true, 'Hospital entrance opens its own furnished hospital interior');
+  await page.evaluate(() => window.__REALCITY_QA__().exitInteriorForTest());
+  await page.waitForFunction(() => !window.__REALCITY_QA__().interiorMode, null, { timeout: 3000 });
+  assert(true, 'Interior exit returns the player to the exterior entrance');
+
+  await page.locator('#realcity-career-open').click();
+  await page.waitForFunction(() => document.getElementById('stage-title')?.textContent === 'CITY MISSIONS', null, { timeout: 3000 });
+  await page.locator('[data-mission-action="start:civic-checkin"]').click();
+  await page.evaluate(p => { const q=window.__REALCITY_QA__(); q.movePlayerForTest(p.x,p.z); q.updateMissionProgressForTest(); }, hospitalPoint);
+  await page.waitForFunction(() => window.__REALCITY_QA__().missionCompletedIds.includes('civic-checkin') && window.__REALCITY_QA__().cityCash === 805, null, { timeout: 3000 });
+  assert(true, 'Hospital mission completes on arrival and pays its $300 reward');
+  await page.locator('[data-stage-close]').click();
+
+  await page.locator('#realcity-wardrobe-open').click();
+  await page.locator('[data-appearance="outfit:crimson"]').click();
+  await page.locator('[data-appearance="skin:medium"]').click();
+  const appearance = await page.evaluate(() => window.__REALCITY_QA__().appearanceState);
+  assert(appearance.outfit === 'crimson' && appearance.skin === 'medium', 'Wardrobe applies outfit and skin appearance selections');
+  await page.locator('[data-stage-close]').click();
+
+  const garagePoint = servicePoints.find(p => p.name === 'FUEL');
+  await page.evaluate(p => { const q=window.__REALCITY_QA__(); q.moveVehicleForTest(0,p.x+3.4,p.z); q.movePlayerForTest(p.x,p.z); }, garagePoint);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
+  await page.locator('#interact').click();
+  await page.locator('[data-service-action="buy:engine"]').click();
+  await page.locator('[data-service-action="buy:handling"]').click();
+  await page.locator('[data-service-action="buy:tires"]').click();
+  const tuned = await page.evaluate(() => window.__REALCITY_QA__().vehicleUpgrades[0]);
+  assert(tuned.engine === 1 && tuned.handling === 1 && tuned.tires === 1, 'Garage installs engine, steering and tire upgrades on the nearest vehicle');
+  await page.locator('[data-service-action="close"]').click();
+  await page.evaluate(position => window.__REALCITY_QA__().movePlayerForTest(position.x,position.z), spawnBeforeServices);
+
   const collision = await page.evaluate(() => window.__REALCITY_QA__().collisionProbe());
   assert(collision && collision.buildingCount >= 1 && collision.playerBlockedAtBuilding && collision.vehicleBlockedAtBuilding,
     'Player and vehicle are blocked by building collision volumes', collision);

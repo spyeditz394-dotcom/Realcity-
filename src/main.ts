@@ -541,6 +541,9 @@ function installRiggedPlayer(gltf){
  player.userData.riggedAsset=true;player.userData.setFingerPose=setPlayerFingerPose;
  playerFingerBoneCount=fingerBones.length;playerAssetLoadMs=performance.now()-playerAssetStarted;playerAssetStatus='Rigged human loaded · '+bones.length+' bones · '+fingerBones.length+' finger joints';
  setPlayerFingerPose('relaxed');
+ // Reuse the already validated, fully rigged character as the guaranteed pedestrian source.
+ // Optional casual/worker GLBs can then replace individual NPCs when their downloads finish.
+ installPedestrianAssets({scene:model,animations:clips});
 }
 
 let pedestrianAssetInstallStarted=false,sedanAssetLoadStarted=false,trafficAssetLoadStarted=false;

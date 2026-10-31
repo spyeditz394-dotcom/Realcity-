@@ -1,0 +1,64 @@
+name: REALCITY vendor verified CC0 assets
+
+on:
+  push:
+    branches:
+      - rebuild/stability-graphics-foundation
+    paths:
+      - '.github/workflows/vendor-realcity-assets.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  vendor:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - name: Checkout active feature branch
+        uses: actions/checkout@v4
+        with:
+          ref: rebuild/stability-graphics-foundation
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Download pinned CC0 assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p public/models
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 90 \
+            'https://raw.githubusercontent.com/Seyamalam/blood-league-kickoff/aa02a4e6d8337a0604d2da131bcbbeb1f01badf0/public/assets/vendor/quaternius/night-striker.glb' \
+            --output public/models/realcity-protagonist-upgraded.glb
+          curl --fail --location --retry 3 --connect-timeout 15 --max-time 90 \
+            'https://raw.githubusercontent.com/Hidencod/tge-assets/2c8950b716e6765930b2b51409c59adf3d66fd5c/packs/car-kit/sedan.glb' \
+            --output public/models/realcity-sedan-cc0.glb
+          node --input-type=module <<'NODE'
+          import { readFileSync, statSync } from 'node:fs';
+          const files = [
+            ['public/models/realcity-protagonist-upgraded.glb', 6_465_208],
+            ['public/models/realcity-sedan-cc0.glb', 184_504],
+          ];
+          for (const [path, expectedBytes] of files) {
+            const bytes = readFileSync(path);
+            if (bytes.length < 20 || bytes.readUInt32LE(0) !== 0x46546c67) {
+              throw new Error(path + ': invalid GLB magic/header');
+            }
+            if (bytes.readUInt32LE(4) !== 2) throw new Error(path + ': expected glTF 2.0');
+            if (bytes.readUInt32LE(8) !== bytes.length) throw new Error(path + ': declared length mismatch');
+            if (bytes.length !== expectedBytes) throw new Error(path + ': size mismatch; expected ' + expectedBytes + ', got ' + bytes.length);
+            console.log(JSON.stringify({path, bytes: statSync(path).size, glbVersion: 2, header: 'PASS'}));
+          }
+          NODE
+      - name: Commit verified binaries to feature branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add public/models/realcity-protagonist-upgraded.glb public/models/realcity-sedan-cc0.glb
+          if git diff --cached --quiet; then
+            echo 'Assets are already current.'
+            exit 0
+          fi
+          git commit -m 'assets: vendor pinned CC0 character and sedan GLBs'
+          git push origin HEAD:rebuild/stability-graphics-foundation

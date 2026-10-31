@@ -103,6 +103,7 @@ try {
   const spawnBeforeServices = serviceState.position;
   const hospitalPoint = servicePoints.find(p => p.name === 'HOSPITAL');
   await page.evaluate(point => { const q=window.__REALCITY_QA__(); q.movePlayerForTest(point.x,point.z); q.setPlayerConditionForTest(42); }, hospitalPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, 'HOSPITAL', { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
@@ -113,6 +114,7 @@ try {
   await page.locator('[data-service-action="close"]').click();
   const marketPoint = servicePoints.find(p => p.name === 'MARKET');
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), marketPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, 'MARKET', { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#rc-service-title')?.textContent === 'MARKET & CONVENIENCE', null, { timeout: 3000 });
@@ -122,6 +124,7 @@ try {
   await page.locator('[data-service-action="close"]').click();
   const gearPoint = servicePoints.find(p => p.type === 'gearStore');
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), gearPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, gearPoint.name || gearPoint.type, { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN GEAR SHOP', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
@@ -132,6 +135,7 @@ try {
   const dealerPoint = servicePoints.find(p => p.type === 'dealership');
   const vehiclesBeforePurchase = (await page.evaluate(() => window.__REALCITY_QA__())).vehicles;
   await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), dealerPoint);
+  await page.waitForFunction(expected => window.__REALCITY_QA__().nearestServiceForTest() === expected, dealerPoint.name || dealerPoint.type, { timeout: 5000 });
   await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN AUTO DEALER', null, { timeout: 5000 });
   await page.locator('#interact').click();
   await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });

@@ -90,6 +90,53 @@ try {
       player: initial.position
     });
 
+  // City service systems: use the real proximity interaction path and verify purchases persist.
+  const serviceState = await page.evaluate(() => window.__REALCITY_QA__());
+  const servicePoints = serviceState.servicePoints || [];
+  assert(['MARKET','HOSPITAL','FUEL','POLICE','FIRE','SCHOOL','VILLAS'].every(name => servicePoints.some(p => p.name === name)) &&
+    servicePoints.some(p => p.type === 'dealership') && servicePoints.some(p => p.type === 'gearStore'),
+    'Hospital, market, garage, civic services, auto dealer and gear shop have world interaction points', servicePoints);
+  const spawnBeforeServices = serviceState.position;
+  const hospitalPoint = servicePoints.find(p => p.name === 'HOSPITAL');
+  await page.evaluate(point => { const q=window.__REALCITY_QA__(); q.movePlayerForTest(point.x,point.z); q.setPlayerConditionForTest(42); }, hospitalPoint);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
+  await page.locator('#interact').click();
+  await page.waitForFunction(() => document.querySelector('#realcity-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
+  assert((await page.locator('#rc-service-title').innerText()) === 'CITY HOSPITAL', 'Hospital opens from its world entrance');
+  await page.locator('[data-service-action="buy:heal"]').click();
+  await page.waitForFunction(() => window.__REALCITY_QA__().cityCash === 2350 && window.__REALCITY_QA__().playerCondition === 100, null, { timeout: 3000 });
+  assert(true, 'Hospital treatment deducts the correct fee and restores player condition');
+  await page.locator('[data-service-action="close"]').click();
+  const marketPoint = servicePoints.find(p => p.name === 'MARKET');
+  await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), marketPoint);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN CITY SERVICE', null, { timeout: 5000 });
+  await page.locator('#interact').click();
+  await page.waitForFunction(() => document.querySelector('#rc-service-title')?.textContent === 'MARKET & CONVENIENCE', null, { timeout: 3000 });
+  await page.locator('[data-service-action="buy:snack"]').click();
+  await page.waitForFunction(() => window.__REALCITY_QA__().cityCash === 2325, null, { timeout: 3000 });
+  assert(true, 'Market purchase updates the saved city economy');
+  await page.locator('[data-service-action="close"]').click();
+  const gearPoint = servicePoints.find(p => p.type === 'gearStore');
+  await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), gearPoint);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN GEAR SHOP', null, { timeout: 5000 });
+  await page.locator('#interact').click();
+  await page.waitForFunction(() => document.querySelector('#rc-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
+  await page.locator('[data-service-action="buy:prop"]').click();
+  await page.waitForFunction(() => window.__REALCITY_QA__().cityCash === 2105 && window.__REALCITY_QA__().cityInventory.includes('prop'), null, { timeout: 3000 });
+  assert(true, 'Gear shop adds a non-functional fictional display collectible to inventory');
+  await page.locator('[data-service-action="close"]').click();
+  const dealerPoint = servicePoints.find(p => p.type === 'dealership');
+  const vehiclesBeforePurchase = (await page.evaluate(() => window.__REALCITY_QA__())).vehicles;
+  await page.evaluate(point => window.__REALCITY_QA__().movePlayerForTest(point.x,point.z), dealerPoint);
+  await page.waitForFunction(() => document.getElementById('interact')?.textContent === 'OPEN AUTO DEALER', null, { timeout: 5000 });
+  await page.locator('#interact').click();
+  await page.waitForFunction(() => document.querySelector('#rc-service-panel')?.classList.contains('open'), null, { timeout: 3000 });
+  await page.locator('[data-service-action="buy:sedan"]').click();
+  await page.waitForFunction(before => window.__REALCITY_QA__().vehicles === before + 1 && window.__REALCITY_QA__().cityCash === 505, vehiclesBeforePurchase, { timeout: 3000 });
+  assert(true, 'Auto dealership purchase spawns a new drivable sedan and deducts its price');
+  await page.locator('[data-service-action="close"]').click();
+  await page.evaluate(position => window.__REALCITY_QA__().movePlayerForTest(position.x,position.z), spawnBeforeServices);
+
   const collision = await page.evaluate(() => window.__REALCITY_QA__().collisionProbe());
   assert(collision && collision.buildingCount >= 1 && collision.playerBlockedAtBuilding && collision.vehicleBlockedAtBuilding,
     'Player and vehicle are blocked by building collision volumes', collision);

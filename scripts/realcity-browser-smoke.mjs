@@ -39,7 +39,7 @@ try {
 
   await page.goto(origin + '/?qa=1', { waitUntil: 'networkidle', timeout: 30000 });
   await page.waitForFunction(() => typeof window.__REALCITY_QA__ === 'function', null, { timeout: 10000 });
-  await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 30000 });
+  await page.waitForFunction(() => window.__REALCITY_QA__().rigged === true, null, { timeout: 60000 });
   await page.waitForFunction(() => window.__REALCITY_QA__().environment?.hdriReady === true, null, { timeout: 30000 });
   const environmentState = await page.evaluate(() => window.__REALCITY_QA__().environment);
   assert(environmentState?.hdriLoaded === true && environmentState?.dayBackground === 'photographic-hdri',

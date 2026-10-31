@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - feature/realcity-protagonist-animation-audit
+      - feature/realcity-expanded-city-assets
   pull_request:
     branches:
       - main
